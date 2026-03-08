@@ -26,14 +26,26 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     const [hasNextPage, setHasNextPage] = useState(false);
     const [loadedToken, setLoadedToken] = useState<string | null>(null);
     const [errorState, setErrorState] = useState<TokenScopedError | null>(null);
+    const loadControllerRef = useRef<AbortController | null>(null);
     const ingestControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
-        if (!open || !githubAccessToken || loadedToken === githubAccessToken) {
+        if (!open) {
+            return;
+        }
+
+        if (!githubAccessToken) {
+            loadControllerRef.current?.abort();
+            return;
+        }
+
+        if (loadedToken === githubAccessToken) {
             return;
         }
 
         const controller = new AbortController();
+        loadControllerRef.current?.abort();
+        loadControllerRef.current = controller;
 
         void api.fetchGitHubReadableRepos(githubAccessToken, controller.signal)
             .then((response) => {
@@ -57,13 +69,25 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                     token: githubAccessToken,
                     message: error instanceof Error ? error.message : 'GitHub repo fetch failed.',
                 });
-                setLoadedToken(null);
+                setLoadedToken(githubAccessToken);
+            })
+            .finally(() => {
+                if (loadControllerRef.current === controller) {
+                    loadControllerRef.current = null;
+                }
             });
 
-        return () => controller.abort();
+        return () => {
+            if (loadControllerRef.current === controller) {
+                loadControllerRef.current = null;
+            }
+
+            controller.abort();
+        };
     }, [githubAccessToken, loadedToken, open]);
 
     useEffect(() => () => {
+        loadControllerRef.current?.abort();
         ingestControllerRef.current?.abort();
     }, []);
 
@@ -72,18 +96,65 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     }
 
     const activeErrorMessage = errorState?.token === githubAccessToken ? errorState.message : null;
-    const status: PickerStatus = !githubAccessToken
+    const displayStatus: PickerStatus = !githubAccessToken
         ? 'idle'
-        : activeErrorMessage
-            ? 'error'
-            : loadedToken !== githubAccessToken
+        : loadedToken !== githubAccessToken
             ? 'loading'
-            : 'ready';
-    const visibleRepos = status === 'ready' ? repos : [];
+            : activeErrorMessage
+                ? 'error'
+                : 'ready';
+    const visibleRepos = displayStatus === 'ready' ? repos : [];
 
     const pickerHint = githubAccessToken
-        ? 'Fetched from GitHub with the OAuth token currently stored in frontend state.'
-        : 'GitHub auth token missing from frontend state.';
+        ? 'Load the readable repos this GitHub login can access. Picking one keeps you in the repo-city shell.'
+        : 'GitHub is not connected in this browser state yet.';
+    const pickerStatusCopy = !githubAccessToken
+        ? {
+              tone: 'idle',
+              pill: 'Signed out',
+              title: 'GitHub not connected',
+              message: 'Log in with GitHub to load readable repos here.',
+          }
+        : displayStatus === 'loading'
+            ? {
+                  tone: 'loading',
+                  pill: 'Loading',
+                  title: 'Loading GitHub repos',
+                  message: 'Fetching the readable repo list for this login. No page reload is needed.',
+              }
+            : displayStatus === 'error'
+                ? {
+                      tone: 'error',
+                      pill: 'Load failed',
+                      title: 'Could not load GitHub repos',
+                      message: activeErrorMessage
+                          ? `${activeErrorMessage} Your current repo selection stays unchanged.`
+                          : 'GitHub did not return the repo list. Your current repo selection stays unchanged.',
+                  }
+                : visibleRepos.length === 0
+                    ? {
+                          tone: 'idle',
+                          pill: 'No repos',
+                          title: 'No readable repos returned',
+                          message: 'This GitHub login is connected, but GitHub did not return any readable repos yet.',
+                      }
+                    : {
+                          tone: 'success',
+                          pill: 'Repos ready',
+                          title: 'Choose a repo to connect',
+                          message: hasNextPage
+                              ? `${visibleRepos.length} readable repos loaded from the first GitHub page.`
+                              : `${visibleRepos.length} readable repos loaded and ready to pick.`,
+                      };
+
+    function handleRetryRepoLoad() {
+        if (!githubAccessToken || displayStatus === 'loading') {
+            return;
+        }
+
+        setErrorState(null);
+        setLoadedToken(null);
+    }
 
     function handleRepoSelection(repo: api.GitHubReadableRepo) {
         const shouldTriggerIngest = repo.visibility === 'public' && selectedGitHubRepo?.id !== repo.id;
@@ -158,13 +229,27 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                 )}
             </div>
 
-            <div className="repo-selector-meta" aria-live="polite">
-                {status === 'loading' && 'Loading repositories from GitHub...'}
-                {status === 'error' && (activeErrorMessage ?? 'GitHub repo fetch failed.')}
-                {status === 'ready' && visibleRepos.length === 0 && 'No readable repositories returned by GitHub.'}
-                {status === 'ready' && visibleRepos.length > 0 && `${visibleRepos.length} readable repos loaded.`}
-                {status === 'idle' && !githubAccessToken && 'Log in with GitHub to load readable repos.'}
-                {status === 'ready' && hasNextPage && ' Showing the first 100 repos from the initial GitHub page.'}
+            <div
+                className={`repo-selector-meta repo-connection-feedback ${pickerStatusCopy.tone === 'idle' ? '' : pickerStatusCopy.tone}`.trim()}
+                aria-live="polite"
+                aria-busy={displayStatus === 'loading'}
+            >
+                <div className="repo-connection-feedback-header">
+                    <span className={`repo-connection-feedback-pill ${pickerStatusCopy.tone}`.trim()}>
+                        {pickerStatusCopy.pill}
+                    </span>
+                    <span className="repo-connection-feedback-title">{pickerStatusCopy.title}</span>
+                </div>
+                <div className="repo-connection-feedback-copy">{pickerStatusCopy.message}</div>
+                {displayStatus === 'error' && (
+                    <button
+                        type="button"
+                        className="repo-connection-feedback-action"
+                        onClick={handleRetryRepoLoad}
+                    >
+                        Try Again
+                    </button>
+                )}
             </div>
 
             <div className="repo-selector-list">

@@ -6,7 +6,7 @@ import * as api from '../api';
 import { GitHubRepoPicker } from './GitHubRepoPicker';
 import { RepoPrivacyNotice } from './RepoPrivacyNotice';
 
-type RepoRefreshTone = 'idle' | 'success' | 'error';
+type RepoRefreshTone = 'idle' | 'loading' | 'success' | 'error';
 
 interface RepoRefreshStatus {
     tone: RepoRefreshTone;
@@ -74,8 +74,8 @@ export function MainMenu() {
         refreshControllerRef.current = controller;
         setIsRefreshingRepo(true);
         setRepoRefreshStatus({
-            tone: 'idle',
-            message: null,
+            tone: 'loading',
+            message: 'Checking the latest GitHub metadata for this repo.',
             repoId: targetRepoId,
         });
 
@@ -143,12 +143,12 @@ export function MainMenu() {
               title: selectedGitHubRepo ? 'GitHub repo selected' : 'Logged in as GitHub user',
               meta: selectedGitHubRepo
                   ? `${selectedGitHubRepo.fullName} · ${selectedGitHubRepo.visibility}`
-                  : 'Access token stored in frontend app state.',
+                  : 'GitHub login is active in this browser session.',
           }
         : githubAuthStatus === 'exchanging'
             ? {
                   title: 'Completing GitHub login',
-                  meta: 'Exchanging the OAuth code for an access token.',
+                  meta: 'Finishing the sign-in so the readable repo list can load.',
               }
             : null;
     const repoCitySummaryMetrics = generatedCity
@@ -164,13 +164,30 @@ export function MainMenu() {
         && (connectedRepo.visibility === 'public' || Boolean(githubAccessToken));
     const activeRefreshTone = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.tone : 'idle';
     const activeRefreshMessage = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.message : null;
-    const refreshStatusMessage = isRefreshingRepo
-        ? 'Refreshing current GitHub snapshot...'
+    const refreshStatusCopy = activeRefreshTone === 'loading'
+        ? {
+              pill: 'Refreshing',
+              title: 'Refreshing connected repo',
+              message: activeRefreshMessage ?? 'Pulling a fresh read-only snapshot without leaving this menu.',
+          }
         : activeRefreshTone === 'success'
-            ? (activeRefreshMessage ?? 'Repo refreshed!')
+            ? {
+                  pill: 'Up to date',
+                  title: 'Connected repo refreshed',
+                  message: activeRefreshMessage ?? 'A fresh GitHub snapshot is ready in the current session.',
+              }
             : activeRefreshTone === 'error'
-                ? (activeRefreshMessage ?? 'Repo refresh failed.')
-                : 'Re-ingest the connected GitHub snapshot without changing the current repo selection.';
+                ? {
+                      pill: 'Refresh failed',
+                      title: 'Could not refresh this repo',
+                      message: activeRefreshMessage
+                          ?? 'GitHub did not return a fresh snapshot. Try the refresh action again.',
+                  }
+                : {
+                      pill: 'Manual refresh',
+                      title: 'Refresh the connected snapshot',
+                      message: 'Pull the latest read-only repo metadata here without changing the current repo.',
+                  };
 
     return (
         <div className={`main-menu ${repoCityMode ? 'repo-city' : ''}`.trim()}>
@@ -207,10 +224,23 @@ export function MainMenu() {
                                             {isRefreshingRepo ? 'Refreshing...' : 'Refresh Repo'}
                                         </button>
                                         <div
-                                            className={`repo-city-refresh-status ${activeRefreshTone === 'idle' ? '' : activeRefreshTone}`.trim()}
+                                            className={`repo-connection-feedback ${activeRefreshTone === 'idle' ? '' : activeRefreshTone}`.trim()}
                                             aria-live="polite"
+                                            aria-busy={isRefreshingRepo}
                                         >
-                                            {refreshStatusMessage}
+                                            <div className="repo-connection-feedback-header">
+                                                <span
+                                                    className={`repo-connection-feedback-pill ${activeRefreshTone}`.trim()}
+                                                >
+                                                    {refreshStatusCopy.pill}
+                                                </span>
+                                                <span className="repo-connection-feedback-title">
+                                                    {refreshStatusCopy.title}
+                                                </span>
+                                            </div>
+                                            <div className="repo-connection-feedback-copy">
+                                                {refreshStatusCopy.message}
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -285,11 +315,13 @@ export function MainMenu() {
                     >
                         {repoCityMode ? (
                             <>
-                                <span className="menu-action-label">Login with GitHub</span>
+                                <span className="menu-action-label">
+                                    {githubAuthStatus === 'error' ? 'Retry GitHub Login' : 'Connect GitHub'}
+                                </span>
                                 <span className="menu-action-meta">
                                     {githubAuthStatus === 'error'
                                         ? (githubAuthMessage ?? 'GitHub login failed. Try again.')
-                                        : 'Start the minimal OAuth token flow.'}
+                                        : 'Read-only repo metadata only. No code write access.'}
                                 </span>
                             </>
                         ) : (
@@ -313,8 +345,8 @@ export function MainMenu() {
                                 </span>
                                 <span className="menu-action-meta">
                                     {selectedGitHubRepo
-                                        ? `${selectedGitHubRepo.fullName} selected in app state.`
-                                        : 'Fetch the authenticated repo list from GitHub.'}
+                                        ? `${selectedGitHubRepo.fullName} is selected for repo-city translation.`
+                                        : 'Load the readable repo list without leaving this menu.'}
                                 </span>
                             </>
                         ) : (
