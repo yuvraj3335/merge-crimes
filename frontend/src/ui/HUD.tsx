@@ -103,7 +103,28 @@ const HudSnapshotProvenance = memo(function HudSnapshotProvenance({
 
 // App subscribes broadly to the game store, so memoizing the HUD keeps unrelated parent updates
 // from rebuilding the overlay while Zustand still pushes the HUD's own selected state changes through.
+type HudState = ReturnType<typeof selectHudState>;
+
 export const HUD = memo(function HUD() {
+    const hudState = useGameStore(useShallow(selectHudState));
+    const { phase, repoCityMode } = hudState;
+
+    if (phase === 'menu' || phase === 'boss') {
+        return null;
+    }
+
+    return repoCityMode
+        ? <RepoCityHUD hudState={hudState} />
+        : <ClassicHUD hudState={hudState} />;
+});
+
+HUD.displayName = 'HUD';
+
+interface HudModeProps {
+    hudState: HudState;
+}
+
+function RepoCityHUD({ hudState }: HudModeProps) {
     const {
         phase,
         credits,
@@ -122,17 +143,11 @@ export const HUD = memo(function HUD() {
         currentWaypointIndex,
         captureProgress,
         districtRooms,
-        repoCityMode,
         connectedRepo,
         connectedRepoRefreshStatus,
         generatedCity,
         repoCityTransit,
-    } = useGameStore(useShallow(selectHudState));
-    const hideHud = phase === 'menu' || phase === 'boss';
-
-    if (hideHud) return null;
-
-    // Current waypoint info for the mission-active bar
+    } = hudState;
     const currentWp = activeMission?.waypoints[currentWaypointIndex];
     const totalWaypoints = activeMission?.waypoints.length ?? 0;
     const missionColor = activeMission ? (MISSION_TYPE_COLORS[activeMission.type] || '#00ff88') : '#00ff88';
@@ -149,17 +164,13 @@ export const HUD = memo(function HUD() {
     const transitGeneratedDistrict = repoCityTransit && generatedCity
         ? generatedCity.districts.find((district) => district.id === repoCityTransit.districtId) ?? null
         : null;
-    const transitDistrict = repoCityMode && repoCityTransit
+    const transitDistrict = repoCityTransit
         ? districts.find((district) => district.id === repoCityTransit.districtId) ?? currentDistrict
         : null;
-    const scopedDistrict = repoCityMode
-        ? transitDistrict ?? currentDistrict
-        : currentDistrict;
+    const scopedDistrict = transitDistrict ?? currentDistrict;
     const currentRoom = scopedDistrict ? districtRooms[scopedDistrict.id] : undefined;
     const currentCapture = scopedDistrict ? captureProgress[scopedDistrict.id] : undefined;
-    const districtStatusLabel = scopedDistrict
-        ? getHeatLabel(scopedDistrict.heatLevel)
-        : 'idle';
+    const districtStatusLabel = scopedDistrict ? getHeatLabel(scopedDistrict.heatLevel) : 'idle';
     const districtShellTitle = scopedDistrict?.name ?? 'No district selected';
     const districtShellSubtitle = repoCityTransit
         ? 'Queued destination status preview'
@@ -174,7 +185,7 @@ export const HUD = memo(function HUD() {
             repoCityTransit.targetPosition,
         ].map((point) => ({ x: point[0], y: point[2] }))
         : [];
-    const transitStatus = repoCityMode && repoCityTransit
+    const transitStatus = repoCityTransit
         ? {
             destination: transitDistrict?.name ?? currentDistrict?.name ?? 'Selected district',
             routeLabel: repoCityTransit.mode === 'roads' ? 'Road-guided transit' : 'Direct transit',
@@ -206,43 +217,27 @@ export const HUD = memo(function HUD() {
         },
     ] as const;
     const snapshotSource: SnapshotSource = connectedRepo?.metadata?.provider === 'github' ? 'github' : 'seeded';
-    const repoRefreshNotice = repoCityMode
-        ? buildRepoHudRefreshNotice(connectedRepo, connectedRepoRefreshStatus)
-        : null;
+    const repoRefreshNotice = buildRepoHudRefreshNotice(connectedRepo, connectedRepoRefreshStatus);
+    const showActiveMission = activeMission && phase === 'mission';
 
     return (
-        <div className={`hud-overlay ${repoCityMode ? 'repo-city-hud' : ''}`}>
-            {/* Top Bar */}
-            <div className={`hud-top-bar ${repoCityMode ? 'repo-city' : ''}`}>
-                <div className={`hud-shell-stack ${repoCityMode ? 'repo-city' : ''}`}>
-                    {repoCityMode ? (
-                        <div className="hud-stats repo-city">
-                            <div className="hud-stats-kicker">City resources</div>
-                            <div className="hud-stats-grid">
-                                {repoCityStats.map((stat) => (
-                                    <div key={stat.key} className={`hud-stat-card ${stat.key}`}>
-                                        <span className="hud-stat-card-label">{stat.label}</span>
-                                        <span className="hud-stat-card-value">{stat.value}</span>
-                                        <span className="hud-stat-card-meta">{stat.meta}</span>
-                                    </div>
-                                ))}
-                            </div>
+        <div className="hud-overlay repo-city-hud">
+            <div className="hud-top-bar repo-city">
+                <div className="hud-shell-stack repo-city">
+                    <div className="hud-stats repo-city">
+                        <div className="hud-stats-kicker">City resources</div>
+                        <div className="hud-stats-grid">
+                            {repoCityStats.map((stat) => (
+                                <div key={stat.key} className={`hud-stat-card ${stat.key}`}>
+                                    <span className="hud-stat-card-label">{stat.label}</span>
+                                    <span className="hud-stat-card-value">{stat.value}</span>
+                                    <span className="hud-stat-card-meta">{stat.meta}</span>
+                                </div>
+                            ))}
                         </div>
-                    ) : (
-                        <div className="hud-stats">
-                            <div className="stat-item">
-                                <span className="stat-label">Credits</span>
-                                <span className="stat-value">{credits.toLocaleString()}</span>
-                            </div>
-                            <div className="stat-divider" />
-                            <div className="stat-item">
-                                <span className="stat-label">Rep</span>
-                                <span className="stat-value">{reputation}</span>
-                            </div>
-                        </div>
-                    )}
+                    </div>
 
-                    {repoCityMode && connectedRepo && (
+                    {connectedRepo && (
                         <div className="repo-hud-badge repo-city">
                             <span className="repo-hud-icon">⬡</span>
                             <div className="repo-hud-copy">
@@ -273,7 +268,7 @@ export const HUD = memo(function HUD() {
                         </div>
                     )}
 
-                    {repoCityMode && transitStatus && (
+                    {transitStatus && (
                         <div className="repo-transit-card">
                             <div className="repo-transit-header">
                                 <div>
@@ -297,8 +292,179 @@ export const HUD = memo(function HUD() {
                     )}
                 </div>
 
-                {/* Repo City Badge */}
-                {!repoCityMode && connectedRepo && (
+                <div
+                    className={`district-info repo-city ${scopedDistrict ? '' : 'idle'}`.trim()}
+                    style={scopedDistrict ? { borderColor: `${scopedDistrict.color}55` } : undefined}
+                >
+                    <div className="district-info-header">
+                        <div>
+                            <div
+                                className="district-name"
+                                style={scopedDistrict ? { color: scopedDistrict.color } : undefined}
+                            >
+                                {districtShellTitle}
+                            </div>
+                            <div className="district-faction">
+                                {districtShellSubtitle}
+                            </div>
+                        </div>
+                        <span className={`district-status-pill ${districtStatusLabel}`}>
+                            {districtStatusLabel}
+                        </span>
+                    </div>
+
+                    <div className="district-meta-row">
+                        {scopedDistrict ? (
+                            <>
+                                {repoCityTransit && (
+                                    <span className="district-meta-chip">Queued destination</span>
+                                )}
+                                <span className="district-meta-chip">Heat {scopedDistrict.heatLevel}</span>
+                                <span className="district-meta-chip">
+                                    {currentRoom ? `${currentRoom.presenceCount} online` : 'No sync yet'}
+                                </span>
+                                <span className="district-meta-chip">
+                                    {currentCapture ? `${Math.round(currentCapture.progress)}% stable` : '0% stable'}
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="district-meta-chip">Select a district on the map</span>
+                                <span className="district-meta-chip">Missions stay in the side panel</span>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {showActiveMission && (
+                <div className="mission-active-bar repo-city" style={{ borderColor: `${missionColor}33` }}>
+                    <div className="mission-active-content repo-city">
+                        <div className="mission-active-header repo-city">
+                            <div className="mission-active-heading">
+                                <div className="mission-active-kicker">Active route</div>
+                                <div className="mission-active-title repo-city" style={{ color: missionColor }}>
+                                    {activeMission.title}
+                                </div>
+                            </div>
+                            {missionTimer > 0 && (
+                                <div className={`mission-time-pill repo-city ${missionTimer <= 10 ? 'critical' : ''}`}>
+                                    {missionTimer}s
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mission-active-meta repo-city">
+                            {missionRouteLabel && (
+                                <span className={`mission-active-chip route-type ${activeMission.type}`}>
+                                    {missionRouteLabel}
+                                </span>
+                            )}
+                            {missionDistrictName && (
+                                <span className="mission-active-chip">
+                                    {missionDistrictName}
+                                </span>
+                            )}
+                            {missionStepLabel && (
+                                <span className="mission-active-chip">
+                                    {missionStepLabel}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mission-active-obj repo-city">
+                            <span className="mission-active-obj-label">
+                                {currentWp ? 'Current cue' : 'Route status'}
+                            </span>
+                            <span className="mission-active-obj-value">
+                                {missionCueLabel}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="hud-bottom-bar repo-city">
+                <div className="hud-controls repo-city">
+                    <button
+                        className={`hud-btn ${showMissionPanel ? 'active' : ''}`}
+                        data-testid="toggle-missions"
+                        onClick={() => setShowMissionPanel(!showMissionPanel)}
+                    >
+                        <span className="hud-control-label">Routes</span>
+                        <span className="hud-control-meta">
+                            {showMissionPanel ? 'Hide mission routes [M]' : 'Browse mission routes [M]'}
+                        </span>
+                    </button>
+                    <button
+                        className={`hud-btn ${showLeaderboard ? 'active' : ''}`}
+                        onClick={() => setShowLeaderboard(!showLeaderboard)}
+                    >
+                        <span className="hud-control-label">Rankings</span>
+                        <span className="hud-control-meta">
+                            {showLeaderboard ? 'Hide district standings [L]' : 'Open district standings [L]'}
+                        </span>
+                    </button>
+                    <button
+                        className={`hud-btn ${showBulletin ? 'active' : ''}`}
+                        onClick={() => setShowBulletin(!showBulletin)}
+                    >
+                        <span className="hud-control-label">Bulletin</span>
+                        <span className="hud-control-meta">
+                            {showBulletin ? 'Hide repo alerts [B]' : 'Open repo alerts [B]'}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ClassicHUD({ hudState }: HudModeProps) {
+    const {
+        phase,
+        credits,
+        reputation,
+        currentDistrict,
+        activeMission,
+        missionTimer,
+        showMissionPanel,
+        setShowMissionPanel,
+        showLeaderboard,
+        setShowLeaderboard,
+        showBulletin,
+        setShowBulletin,
+        playerPosition,
+        districts,
+        currentWaypointIndex,
+        districtRooms,
+        connectedRepo,
+        generatedCity,
+    } = hudState;
+    const currentWp = activeMission?.waypoints[currentWaypointIndex];
+    const totalWaypoints = activeMission?.waypoints.length ?? 0;
+    const missionColor = activeMission ? (MISSION_TYPE_COLORS[activeMission.type] || '#00ff88') : '#00ff88';
+    const showActiveMission = activeMission && phase === 'mission';
+    const waypointPosition = showActiveMission && currentWp ? currentWp.position : null;
+
+    return (
+        <div className="hud-overlay">
+            <div className="hud-top-bar">
+                <div className="hud-shell-stack">
+                    <div className="hud-stats">
+                        <div className="stat-item">
+                            <span className="stat-label">Credits</span>
+                            <span className="stat-value">{credits.toLocaleString()}</span>
+                        </div>
+                        <div className="stat-divider" />
+                        <div className="stat-item">
+                            <span className="stat-label">Rep</span>
+                            <span className="stat-value">{reputation}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {connectedRepo && (
                     <div className="repo-hud-badge">
                         <span className="repo-hud-icon">⬡</span>
                         <span className="repo-hud-name">{connectedRepo.owner}/{connectedRepo.name}</span>
@@ -308,53 +474,8 @@ export const HUD = memo(function HUD() {
                     </div>
                 )}
 
-                {/* District Info */}
-                {repoCityMode ? (
-                    <div
-                        className={`district-info repo-city ${scopedDistrict ? '' : 'idle'}`.trim()}
-                        style={scopedDistrict ? { borderColor: `${scopedDistrict.color}55` } : undefined}
-                    >
-                        <div className="district-info-header">
-                            <div>
-                                <div
-                                    className="district-name"
-                                    style={scopedDistrict ? { color: scopedDistrict.color } : undefined}
-                                >
-                                    {districtShellTitle}
-                                </div>
-                                <div className="district-faction">
-                                    {districtShellSubtitle}
-                                </div>
-                            </div>
-                            <span className={`district-status-pill ${districtStatusLabel}`}>
-                                {districtStatusLabel}
-                            </span>
-                        </div>
-
-                        <div className="district-meta-row">
-                            {scopedDistrict ? (
-                                <>
-                                    {repoCityTransit && (
-                                        <span className="district-meta-chip">Queued destination</span>
-                                    )}
-                                    <span className="district-meta-chip">Heat {scopedDistrict.heatLevel}</span>
-                                    <span className="district-meta-chip">
-                                        {currentRoom ? `${currentRoom.presenceCount} online` : 'No sync yet'}
-                                    </span>
-                                    <span className="district-meta-chip">
-                                        {currentCapture ? `${Math.round(currentCapture.progress)}% stable` : '0% stable'}
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="district-meta-chip">Select a district on the map</span>
-                                    <span className="district-meta-chip">Missions stay in the side panel</span>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                ) : currentDistrict && (
-                    <div className="district-info" style={{ borderColor: currentDistrict.color + '55' }}>
+                {currentDistrict && (
+                    <div className="district-info" style={{ borderColor: `${currentDistrict.color}55` }}>
                         <div className="district-name" style={{ color: currentDistrict.color }}>
                             {currentDistrict.name}
                         </div>
@@ -382,69 +503,21 @@ export const HUD = memo(function HUD() {
                 )}
             </div>
 
-            {/* Active Mission Bar */}
-            {activeMission && phase === 'mission' && (
+            {showActiveMission && (
                 <>
-                    {repoCityMode ? (
-                        <div className="mission-active-bar repo-city" style={{ borderColor: `${missionColor}33` }}>
-                            <div className="mission-active-content repo-city">
-                                <div className="mission-active-header repo-city">
-                                    <div className="mission-active-heading">
-                                        <div className="mission-active-kicker">Active route</div>
-                                        <div className="mission-active-title repo-city" style={{ color: missionColor }}>
-                                            {activeMission.title}
-                                        </div>
-                                    </div>
-                                    {missionTimer > 0 && (
-                                        <div className={`mission-time-pill repo-city ${missionTimer <= 10 ? 'critical' : ''}`}>
-                                            {missionTimer}s
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="mission-active-meta repo-city">
-                                    {missionRouteLabel && (
-                                        <span className={`mission-active-chip route-type ${activeMission.type}`}>
-                                            {missionRouteLabel}
-                                        </span>
-                                    )}
-                                    {missionDistrictName && (
-                                        <span className="mission-active-chip">
-                                            {missionDistrictName}
-                                        </span>
-                                    )}
-                                    {missionStepLabel && (
-                                        <span className="mission-active-chip">
-                                            {missionStepLabel}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="mission-active-obj repo-city">
-                                    <span className="mission-active-obj-label">
-                                        {currentWp ? 'Current cue' : 'Route status'}
-                                    </span>
-                                    <span className="mission-active-obj-value">
-                                        {missionCueLabel}
-                                    </span>
-                                </div>
+                    <div className="mission-active-bar" style={{ borderColor: missionColor }}>
+                        <div className="mission-active-copy">
+                            <div className="mission-active-title" style={{ color: missionColor }}>
+                                {activeMission.title}
+                            </div>
+                            <div className="mission-active-obj">
+                                {currentWp
+                                    ? `▸ ${currentWp.label}  (${currentWaypointIndex + 1}/${totalWaypoints})`
+                                    : 'All objectives complete!'}
                             </div>
                         </div>
-                    ) : (
-                        <div className="mission-active-bar" style={{ borderColor: missionColor }}>
-                            <div className="mission-active-copy">
-                                <div className="mission-active-title" style={{ color: missionColor }}>
-                                    {activeMission.title}
-                                </div>
-                                <div className="mission-active-obj">
-                                    {currentWp
-                                        ? `▸ ${currentWp.label}  (${currentWaypointIndex + 1}/${totalWaypoints})`
-                                        : 'All objectives complete!'}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    {!repoCityMode && missionTimer > 0 && (
+                    </div>
+                    {missionTimer > 0 && (
                         <div className="mission-timer">
                             <div className="timer-label">Time Remaining</div>
                             <div className={`timer-value ${missionTimer <= 10 ? 'critical' : ''}`}>
@@ -455,82 +528,47 @@ export const HUD = memo(function HUD() {
                 </>
             )}
 
-            {/* Direction Arrow */}
-            {!repoCityMode && activeMission && phase === 'mission' && currentWp && (
+            {waypointPosition && (
                 <DirectionArrow
                     playerPosition={playerPosition}
-                    waypointPosition={currentWp.position}
+                    waypointPosition={waypointPosition}
                     color={missionColor}
                 />
             )}
 
-            {/* Bottom Bar */}
-            <div className={`hud-bottom-bar ${repoCityMode ? 'repo-city' : ''}`}>
-                {/* Controls */}
-                <div className={`hud-controls ${repoCityMode ? 'repo-city' : ''}`}>
+            <div className="hud-bottom-bar">
+                <div className="hud-controls">
                     <button
                         className={`hud-btn ${showMissionPanel ? 'active' : ''}`}
                         data-testid="toggle-missions"
                         onClick={() => setShowMissionPanel(!showMissionPanel)}
                     >
-                        {repoCityMode ? (
-                            <>
-                                <span className="hud-control-label">Routes</span>
-                                <span className="hud-control-meta">
-                                    {showMissionPanel ? 'Hide mission routes [M]' : 'Browse mission routes [M]'}
-                                </span>
-                            </>
-                        ) : (
-                            'Missions [M]'
-                        )}
+                        Missions [M]
                     </button>
                     <button
                         className={`hud-btn ${showLeaderboard ? 'active' : ''}`}
                         onClick={() => setShowLeaderboard(!showLeaderboard)}
                     >
-                        {repoCityMode ? (
-                            <>
-                                <span className="hud-control-label">Rankings</span>
-                                <span className="hud-control-meta">
-                                    {showLeaderboard ? 'Hide district standings [L]' : 'Open district standings [L]'}
-                                </span>
-                            </>
-                        ) : (
-                            'Rankings [L]'
-                        )}
+                        Rankings [L]
                     </button>
                     <button
                         className={`hud-btn ${showBulletin ? 'active' : ''}`}
                         onClick={() => setShowBulletin(!showBulletin)}
                     >
-                        {repoCityMode ? (
-                            <>
-                                <span className="hud-control-label">Bulletin</span>
-                                <span className="hud-control-meta">
-                                    {showBulletin ? 'Hide repo alerts [B]' : 'Open repo alerts [B]'}
-                                </span>
-                            </>
-                        ) : (
-                            'Bulletin [B]'
-                        )}
+                        Bulletin [B]
                     </button>
                 </div>
 
-                {/* Minimap */}
-                {!repoCityMode && (
-                    <Minimap
-                        playerPosition={playerPosition}
-                        districts={districts}
-                        waypointPosition={activeMission && phase === 'mission' && currentWp ? currentWp.position : null}
-                        waypointColor={missionColor}
-                    />
-                )}
+                <Minimap
+                    playerPosition={playerPosition}
+                    districts={districts}
+                    waypointPosition={waypointPosition}
+                    waypointColor={missionColor}
+                />
             </div>
         </div>
     );
-});
-
-HUD.displayName = 'HUD';
+}
 
 const DirectionArrow = memo(function DirectionArrow({ playerPosition, waypointPosition, color }: DirectionArrowProps) {
     const { distance, text: distText } = getWaypointDistanceAndText(playerPosition, waypointPosition);
