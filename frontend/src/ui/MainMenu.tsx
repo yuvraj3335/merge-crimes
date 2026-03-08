@@ -3,9 +3,11 @@ import { useGameStore } from '../store/gameStore';
 import { REPO_FIXTURES } from '../../../shared/seed/repoFixtures';
 import type { RepoModel } from '../../../shared/repoModel';
 import * as api from '../api';
+import type { GitHubReadableRepo } from '../api';
 import { GitHubRepoPicker } from './GitHubRepoPicker';
 import { GitHubTrustNotice } from './GitHubTrustNotice';
 import { RepoPrivacyNotice } from './RepoPrivacyNotice';
+import { type GitHubRepoTranslationEligibility } from '../repoTranslationEligibility';
 import { buildSnapshotFreshnessCopy } from './snapshotFreshness';
 
 type RepoRefreshTone = 'idle' | 'loading' | 'success' | 'error';
@@ -28,6 +30,7 @@ export function MainMenu() {
     const githubAuthStatus = useGameStore((s) => s.githubAuthStatus);
     const githubAuthMessage = useGameStore((s) => s.githubAuthMessage);
     const selectedGitHubRepo = useGameStore((s) => s.selectedGitHubRepo);
+    const selectedGitHubRepoEligibility = useGameStore((s) => s.selectedGitHubRepoEligibility);
     const setSelectedGitHubRepoSnapshot = useGameStore((s) => s.setSelectedGitHubRepoSnapshot);
     const showGitHubRepoPicker = useGameStore((s) => s.showGitHubRepoPicker);
     const setShowGitHubRepoPicker = useGameStore((s) => s.setShowGitHubRepoPicker);
@@ -158,9 +161,24 @@ export function MainMenu() {
             freshnessNow,
         )
         : null;
-    const startMeta = generatedCity
-        ? `${generatedCity.districts.length} districts · ${generatedCity.missions.length} routes ready`
-        : 'Repo city translation ready';
+    const selectedGitHubRepoIsActive = Boolean(
+        selectedGitHubRepo
+        && connectedRepo?.metadata?.provider === 'github'
+        && connectedRepo.metadata.providerRepoId === selectedGitHubRepo.id,
+    );
+    const selectedRepoBlocksTranslation = Boolean(
+        selectedGitHubRepo
+        && selectedGitHubRepoEligibility
+        && !selectedGitHubRepoEligibility.eligible,
+    );
+    const startKicker = selectedRepoBlocksTranslation ? 'Current active city' : 'Launch translation';
+    const startMeta = selectedRepoBlocksTranslation
+        ? connectedRepo
+            ? `${selectedGitHubRepo?.fullName} is listed only. Entering ${connectedRepo.owner}/${connectedRepo.name}.`
+            : `${selectedGitHubRepo?.fullName} is listed only. Pick an eligible public repo to generate a city.`
+        : generatedCity
+            ? `${generatedCity.districts.length} districts · ${generatedCity.missions.length} routes ready`
+            : 'Repo city translation ready';
     const footerNote = generatedCity
         ? `${generatedCity.repoName} snapshot · ${generatedCity.districts.length} districts ready`
         : 'Metadata-first seeded translation';
@@ -168,7 +186,7 @@ export function MainMenu() {
         ? {
               title: selectedGitHubRepo ? 'GitHub repo selected' : 'Logged in as GitHub user',
               meta: selectedGitHubRepo
-                  ? `${selectedGitHubRepo.fullName} · ${selectedGitHubRepo.visibility}`
+                  ? `${selectedGitHubRepo.fullName} · ${selectedGitHubRepoEligibility?.shortLabel ?? selectedGitHubRepo.visibility}`
                   : 'GitHub login is active in this browser session.',
           }
         : githubAuthStatus === 'exchanging'
@@ -214,6 +232,19 @@ export function MainMenu() {
                       title: 'Refresh the connected snapshot',
                       message: 'Pull the latest read-only repo metadata here without changing the current repo.',
                   };
+    const selectedRepoStatusCopy = buildSelectedRepoStatusCopy(
+        selectedGitHubRepo,
+        selectedGitHubRepoEligibility,
+        selectedGitHubRepoIsActive,
+        connectedRepo,
+    );
+    const githubRepoActionMeta = selectedGitHubRepo
+        ? selectedGitHubRepoEligibility?.eligible
+            ? selectedGitHubRepoIsActive
+                ? `${selectedGitHubRepo.fullName} is the active translated repo.`
+                : `${selectedGitHubRepo.fullName} is eligible for repo-city translation in this flow.`
+            : `${selectedGitHubRepo.fullName} is listed only. ${selectedGitHubRepoEligibility?.menuDetail ?? "This repo can't be translated here yet."}`
+        : 'Load the readable repo list without leaving this menu.';
 
     return (
         <div className={`main-menu ${repoCityMode ? 'repo-city' : ''}`.trim()}>
@@ -298,6 +329,39 @@ export function MainMenu() {
                                 )}
                             </div>
                         )}
+                        {selectedRepoStatusCopy && (
+                            <div
+                                className={`repo-connection-feedback ${selectedRepoStatusCopy.tone}`.trim()}
+                                aria-live="polite"
+                            >
+                                <div className="repo-connection-feedback-layout">
+                                    <div
+                                        className={`repo-connection-feedback-icon ${selectedRepoStatusCopy.tone}`.trim()}
+                                        aria-hidden="true"
+                                    >
+                                        <span className="repo-status-dot" />
+                                    </div>
+                                    <div className="repo-connection-feedback-body">
+                                        <div className="repo-connection-feedback-header">
+                                            <span
+                                                className={`repo-connection-feedback-pill ${selectedRepoStatusCopy.tone}`.trim()}
+                                            >
+                                                {selectedRepoStatusCopy.pill}
+                                            </span>
+                                            <span className="repo-connection-feedback-title">
+                                                {selectedRepoStatusCopy.title}
+                                            </span>
+                                        </div>
+                                        <div className="repo-connection-feedback-copy">
+                                            {selectedRepoStatusCopy.message}
+                                        </div>
+                                        <div className="repo-connection-feedback-detail">
+                                            {selectedRepoStatusCopy.detail}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {generatedCity && (
@@ -343,7 +407,7 @@ export function MainMenu() {
             >
                 {repoCityMode ? (
                     <>
-                        <span className="menu-start-kicker">Launch translation</span>
+                        <span className="menu-start-kicker">{startKicker}</span>
                         <span className="menu-start-title">Enter Repo City</span>
                         <span className="menu-start-meta">{startMeta}</span>
                     </>
@@ -399,9 +463,7 @@ export function MainMenu() {
                                     {selectedGitHubRepo ? 'Change GitHub Repo' : 'Pick GitHub Repo'}
                                 </span>
                                 <span className="menu-action-meta">
-                                    {selectedGitHubRepo
-                                        ? `${selectedGitHubRepo.fullName} is selected for repo-city translation.`
-                                        : 'Load the readable repo list without leaving this menu.'}
+                                    {githubRepoActionMeta}
                                 </span>
                             </>
                         ) : (
@@ -543,4 +605,49 @@ export function MainMenu() {
             )}
         </div>
     );
+}
+
+interface SelectedRepoStatusCopy {
+    tone: 'success' | 'empty';
+    pill: string;
+    title: string;
+    message: string;
+    detail: string;
+}
+
+function buildSelectedRepoStatusCopy(
+    selectedGitHubRepo: GitHubReadableRepo | null,
+    selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null,
+    selectedGitHubRepoIsActive: boolean,
+    connectedRepo: RepoModel | null,
+): SelectedRepoStatusCopy | null {
+    if (!selectedGitHubRepo || !selectedGitHubRepoEligibility) {
+        return null;
+    }
+
+    if (selectedGitHubRepoEligibility.eligible) {
+        return {
+            tone: 'success',
+            pill: selectedGitHubRepoIsActive ? 'Active city' : selectedGitHubRepoEligibility.pill,
+            title: selectedGitHubRepoIsActive ? 'Selected repo is active' : 'Selected repo is eligible',
+            message: selectedGitHubRepoIsActive
+                ? `${selectedGitHubRepo.fullName} is the public repo behind the current Repo City snapshot.`
+                : `${selectedGitHubRepo.fullName} is eligible for Repo City translation in this flow.`,
+            detail: selectedGitHubRepoIsActive
+                ? 'Menu status and actions now match the same eligibility rule shown in the picker.'
+                : connectedRepo
+                    ? `${connectedRepo.owner}/${connectedRepo.name} stays active until a read-only snapshot for the selected repo is available.`
+                    : 'The menu only switches the active city after a read-only GitHub snapshot is available.',
+        };
+    }
+
+    return {
+        tone: 'empty',
+        pill: selectedGitHubRepoEligibility.pill,
+        title: 'Selected repo is listed only',
+        message: `${selectedGitHubRepo.fullName} is visible through GitHub, but ${selectedGitHubRepoEligibility.menuDetail.toLowerCase()}`,
+        detail: connectedRepo
+            ? `${connectedRepo.owner}/${connectedRepo.name} stays the active city. Pick an eligible public repo to switch translation.`
+            : 'Pick an eligible public repo to generate a city here.',
+    };
 }

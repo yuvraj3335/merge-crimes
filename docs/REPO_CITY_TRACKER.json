@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T16:20:38+05:30",
+  "last_updated": "2026-03-08T16:31:32+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -940,21 +940,35 @@
             "frontend_build": "pass",
             "browser_smoke": "not_run — copy-only picker UX update with no selector or flow changes"
           }
+        },
+        {
+          "title": "Selected private-repo status copy — keep post-picker menu state aligned with translation eligibility",
+          "summary": [
+            "The frontend now stores the selected GitHub repo's translation eligibility in shared menu state, so the picker and post-selection menu use the same public-versus-listed-only source of truth.",
+            "The repo-city main menu now shows an explicit selected-repo status block and action copy that keeps listed-only private repos from being framed as translation-ready while preserving the current active city snapshot.",
+            "The slice stays frontend-only and does not change OAuth scopes, GitHub ingest rules, worker behavior, or seeded repo selection flows."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Selected private-repo status copy — keep post-picker menu state aligned with translation eligibility",
-    "why": "The picker now explains which repos are listed only, but the main menu still treats any selected GitHub repo as translation-ready. The next trust gap is keeping post-selection status and action copy consistent when a listed-only private repo is chosen.",
+    "title": "Eligible-repo ingest status copy — surface when a selected public repo is still waiting on its active snapshot",
+    "why": "The menu now distinguishes listed-only private repos, but public repo selection still relies on silent background ingest before the active city switches. The next trust gap is showing explicit loading or failure feedback when an eligible repo is selected but not yet active.",
     "candidate_files": [
       "frontend/src/ui/MainMenu.tsx",
-      "frontend/src/index.css"
+      "frontend/src/ui/GitHubRepoPicker.tsx",
+      "frontend/src/store/gameStore.ts"
     ],
     "acceptance_criteria": [
-      "Selecting a listed-only private repo no longer makes the main menu or selected-repo card imply that translation is already available.",
-      "Menu copy stays consistent with the picker's public-vs-listed-only eligibility language without changing selection, ingest, or OAuth behavior.",
-      "Frontend lint and build pass."
+      "Selecting an eligible public repo shows clear in-progress or failure status until that repo becomes the active connected city.",
+      "The menu no longer relies on silent background ingest to explain why the previously connected city is still active after a new public selection.",
+      "Frontend lint and build pass, and browser smoke is run unless the sandbox blocks Wrangler again."
     ]
   },
   "open_questions": [

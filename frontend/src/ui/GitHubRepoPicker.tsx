@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import * as api from '../api';
 import { useGameStore } from '../store/gameStore';
+import {
+    getGitHubRepoTranslationEligibility,
+    isGitHubRepoTranslationEligible,
+} from '../repoTranslationEligibility';
 import { GitHubTrustNotice } from './GitHubTrustNotice';
 
 interface GitHubRepoPickerProps {
@@ -24,32 +28,6 @@ interface PickerStatusCopy {
     detail: string;
     actionLabel?: string;
     showSpinner?: boolean;
-}
-
-interface RepoEligibilityCopy {
-    pill: string;
-    detail: string;
-    tone: 'eligible' | 'reference';
-}
-
-function isRepoTranslationEligible(repo: api.GitHubReadableRepo) {
-    return repo.visibility === 'public';
-}
-
-function buildRepoEligibilityCopy(repo: api.GitHubReadableRepo): RepoEligibilityCopy {
-    if (isRepoTranslationEligible(repo)) {
-        return {
-            pill: 'Translate now',
-            detail: 'Eligible for Repo City translation in this read-only flow.',
-            tone: 'eligible',
-        };
-    }
-
-    return {
-        pill: 'Listed only',
-        detail: 'Visible through this GitHub connection, but Repo City needs explicit access before translation.',
-        tone: 'reference',
-    };
 }
 
 export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
@@ -148,7 +126,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     }
 
     const visibleRepos = displayStatus === 'ready' ? repos : [];
-    const translationEligibleRepos = visibleRepos.filter((repo) => isRepoTranslationEligible(repo));
+    const translationEligibleRepos = visibleRepos.filter((repo) => isGitHubRepoTranslationEligible(repo.visibility));
     const listedOnlyCount = visibleRepos.length - translationEligibleRepos.length;
     const repoCountCopy = `${visibleRepos.length} listed ${visibleRepos.length === 1 ? 'repository' : 'repositories'}`;
 
@@ -214,7 +192,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     }
 
     function handleRepoSelection(repo: api.GitHubReadableRepo) {
-        const shouldTriggerIngest = repo.visibility === 'public' && selectedGitHubRepo?.id !== repo.id;
+        const shouldTriggerIngest = isGitHubRepoTranslationEligible(repo.visibility) && selectedGitHubRepo?.id !== repo.id;
         const isNewSelection = selectedGitHubRepo?.id !== repo.id;
 
         setSelectedGitHubRepo(repo);
@@ -342,7 +320,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                     </div>
                     <div className="repo-selector-list">
                         {visibleRepos.map((repo) => {
-                            const eligibilityCopy = buildRepoEligibilityCopy(repo);
+                            const eligibilityCopy = getGitHubRepoTranslationEligibility(repo.visibility);
 
                             return (
                                 <button
@@ -366,7 +344,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="repo-item-eligibility-copy">{eligibilityCopy.detail}</div>
+                                    <div className="repo-item-eligibility-copy">{eligibilityCopy.pickerDetail}</div>
                                 </button>
                             );
                         })}

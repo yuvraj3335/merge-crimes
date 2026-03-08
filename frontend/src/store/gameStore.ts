@@ -9,6 +9,10 @@ import { SEED_EVENTS } from '../../../shared/seed/events';
 import { SEED_CONFLICTS } from '../../../shared/seed/conflicts';
 import * as api from '../api';
 import { getBootstrapRepoSnapshot, writeStoredSelectedGitHubRepoSnapshot } from '../repoCityBootstrap';
+import {
+    getGitHubRepoTranslationEligibility,
+    type GitHubRepoTranslationEligibility,
+} from '../repoTranslationEligibility';
 import type { ApiConnectionState, ApiRuntimeStatus, ApiWriteSessionState, GitHubReadableRepo } from '../api';
 
 // ─── Waypoint Persistence (ADR-017: Hybrid Policy) ───
@@ -155,6 +159,7 @@ export interface GameState {
     githubAuthStatus: 'anonymous' | 'exchanging' | 'authenticated' | 'error';
     githubAuthMessage: string | null;
     selectedGitHubRepo: GitHubReadableRepo | null;
+    selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null;
     selectedGitHubRepoSnapshot: GitHubRepoMetadataSnapshot | null;
     showGitHubRepoPicker: boolean;
     setGitHubAuthExchanging: () => void;
@@ -730,6 +735,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     githubAuthStatus: 'anonymous',
     githubAuthMessage: null,
     selectedGitHubRepo: null,
+    selectedGitHubRepoEligibility: null,
     selectedGitHubRepoSnapshot: null,
     showGitHubRepoPicker: false,
     setGitHubAuthExchanging: () => set({
@@ -741,6 +747,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthStatus: 'authenticated',
         githubAuthMessage: null,
         selectedGitHubRepo: null,
+        selectedGitHubRepoEligibility: null,
         selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: true,
     }),
@@ -749,6 +756,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthStatus: 'error',
         githubAuthMessage: message,
         selectedGitHubRepo: null,
+        selectedGitHubRepoEligibility: null,
         selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
     }),
@@ -757,10 +765,14 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthStatus: 'anonymous',
         githubAuthMessage: null,
         selectedGitHubRepo: null,
+        selectedGitHubRepoEligibility: null,
         selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
     }),
-    setSelectedGitHubRepo: (repo) => set({ selectedGitHubRepo: repo }),
+    setSelectedGitHubRepo: (repo) => set({
+        selectedGitHubRepo: repo,
+        selectedGitHubRepoEligibility: repo ? getGitHubRepoTranslationEligibility(repo.visibility) : null,
+    }),
     setSelectedGitHubRepoSnapshot: (snapshot) => {
         set({ selectedGitHubRepoSnapshot: snapshot });
 
