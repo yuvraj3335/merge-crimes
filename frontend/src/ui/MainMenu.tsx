@@ -4,6 +4,7 @@ import { REPO_FIXTURES } from '../../../shared/seed/repoFixtures';
 import type { RepoModel } from '../../../shared/repoModel';
 import * as api from '../api';
 import { GitHubRepoPicker } from './GitHubRepoPicker';
+import { RepoPrivacyNotice } from './RepoPrivacyNotice';
 
 type RepoRefreshTone = 'idle' | 'success' | 'error';
 
@@ -173,6 +174,7 @@ export function MainMenu() {
 
     return (
         <div className={`main-menu ${repoCityMode ? 'repo-city' : ''}`.trim()}>
+            {repoCityMode && <RepoPrivacyNotice context="menu" />}
             {repoCityMode ? (
                 <div className="repo-city-menu-hero">
                     <div className="repo-city-menu-kicker">Repo city translation</div>
