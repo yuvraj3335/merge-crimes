@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { District, Mission, Faction, CityEvent, MergeConflictEncounter, LeaderboardEntry } from '../../../shared/types';
-import type { RepoModel, GeneratedCity, GeneratedRoad } from '../../../shared/repoModel';
+import type { GitHubRepoMetadataSnapshot, RepoModel, GeneratedCity, GeneratedRoad } from '../../../shared/repoModel';
 import { generateCityFromRepo, generatedCityToDistricts, generatedCityToMissions, generatedCityToConflicts } from '../../../shared/repoCityGenerator';
 import { buildSeedLeaderboard, SEED_FACTIONS } from '../../../shared/seed/factions';
 import { SEED_DISTRICTS } from '../../../shared/seed/districts';
@@ -154,12 +154,14 @@ export interface GameState {
     githubAuthStatus: 'anonymous' | 'exchanging' | 'authenticated' | 'error';
     githubAuthMessage: string | null;
     selectedGitHubRepo: GitHubReadableRepo | null;
+    selectedGitHubRepoSnapshot: GitHubRepoMetadataSnapshot | null;
     showGitHubRepoPicker: boolean;
     setGitHubAuthExchanging: () => void;
     setGitHubAccessToken: (token: string) => void;
     setGitHubAuthError: (message: string) => void;
     clearGitHubAuth: () => void;
     setSelectedGitHubRepo: (repo: GitHubReadableRepo | null) => void;
+    setSelectedGitHubRepoSnapshot: (snapshot: GitHubRepoMetadataSnapshot | null) => void;
     setShowGitHubRepoPicker: (show: boolean) => void;
 
     // API
@@ -710,6 +712,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     githubAuthStatus: 'anonymous',
     githubAuthMessage: null,
     selectedGitHubRepo: null,
+    selectedGitHubRepoSnapshot: null,
     showGitHubRepoPicker: false,
     setGitHubAuthExchanging: () => set({
         githubAuthStatus: 'exchanging',
@@ -720,6 +723,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthStatus: 'authenticated',
         githubAuthMessage: null,
         selectedGitHubRepo: null,
+        selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: true,
     }),
     setGitHubAuthError: (message) => set({
@@ -727,6 +731,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthStatus: 'error',
         githubAuthMessage: message,
         selectedGitHubRepo: null,
+        selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
     }),
     clearGitHubAuth: () => set({
@@ -734,9 +739,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthStatus: 'anonymous',
         githubAuthMessage: null,
         selectedGitHubRepo: null,
+        selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
     }),
     setSelectedGitHubRepo: (repo) => set({ selectedGitHubRepo: repo }),
+    setSelectedGitHubRepoSnapshot: (snapshot) => set({ selectedGitHubRepoSnapshot: snapshot }),
     setShowGitHubRepoPicker: (show) => set({ showGitHubRepoPicker: show }),
 
     // District Rooms

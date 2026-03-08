@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as api from '../api';
 import { useGameStore } from '../store/gameStore';
 
@@ -19,11 +19,13 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     const repoCityMode = useGameStore((s) => s.repoCityMode);
     const selectedGitHubRepo = useGameStore((s) => s.selectedGitHubRepo);
     const setSelectedGitHubRepo = useGameStore((s) => s.setSelectedGitHubRepo);
+    const setSelectedGitHubRepoSnapshot = useGameStore((s) => s.setSelectedGitHubRepoSnapshot);
 
     const [repos, setRepos] = useState<api.GitHubReadableRepo[]>([]);
     const [hasNextPage, setHasNextPage] = useState(false);
     const [loadedToken, setLoadedToken] = useState<string | null>(null);
     const [errorState, setErrorState] = useState<TokenScopedError | null>(null);
+    const ingestControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
         if (!open || !githubAccessToken || loadedToken === githubAccessToken) {
@@ -60,6 +62,10 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
         return () => controller.abort();
     }, [githubAccessToken, loadedToken, open]);
 
+    useEffect(() => () => {
+        ingestControllerRef.current?.abort();
+    }, []);
+
     if (!open) {
         return null;
     }
@@ -80,14 +86,47 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
     function handleRepoSelection(repo: api.GitHubReadableRepo) {
         const shouldTriggerIngest = repo.visibility === 'public' && selectedGitHubRepo?.id !== repo.id;
+        const isNewSelection = selectedGitHubRepo?.id !== repo.id;
 
         setSelectedGitHubRepo(repo);
+
+        if (!isNewSelection) {
+            return;
+        }
+
+        ingestControllerRef.current?.abort();
+        setSelectedGitHubRepoSnapshot(null);
 
         if (!shouldTriggerIngest) {
             return;
         }
 
-        void api.fetchGitHubRepoMetadata(repo.ownerLogin, repo.name);
+        const controller = new AbortController();
+        ingestControllerRef.current = controller;
+
+        void api.fetchGitHubRepoMetadata(repo.ownerLogin, repo.name, controller.signal)
+            .then((snapshot) => {
+                if (!snapshot || controller.signal.aborted) {
+                    return;
+                }
+
+                const currentSelection = useGameStore.getState().selectedGitHubRepo;
+                if (currentSelection?.id !== repo.id) {
+                    return;
+                }
+
+                setSelectedGitHubRepoSnapshot(snapshot);
+            })
+            .catch((error: unknown) => {
+                if (controller.signal.aborted) {
+                    return;
+                }
+
+                console.warn(
+                    '[MergeCrimes] GitHub repo metadata ingest failed',
+                    error instanceof Error ? error.message : error,
+                );
+            });
     }
 
     return (

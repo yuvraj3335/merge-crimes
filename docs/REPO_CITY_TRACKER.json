@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_4_in_progress",
-  "last_updated": "2026-03-08T12:50:20+05:30",
+  "last_updated": "2026-03-08T12:57:05+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 4 - GitHub Connection MVP",
   "source_of_truth": [
@@ -613,6 +613,20 @@
             "worker_build": "not_run — no worker or shared files changed in this slice",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 for the local worker process"
           }
+        },
+        {
+          "title": "Selected GitHub repo metadata snapshot storage — keep the ingest response in frontend state",
+          "summary": [
+            "The frontend now stores the normalized GitHub repo metadata ingest response in volatile Zustand state instead of discarding it after the picker triggers the worker call.",
+            "Picker-driven ingest clears stale snapshot data on repo changes, skips duplicate churn for repeated clicks on the already selected repo, and avoids retaining mismatched data for non-public selections.",
+            "The stored snapshot uses the shared GitHubRepoMetadataSnapshot contract so later Phase 4 slices can read real repo metadata from app state without adding persistence or routing changes yet."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "worker_build": "not_run — no worker or shared files changed in this slice",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 for the local worker process"
+          }
         }
       ]
     },
@@ -646,21 +660,19 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Selected GitHub repo metadata snapshot storage — keep the ingest response in frontend state",
-    "why": "The GitHub repo picker now triggers metadata ingest for a newly selected public repo, but the frontend currently discards the response. The next bounded Phase 4 slice is to persist the normalized RepoModel snapshot or lightweight ingest status in app state so the later city-generation bridge can use real repo data without changing the picker into a blocking flow.",
+    "title": "GitHub repo tree module extraction — derive top-level modules in the normalized snapshot",
+    "why": "The frontend now retains the selected repo's normalized metadata snapshot in volatile state, but the snapshot still carries empty modules and cannot yet drive district generation for a real repo. The next bounded Phase 4 slice is to fetch a shallow default-branch tree or top-level contents during ingest and derive a small RepoModel module layer so later city-generation work has real structure to consume.",
     "candidate_files": [
-      "frontend/src/api.ts",
-      "frontend/src/store/gameStore.ts",
-      "frontend/src/ui/GitHubRepoPicker.tsx",
-      "frontend/src/ui/MainMenu.tsx"
+      "worker/src/index.ts",
+      "shared/repoModel.ts",
+      "shared/repoCityGenerator.ts"
     ],
     "acceptance_criteria": [
-      "Frontend stores the selected public repo's normalized snapshot or ingest status in state after the picker triggers GET /api/github/repo-metadata",
-      "A repeated click on the already selected repo does not create duplicate ingest state churn",
-      "The seeded repo selector path still works alongside the GitHub picker",
-      "Private or otherwise ineligible repo selections do not trigger public-repo ingest storage",
-      "cd frontend && npm run lint passes",
-      "cd frontend && npm run build passes"
+      "GET /api/github/repo-metadata returns a normalized RepoModel snapshot with a bounded top-level modules array for common public repos",
+      "The extracted modules stay metadata-first and avoid deep per-file analysis or source persistence",
+      "Existing frontend ingest and selected-repo state continue to accept the response without UI rewrites",
+      "cd worker && npm run build passes",
+      "If shared contracts change, cd frontend && npm run build passes"
     ]
   },
   "open_questions": [
