@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T14:56:13+05:30",
+  "last_updated": "2026-03-08T15:13:12+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -808,21 +808,37 @@
         "Privacy-safe copy",
         "Performance pass",
         "Stability and testing improvements"
+      ],
+      "completed_slices": [
+        {
+          "title": "Manual repo refresh control — let players re-ingest the selected repo snapshot on demand",
+          "summary": [
+            "The repo-city dashboard now exposes a visible Refresh Repo action that calls a worker-backed refresh endpoint instead of re-ingesting the selected GitHub repo directly from the frontend.",
+            "The worker now accepts POST /api/refresh-repo, logs the manual trigger, and reuses the existing GitHub metadata normalization path to return a fresh snapshot payload with a success message.",
+            "Successful refreshes replace the cached selected GitHub snapshot in frontend state and localStorage, and the menu now reports clear success or failure feedback after the request completes."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "worker_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
+        }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Manual repo refresh control — let players re-ingest the selected repo snapshot on demand",
-    "why": "Phase 7 starts with refresh/update cycle work. The smallest meaningful slice is a manual refresh action for the currently selected GitHub repo so cached repo-city state can be updated without forcing a new login or widening repository permissions.",
+    "title": "Privacy-safe GitHub copy — clarify read-only metadata boundaries in the repo-city shell",
+    "why": "With manual refresh wired, the next bounded Phase 7 slice is to make the GitHub-connected surfaces explain the trust model clearly: read-only metadata-first access, explicit repo selection, and no overclaiming about deep source understanding.",
     "candidate_files": [
       "frontend/src/ui/MainMenu.tsx",
       "frontend/src/ui/GitHubRepoPicker.tsx",
-      "frontend/src/store/gameStore.ts",
-      "frontend/src/repoCityBootstrap.ts"
+      "frontend/src/ui/ConnectionStatusBanner.tsx",
+      "frontend/src/index.css"
     ],
     "acceptance_criteria": [
-      "The selected GitHub repo can be manually refreshed without restarting auth or losing the current repo-city session",
-      "A successful refresh replaces the cached repo snapshot and updates the connected repo metadata shown in the frontend",
+      "GitHub-connected UI surfaces explicitly say the app is using read-only, metadata-first repo translation language",
+      "The copy avoids implying full source upload, deep code understanding, or automatic repo repair",
       "cd frontend && npm run lint, cd frontend && npm run build, and cd frontend && npm run browser:smoke pass"
     ]
   },

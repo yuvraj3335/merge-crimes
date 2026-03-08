@@ -231,6 +231,61 @@ async function fetchGitHubJson<T>(url: string, accessToken?: string | null): Pro
         data: payload as T,
     };
 }
+
+function getGitHubAccessTokenFromAuthorizationHeader(authorizationHeader?: string | null): string | null {
+    return authorizationHeader?.startsWith('Bearer ')
+        ? authorizationHeader.slice('Bearer '.length).trim()
+        : null;
+}
+
+async function fetchGitHubRepoMetadataSnapshot(owner: string, name: string, accessToken?: string | null) {
+    const repoPath = `${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
+    const repoResponse = await fetchGitHubJson<GitHubRepoResponse>(`https://api.github.com/repos/${repoPath}`, accessToken);
+    if (!repoResponse.ok) {
+        const status: 404 | 502 = repoResponse.status === 404 ? 404 : 502;
+        return {
+            ok: false as const,
+            status,
+            body: {
+                error: status === 404 ? 'github_repo_not_found' : 'github_repo_fetch_failed',
+                message: repoResponse.message,
+                owner,
+                name,
+            },
+        };
+    }
+
+    const [languagesResponse, contentsResponse] = await Promise.all([
+        fetchGitHubJson<GitHubRepoLanguagesResponse>(`https://api.github.com/repos/${repoPath}/languages`, accessToken),
+        fetchGitHubJson<GitHubRepoContentsResponse>(`https://api.github.com/repos/${repoPath}/contents`, accessToken),
+    ]);
+
+    if (!languagesResponse.ok) {
+        return {
+            ok: false as const,
+            status: 502 as const,
+            body: {
+                error: 'github_repo_languages_fetch_failed',
+                message: languagesResponse.message,
+                owner,
+                name,
+            },
+        };
+    }
+
+    const snapshot = await normalizeGitHubRepoSnapshot({
+        repo: repoResponse.data,
+        languages: languagesResponse.data,
+        contents: contentsResponse.ok ? contentsResponse.data : undefined,
+        fetchGitHubJson: <T>(url: string) => fetchGitHubJson<T>(url, accessToken),
+    });
+
+    return {
+        ok: true as const,
+        snapshot,
+    };
+}
+
 function isAllowedRedirectUri(request: Request, env: Bindings, redirectUri: string): boolean {
     let parsedRedirectUri: URL;
     try {
@@ -558,6 +613,10 @@ const GitHubRepoMetadataQuery = z.object({
     owner: z.string().trim().min(1).optional(),
     name: z.string().trim().min(1).optional(),
 });
+const RefreshRepoBody = z.object({
+    owner: z.string().trim().min(1),
+    name: z.string().trim().min(1),
+});
 const MissionsQuery = z.object({
     district: z.string().optional(),
     sessionId: z.string().uuid().optional(),
@@ -792,44 +851,37 @@ app.get('/api/github/repo-metadata', async (c) => {
 
     const owner = query.data.owner ?? DEFAULT_GITHUB_REPO_OWNER;
     const name = query.data.name ?? DEFAULT_GITHUB_REPO_NAME;
-    const repoPath = `${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
-    const authorizationHeader = c.req.header('Authorization');
-    const accessToken = authorizationHeader?.startsWith('Bearer ')
-        ? authorizationHeader.slice('Bearer '.length).trim()
-        : null;
-
-    const repoResponse = await fetchGitHubJson<GitHubRepoResponse>(`https://api.github.com/repos/${repoPath}`, accessToken);
-    if (!repoResponse.ok) {
-        return c.json({
-            error: repoResponse.status === 404 ? 'github_repo_not_found' : 'github_repo_fetch_failed',
-            message: repoResponse.message,
-            owner,
-            name,
-        }, repoResponse.status === 404 ? 404 : 502);
+    const accessToken = getGitHubAccessTokenFromAuthorizationHeader(c.req.header('Authorization'));
+    const result = await fetchGitHubRepoMetadataSnapshot(owner, name, accessToken);
+    if (!result.ok) {
+        return c.json(result.body, result.status);
     }
 
-    const [languagesResponse, contentsResponse] = await Promise.all([
-        fetchGitHubJson<GitHubRepoLanguagesResponse>(`https://api.github.com/repos/${repoPath}/languages`, accessToken),
-        fetchGitHubJson<GitHubRepoContentsResponse>(`https://api.github.com/repos/${repoPath}/contents`, accessToken),
-    ]);
+    return c.json(result.snapshot);
+});
 
-    if (!languagesResponse.ok) {
-        return c.json({
-            error: 'github_repo_languages_fetch_failed',
-            message: languagesResponse.message,
-            owner,
-            name,
-        }, 502);
+app.post('/api/refresh-repo', async (c) => {
+    const parsed = await parseJsonBody(c, RefreshRepoBody);
+    if (!parsed.ok) {
+        return parsed.response;
     }
 
-    const snapshot = await normalizeGitHubRepoSnapshot({
-        repo: repoResponse.data,
-        languages: languagesResponse.data,
-        contents: contentsResponse.ok ? contentsResponse.data : undefined,
-        fetchGitHubJson: <T>(url: string) => fetchGitHubJson<T>(url, accessToken),
+    const accessToken = getGitHubAccessTokenFromAuthorizationHeader(c.req.header('Authorization'));
+    console.log('[MergeCrimes] Manual repo refresh requested', {
+        owner: parsed.data.owner,
+        name: parsed.data.name,
+        authenticated: Boolean(accessToken),
     });
 
-    return c.json(snapshot);
+    const result = await fetchGitHubRepoMetadataSnapshot(parsed.data.owner, parsed.data.name, accessToken);
+    if (!result.ok) {
+        return c.json(result.body, result.status);
+    }
+
+    return c.json({
+        message: 'Repo refresh completed.',
+        snapshot: result.snapshot,
+    });
 });
 
 // ─── Anonymous Write Session ───

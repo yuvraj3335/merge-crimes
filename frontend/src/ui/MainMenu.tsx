@@ -5,6 +5,14 @@ import type { RepoModel } from '../../../shared/repoModel';
 import * as api from '../api';
 import { GitHubRepoPicker } from './GitHubRepoPicker';
 
+type RepoRefreshTone = 'idle' | 'success' | 'error';
+
+interface RepoRefreshStatus {
+    tone: RepoRefreshTone;
+    message: string | null;
+    repoId: string | null;
+}
+
 export function MainMenu() {
     const phase = useGameStore((s) => s.phase);
     const setPhase = useGameStore((s) => s.setPhase);
@@ -23,6 +31,11 @@ export function MainMenu() {
 
     const [showRepoSelector, setShowRepoSelector] = useState(false);
     const [isRefreshingRepo, setIsRefreshingRepo] = useState(false);
+    const [repoRefreshStatus, setRepoRefreshStatus] = useState<RepoRefreshStatus>({
+        tone: 'idle',
+        message: null,
+        repoId: null,
+    });
     const refreshControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => () => {
@@ -59,15 +72,20 @@ export function MainMenu() {
         refreshControllerRef.current?.abort();
         refreshControllerRef.current = controller;
         setIsRefreshingRepo(true);
+        setRepoRefreshStatus({
+            tone: 'idle',
+            message: null,
+            repoId: targetRepoId,
+        });
 
-        void api.fetchGitHubRepoMetadata(
+        void api.refreshGitHubRepo(
             connectedRepo.owner,
             connectedRepo.name,
             controller.signal,
             githubAccessToken ?? undefined,
         )
-            .then((snapshot) => {
-                if (!snapshot || controller.signal.aborted) {
+            .then((response) => {
+                if (controller.signal.aborted) {
                     return;
                 }
 
@@ -76,12 +94,23 @@ export function MainMenu() {
                     return;
                 }
 
-                setSelectedGitHubRepoSnapshot(snapshot);
+                setSelectedGitHubRepoSnapshot(response.snapshot);
+                setRepoRefreshStatus({
+                    tone: 'success',
+                    message: 'Repo refreshed!',
+                    repoId: targetRepoId,
+                });
             })
             .catch((error: unknown) => {
                 if (controller.signal.aborted) {
                     return;
                 }
+
+                setRepoRefreshStatus({
+                    tone: 'error',
+                    message: error instanceof Error ? error.message : 'Repo refresh failed.',
+                    repoId: targetRepoId,
+                });
 
                 console.warn(
                     '[MergeCrimes] GitHub repo refresh failed',
@@ -132,9 +161,15 @@ export function MainMenu() {
     const canRefreshConnectedRepo = repoCityMode
         && connectedRepo?.metadata?.provider === 'github'
         && (connectedRepo.visibility === 'public' || Boolean(githubAccessToken));
+    const activeRefreshTone = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.tone : 'idle';
+    const activeRefreshMessage = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.message : null;
     const refreshStatusMessage = isRefreshingRepo
         ? 'Refreshing current GitHub snapshot...'
-        : 'Re-ingest the connected GitHub snapshot without changing the current repo selection.';
+        : activeRefreshTone === 'success'
+            ? (activeRefreshMessage ?? 'Repo refreshed!')
+            : activeRefreshTone === 'error'
+                ? (activeRefreshMessage ?? 'Repo refresh failed.')
+                : 'Re-ingest the connected GitHub snapshot without changing the current repo selection.';
 
     return (
         <div className={`main-menu ${repoCityMode ? 'repo-city' : ''}`.trim()}>
@@ -169,7 +204,10 @@ export function MainMenu() {
                                         >
                                             {isRefreshingRepo ? 'Refreshing...' : 'Refresh Repo'}
                                         </button>
-                                        <div className="repo-city-refresh-status" aria-live="polite">
+                                        <div
+                                            className={`repo-city-refresh-status ${activeRefreshTone === 'idle' ? '' : activeRefreshTone}`.trim()}
+                                            aria-live="polite"
+                                        >
                                             {refreshStatusMessage}
                                         </div>
                                     </div>

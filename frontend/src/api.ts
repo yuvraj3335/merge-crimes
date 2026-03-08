@@ -40,6 +40,11 @@ export interface GitHubReadableRepoListResponse {
     hasNextPage: boolean;
 }
 
+export interface RepoRefreshResponse {
+    message: string;
+    snapshot: GitHubRepoMetadataSnapshot;
+}
+
 interface GitHubRepoApiResponse {
     id: number;
     name: string;
@@ -445,6 +450,40 @@ export async function fetchGitHubRepoMetadata(
         signal,
         headers,
     });
+}
+
+export async function refreshGitHubRepo(
+    owner: string,
+    name: string,
+    signal?: AbortSignal,
+    accessToken?: string,
+): Promise<RepoRefreshResponse> {
+    const headers = new Headers();
+    if (accessToken) {
+        headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+
+    const response = await request('/api/refresh-repo', {
+        method: 'POST',
+        signal,
+        headers,
+        body: JSON.stringify({ owner, name }),
+    });
+
+    if (!response) {
+        throw new Error('Worker API unavailable. Repo refresh could not be started.');
+    }
+
+    const payload = await response.json().catch(() => null) as Partial<RepoRefreshResponse> & { message?: string } | null;
+    if (!response.ok) {
+        throw new Error(payload?.message ?? `Repo refresh failed (${response.status}).`);
+    }
+
+    if (!payload?.snapshot || typeof payload.message !== 'string') {
+        throw new Error('Worker returned an invalid repo refresh response.');
+    }
+
+    return payload as RepoRefreshResponse;
 }
 
 // ─── Health Check ───

@@ -2589,6 +2589,14 @@ body,
   color: rgba(214, 224, 255, 0.72);
 }
 
+.repo-city-refresh-status.success {
+  color: rgba(148, 246, 194, 0.92);
+}
+
+.repo-city-refresh-status.error {
+  color: rgba(255, 177, 177, 0.94);
+}
+
 .menu-title {
   font-family: var(--font-display);
   font-size: 56px;
