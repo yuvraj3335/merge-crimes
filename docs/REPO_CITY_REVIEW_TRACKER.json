@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 7,
-    "total_findings": 16,
+    "cycles_run": 9,
+    "total_findings": 26,
     "total_resolved": 11,
-    "last_updated": "2026-03-08T16:55:48Z"
+    "last_updated": "2026-03-08T17:10:08Z"
   },
   "workstreams": [
     {
@@ -33,8 +33,8 @@
         "worker/src"
       ],
       "description": "Find duplicated logic that should be extracted into shared utilities",
-      "last_run_at": "2026-03-08T16:41:43Z",
-      "cycles_assigned": 4,
+      "last_run_at": "2026-03-08T16:50:10Z",
+      "cycles_assigned": 5,
       "open_findings_count": 0,
       "findings_open": 6
     },
@@ -47,9 +47,10 @@
         "worker/src"
       ],
       "description": "Find overly complex functions that should be simplified or split",
-      "last_run_at": null,
-      "cycles_assigned": 0,
-      "open_findings_count": 0
+      "last_run_at": "2026-03-08T16:57:24Z",
+      "cycles_assigned": 1,
+      "open_findings_count": 0,
+      "findings_open": 10
     },
     {
       "id": "unused_exports",
@@ -161,11 +162,12 @@
       "mode": "review",
       "workstream_id": "complexity",
       "title": "Scan frontend/src and worker/src for overly complex functions",
-      "status": "pending",
+      "status": "done",
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:41:43Z"
+      "last_scored_at": "2026-03-08T16:50:10Z",
+      "completed_at": "2026-03-08T16:57:24Z"
     },
     {
       "id": "q-004",
@@ -176,7 +178,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:41:43Z"
+      "last_scored_at": "2026-03-08T16:57:24Z"
     },
     {
       "id": "q-005",
@@ -187,7 +189,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:41:43Z"
+      "last_scored_at": "2026-03-08T16:57:24Z"
     },
     {
       "id": "q-006",
@@ -198,7 +200,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:41:43Z"
+      "last_scored_at": "2026-03-08T16:57:24Z"
     },
     {
       "id": "q-007",
@@ -209,7 +211,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:41:43Z"
+      "last_scored_at": "2026-03-08T16:57:24Z"
     },
     {
       "id": "q-008",
@@ -220,7 +222,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:41:43Z"
+      "last_scored_at": "2026-03-08T16:57:24Z"
     },
     {
       "id": "q-009",
@@ -231,7 +233,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:41:43Z"
+      "last_scored_at": "2026-03-08T16:57:24Z"
     },
     {
       "id": "qfix-f-000001",
@@ -427,7 +429,138 @@
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
       "last_scored_at": "2026-03-08T16:41:43Z",
-      "completed_at": "2026-03-08T16:55:48Z"
+      "completed_at": "2026-03-08T16:50:10Z"
+    },
+    {
+      "id": "qfix-f-000017",
+      "mode": "fix",
+      "finding_id": "f-000017",
+      "workstream_id": "complexity",
+      "title": "Fix: `shared/repoCityGenerator.ts` is a god module that owns repo classification, sig",
+      "severity": "high",
+      "status": "pending",
+      "score": 2.94,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
+    },
+    {
+      "id": "qfix-f-000018",
+      "mode": "fix",
+      "finding_id": "f-000018",
+      "workstream_id": "complexity",
+      "title": "Fix: `gameStore.ts` centralizes nearly all runtime concerns: gameplay state, waypoint",
+      "severity": "high",
+      "status": "done",
+      "score": 2.97,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z",
+      "completed_at": "2026-03-08T17:10:08Z"
+    },
+    {
+      "id": "qfix-f-000019",
+      "mode": "fix",
+      "finding_id": "f-000019",
+      "workstream_id": "complexity",
+      "title": "Fix: The selected-GitHub-repo/auth state machine is duplicated across the store, UI c",
+      "severity": "high",
+      "status": "pending",
+      "score": 2.88,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
+    },
+    {
+      "id": "qfix-f-000020",
+      "mode": "fix",
+      "finding_id": "f-000020",
+      "workstream_id": "complexity",
+      "title": "Fix: Classic mode and repo-city mode are implemented as pervasive inline branches ins",
+      "severity": "high",
+      "status": "pending",
+      "score": 2.79,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
+    },
+    {
+      "id": "qfix-f-000021",
+      "mode": "fix",
+      "finding_id": "f-000021",
+      "workstream_id": "complexity",
+      "title": "Fix: High-frequency player movement writes are pushed through the global store, while",
+      "severity": "high",
+      "status": "pending",
+      "score": 2.85,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
+    },
+    {
+      "id": "qfix-f-000022",
+      "mode": "fix",
+      "finding_id": "f-000022",
+      "workstream_id": "complexity",
+      "title": "Fix: `App.tsx` is acting as a root controller instead of a thin composition shell. It",
+      "severity": "medium",
+      "status": "pending",
+      "score": 1.8,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
+    },
+    {
+      "id": "qfix-f-000023",
+      "mode": "fix",
+      "finding_id": "f-000023",
+      "workstream_id": "complexity",
+      "title": "Fix: `MainMenu` is an oversized controller component that owns refresh orchestration,",
+      "severity": "medium",
+      "status": "pending",
+      "score": 1.82,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
+    },
+    {
+      "id": "qfix-f-000024",
+      "mode": "fix",
+      "finding_id": "f-000024",
+      "workstream_id": "complexity",
+      "title": "Fix: Transit and district-presentation logic is duplicated between `HUD.tsx` and `Rep",
+      "severity": "medium",
+      "status": "pending",
+      "score": 1.8,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
+    },
+    {
+      "id": "qfix-f-000025",
+      "mode": "fix",
+      "finding_id": "f-000025",
+      "workstream_id": "complexity",
+      "title": "Fix: `api.ts` mixes multiple transport contracts in one module: some calls return `nu",
+      "severity": "medium",
+      "status": "pending",
+      "score": 1.74,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
+    },
+    {
+      "id": "qfix-f-000026",
+      "mode": "fix",
+      "finding_id": "f-000026",
+      "workstream_id": "complexity",
+      "title": "Fix: `generateCityFromRepo` claims to be part of a deterministic translation layer, b",
+      "severity": "medium",
+      "status": "pending",
+      "score": 1.88,
+      "priority_override": null,
+      "added_at": "2026-03-08T17:06:08Z",
+      "last_scored_at": "2026-03-08T16:57:24Z"
     }
   ],
   "findings": [
@@ -769,7 +902,218 @@
         "Bootstrap truncates to `MAX_BOOTSTRAP_MODULES` and filters `dependencyEdges` and `signals` to `allowedModuleIds`, while `buildSmokeConnectedRepo` keeps the full module graph; the same sample snapshot can therefore drive different districts, missions, and signals in normal and smoke flows.",
         "If `RepoModel` gains another nested array or metadata field, both manual clone paths need updates or one environment will silently retain shared references or omit fields that the other preserves."
       ],
-      "resolved_at": "2026-03-08T16:55:48Z"
+      "resolved_at": "2026-03-08T16:50:10Z"
+    },
+    {
+      "id": "f-000017",
+      "workstream_id": "complexity",
+      "rule_id": "CC-001",
+      "severity": "high",
+      "confidence": 0.98,
+      "category": "complexity",
+      "file_path": "shared/repoCityGenerator.ts",
+      "line_start": 0,
+      "symbol": "repoCityGenerator module",
+      "description": "`shared/repoCityGenerator.ts` is a god module that owns repo classification, signal grouping, mission/bot generation, district naming, layout, road generation, and the bridge back into gameplay types. That concentration makes almost every repo-city rule change cross-cut multiple responsibilities in one file.",
+      "evidence": "The file is 1389 LOC. Evidence of mixed responsibilities: `classifyRepoArchetype` at shared/repoCityGenerator.ts:775-829, `buildDistrictLabelPrefix` at :994-1033, `generateRoads` at :1150-1186, `generateCityFromRepo` at :1197-1265, and gameplay bridges `generatedCityToDistricts` / `generatedCityToMissions` / `generatedCityToConflicts` at :1286-1388 all live together. Example excerpts: `const hasWorkspaceConfig = hasTextHint(...)` and 5 archetype exits in `classifyRepoArchetype`; 8 sequential hint checks in `buildDistrictLabelPrefix`; `generateCityFromRepo` classifies, ranks modules, computes footprints, derives heat, builds roads, missions, bots, and timestamps output in one pass.",
+      "recommended_action": "Split the module into focused units such as `archetypeClassification`, `signalMissionGeneration`, `layoutGeneration`, `roadGeneration`, and `gameBridge`. Keep static lookup tables in separate config modules and have `generateCityFromRepo` only orchestrate pure helpers.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "Adding a new `RepoSignalType` currently requires touching multiple unrelated sections in the same file: template selection, bot profiles, grouped copy, mission generation, and conflict bridging.",
+        "Changing archetype rules now spans classification, hub ordering, layout slots, district labels, and road readability in one module, so a layout tweak can easily regress mission or labeling behavior."
+      ]
+    },
+    {
+      "id": "f-000018",
+      "workstream_id": "complexity",
+      "rule_id": "CC-002",
+      "severity": "high",
+      "confidence": 0.99,
+      "category": "complexity",
+      "file_path": "frontend/src/store/gameStore.ts",
+      "line_start": 90,
+      "symbol": "GameState/useGameStore",
+      "description": "`gameStore.ts` centralizes nearly all runtime concerns: gameplay state, waypoint persistence, repo-city routing, GitHub auth/selection, DO room sync, reward toasts, and Worker API hydration. The store has become both a domain model and a controller layer, which makes invariants hard to reason about and hard to reuse safely.",
+      "evidence": "The file is 940 LOC. `GameState` at frontend/src/store/gameStore.ts:90-196 includes phase/player/district/capture/missions/factions/events/conflicts/UI/repo-city/GitHub auth/API concerns in one interface. Pure routing logic such as `buildRoadGuidedTransitPath` lives inside the store file at :254-399. The store body at :428-939 then also owns movement, capture, mission transitions, boss resolution, repo load/clear, auth resets, district room merging, and `loadFromApi`.",
+      "recommended_action": "Break the store into slices or domain modules: movement/transit, mission progression, repo-city session, GitHub auth/repo selection, and API sync. Move pure helpers like `buildRoadGuidedTransitPath` into standalone modules and expose only narrow store actions.",
+      "status": "resolved",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "A new repo-load entry point must keep `loadRepoCity`, `clearRepoCity`, auth reset paths, API hydration, and smoke-mode setup in sync, because all of them mutate overlapping state in this one file.",
+        "Mission flow changes must also preserve waypoint persistence and timer resets (`saveWaypointState`, `clearWaypointState`, `missionTimer` updates), so a small mission tweak can silently break reload or boss transitions."
+      ],
+      "resolved_at": "2026-03-08T17:10:08Z"
+    },
+    {
+      "id": "f-000019",
+      "workstream_id": "complexity",
+      "rule_id": "CC-003",
+      "severity": "high",
+      "confidence": 0.96,
+      "category": "complexity",
+      "file_path": "frontend/src/store/gameStore.ts",
+      "line_start": 0,
+      "symbol": "selectedGitHubRepo state machine",
+      "description": "The selected-GitHub-repo/auth state machine is duplicated across the store, UI controllers, copy helpers, and smoke harness instead of being owned by one canonical reducer/action set. This creates multiple sources of truth for the same transitions and increases race-condition surface area.",
+      "evidence": "Repeated resets and direct mutations appear in multiple places. In frontend/src/store/gameStore.ts:751-803, `selectedGitHubRepo`, `selectedGitHubRepoEligibility`, `selectedGitHubRepoIngestState`, and `selectedGitHubRepoSnapshot` are hand-reset in the initial state, `setGitHubAccessToken`, `setGitHubAuthError`, and `clearGitHubAuth`. In frontend/src/localSmokeBridge.ts:165-205 and :263-310, the smoke harness bypasses store actions with `useGameStore.setState({...})` and rewrites the same fields directly. In frontend/src/ui/GitHubRepoPicker.tsx:215-299, `handleRepoSelection` aborts requests, clears snapshot, resets ingest state, starts fetch, and writes error/success. In frontend/src/ui/selectedRepoStatusCopy.ts:74-215, status is recomputed again from the same inputs through branching helper functions.",
+      "recommended_action": "Introduce a single reducer-like module or explicit action helpers for repo selection/auth transitions, e.g. `resetSelectedRepoState`, `beginRepoIngest`, `repoIngestFailed`, `activateRepoSnapshot`. Make the smoke bridge call those actions instead of `useGameStore.setState`, and let UI read derived status from one canonical selector.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "If a new field is added to selected-repo state, it must be updated in every hand-built reset object in `gameStore.ts` and `localSmokeBridge.ts`, or stale state will survive some transitions but not others.",
+        "`GitHubRepoPicker` guards in-flight ingest with `useGameStore.getState().selectedGitHubRepo`, but other code paths can change the same selection via direct store writes, so race handling is distributed instead of centralized."
+      ]
+    },
+    {
+      "id": "f-000020",
+      "workstream_id": "complexity",
+      "rule_id": "CC-004",
+      "severity": "high",
+      "confidence": 0.93,
+      "category": "complexity",
+      "file_path": "frontend/src/ui/HUD.tsx",
+      "line_start": 0,
+      "symbol": "repoCityMode branching",
+      "description": "Classic mode and repo-city mode are implemented as pervasive inline branches inside the same components instead of separate compositions. This spreads control flow and styling decisions across the app and makes every feature change a two-mode audit.",
+      "evidence": "Search results show the same split across many files: App.tsx:311/372/376; CityScene.tsx:15/43/331/357; Player.tsx:39-48/128/187; Waypoint.tsx:68-172; HUD.tsx:152/214/218/312/388/447/520; MainMenu.tsx:297-651; GitHubRepoPicker.tsx:330-491; ConnectionStatusBanner.tsx:44-50; RewardToast.tsx:9-12; Leaderboard.tsx:19-55. Representative code: `repoCityMode ? (...) : (...)` blocks dominate HUD and MainMenu, while Player, Waypoint, and CityScene branch behavior and visuals on the same flag.",
+      "recommended_action": "Move mode-specific behavior behind separate components or mode adapters, e.g. `RepoCityHUD` vs `ClassicHUD`, `RepoCityMenu` vs `ClassicMenu`, and shared presentational primitives. Keep mode-specific copy/style maps centralized rather than branching inline in many files.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "A new repo-city-only change now requires auditing every `repoCityMode` branch site to keep classic mode stable, because the two modes share modules instead of boundaries.",
+        "Behavior can drift between surfaces because each file chooses its own repo-city/classic split; for example HUD, MainMenu, Player, and CityScene all branch independently on the same flag."
+      ]
+    },
+    {
+      "id": "f-000021",
+      "workstream_id": "complexity",
+      "rule_id": "CC-005",
+      "severity": "high",
+      "confidence": 0.95,
+      "category": "complexity",
+      "file_path": "frontend/src/game/Player.tsx",
+      "line_start": 84,
+      "symbol": "commitPosition + broad store subscriptions",
+      "description": "High-frequency player movement writes are pushed through the global store, while many components subscribe to the entire store with `useGameStore()` and no selector. That combination creates a broad rerender fan-out and makes performance harder to predict as more UI gets added.",
+      "evidence": "`commitPosition` at frontend/src/game/Player.tsx:84-111 calls `setPlayerPosition(nextPosition)` and `setCurrentDistrict(nextDistrict)`. `useFrame` at :114-211 invokes `commitPosition` during movement. Full-store subscriptions are widespread: Camera.tsx:22, Waypoint.tsx:24, CaptureOverlay.tsx:4, MissionTrigger.tsx:22/122, App.tsx:59/253, MissionPanel.tsx:18, MergeConflictGame.tsx:37, CityBulletin.tsx:4, ConnectionStatusBanner.tsx:5-14, Leaderboard.tsx:4, MissionObjectiveTracker.tsx:5-13, RewardToast.tsx:4 all call `useGameStore()` without a selector.",
+      "recommended_action": "Keep per-frame movement state local to the scene layer or a narrow transient slice, and expose throttled/derived state to the global store. Convert broad `useGameStore()` consumers to selectors so unrelated overlays do not rerender on every position update.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "Holding movement keys causes `setPlayerPosition` to fire every frame, so panels like `ConnectionStatusBanner`, `CityBulletin`, and `RewardToast` can rerender even though they do not need player coordinates.",
+        "Crossing district boundaries triggers `setCurrentDistrict` from the same movement loop, so the app pays both per-frame position updates and additional broad store updates during transit."
+      ]
+    },
+    {
+      "id": "f-000022",
+      "workstream_id": "complexity",
+      "rule_id": "CC-006",
+      "severity": "medium",
+      "confidence": 0.9,
+      "category": "complexity",
+      "file_path": "frontend/src/App.tsx",
+      "line_start": 58,
+      "symbol": "App",
+      "description": "`App.tsx` is acting as a root controller instead of a thin composition shell. It mixes DO polling, repo refresh polling, OAuth callback exchange, smoke harness installation, keyboard shortcuts, mission timer behavior, and top-level rendering in one file.",
+      "evidence": "`DistrictRoomPoller` at frontend/src/App.tsx:58-95 mixes local capture ticking with DO heartbeat requests. `ConnectedRepoRefreshPoller` at :97-227 handles visibility/offline backoff, abort controllers, repo identity guards, polling cadence, and store writes. The `App` component at :255-356 bootstraps API hydration, runtime status subscription, GitHub OAuth callback exchange, smoke bridge installation, write-session priming, keyboard shortcuts, and mission timer logic before rendering the scene and overlays at :358-400.",
+      "recommended_action": "Extract root concerns into dedicated hooks/components such as `useDistrictRoomPolling`, `useConnectedRepoRefreshPolling`, `useGitHubOAuthCallback`, and `useMissionTimer`. Keep `App` focused on scene/UI composition.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "Changing mount order or cleanup behavior now risks unrelated systems because polling, OAuth, and timer effects all live beside each other in the same root module.",
+        "Debugging stale intervals or abort-controller leaks spans multiple nested hooks in one file, especially when refresh polling and district-room polling are both active."
+      ]
+    },
+    {
+      "id": "f-000023",
+      "workstream_id": "complexity",
+      "rule_id": "CC-007",
+      "severity": "medium",
+      "confidence": 0.91,
+      "category": "complexity",
+      "file_path": "frontend/src/ui/MainMenu.tsx",
+      "line_start": 108,
+      "symbol": "MainMenu",
+      "description": "`MainMenu` is an oversized controller component that owns refresh orchestration, seeded repo selection, GitHub auth/status modeling, repo selector toggles, and a very large mode-dependent render tree. Its responsibilities exceed simple view composition and make the menu hard to change safely.",
+      "evidence": "The file is 662 LOC. At frontend/src/ui/MainMenu.tsx:108-125, `MainMenu` pulls many store slices plus local refresh state. `handleRefreshRepo` at :154-225 owns controller lifecycle, network call, optimistic status, snapshot activation, and error reporting. The render body at :296-659 includes repo hero, snapshot freshness, refresh feedback, selected-repo status, start-button copy, GitHub auth card, GitHub picker launch, seeded repo selector, classic mode switch, and embedded `GitHubRepoPicker`.",
+      "recommended_action": "Split the component into hooks and subviews such as `useRepoRefresh`, `RepoHero`, `SelectedRepoStatusPanel`, `MenuActions`, and `SeedRepoSelector`. Keep derived status assembly out of the JSX-heavy component.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "Refreshing repo behavior is coupled to menu rendering and selected-repo copy, so a refresh-flow change can break status presentation or start-button wording in the same component.",
+        "`selectedGitHubRepoIsActive` and status-copy assembly are recomputed here separately from the picker/store paths, so menu and picker behavior can drift if one side changes first."
+      ]
+    },
+    {
+      "id": "f-000024",
+      "workstream_id": "complexity",
+      "rule_id": "CC-008",
+      "severity": "medium",
+      "confidence": 0.9,
+      "category": "complexity",
+      "file_path": "frontend/src/ui/HUD.tsx",
+      "line_start": 149,
+      "symbol": "HUD",
+      "description": "Transit and district-presentation logic is duplicated between `HUD.tsx` and `RepoCitySurface.tsx`. Both components independently resolve focused districts, rebuild path arrays, and compute distance labels, which increases the chance that the surface and HUD disagree about the same route.",
+      "evidence": "In frontend/src/ui/HUD.tsx:149-192, HUD resolves `transitGeneratedDistrict`, `transitDistrict`, `remainingTransitPath`, and `distanceLabel: formatTransitDistance(measure2DPathDistance([...]))`. In frontend/src/ui/RepoCitySurface.tsx:109-198, the surface separately resolves `currentSurfaceDistrict`, `currentMissionDistrict`, `transitDistrict`, `hoveredDistrict`, and computes guidance distances with `measure2DPathDistance([...])` in three branches. Both files also do repeated `districts.find(...)` / `generatedCity.districts.find(...)`, and each defines its own distance formatter (`formatTransitDistance` at HUD:28-31 vs `formatDistance` at RepoCitySurface:49-52).",
+      "recommended_action": "Introduce a shared presenter utility for repo-city transit state, e.g. `deriveTransitPresentation` and `resolveFocusedDistrict`, and reuse one distance-formatting helper across HUD and surface.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "If transit distance semantics change, both `HUD` and `RepoCitySurface` must be updated or the HUD can report a different remaining distance than the map line shows.",
+        "If district-focus precedence changes in only one file, the HUD can highlight one district while the surface pins another because each computes queued/current/hovered/mission precedence independently."
+      ]
+    },
+    {
+      "id": "f-000025",
+      "workstream_id": "complexity",
+      "rule_id": "CC-009",
+      "severity": "medium",
+      "confidence": 0.87,
+      "category": "complexity",
+      "file_path": "frontend/src/api.ts",
+      "line_start": 117,
+      "symbol": "request/writeApiFetch/fetchGitHubReadableRepos",
+      "description": "`api.ts` mixes multiple transport contracts in one module: some calls return `null`, some throw, some update global runtime status, and some bypass that status entirely. That inconsistency increases cognitive load for every caller and makes error handling easy to get wrong.",
+      "evidence": "`request` and `apiFetch` at frontend/src/api.ts:117-140 update `emitApiRuntimeStatus` and return `null` on transport failure. `writeApiFetch` at :187-217 also returns `null` on non-ok responses except for the 401 retry path. By contrast, `fetchGitHubReadableRepos` at :387-430 bypasses `request`, uses raw `fetch`, and throws `Error`, while `refreshGitHubRepo` / `fetchGitHubRepoRefreshStatus` at :456-525 also throw structured errors. `ConnectionStatusBanner` reads store-driven runtime status from frontend/src/ui/ConnectionStatusBanner.tsx:5-14 and :80-127, so raw GitHub fetch failures do not flow through the same status mechanism.",
+      "recommended_action": "Standardize the client contract: either return typed `Result` objects everywhere or throw typed errors everywhere. Route GitHub transport through the same status-aware request layer so callers do not need endpoint-specific error semantics.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "`GitHubRepoPicker` must catch thrown errors from `fetchGitHubReadableRepos`, while store code calling `fetchDistricts` or `acceptMission` expects `null`; a new caller can easily implement the wrong failure path.",
+        "A GitHub repo-list failure will not update the same runtime-status channel used by `ConnectionStatusBanner`, so transport health and UI health indicators can diverge."
+      ]
+    },
+    {
+      "id": "f-000026",
+      "workstream_id": "complexity",
+      "rule_id": "CC-010",
+      "severity": "medium",
+      "confidence": 0.94,
+      "category": "complexity",
+      "file_path": "shared/repoCityGenerator.ts",
+      "line_start": 1197,
+      "symbol": "generateCityFromRepo",
+      "description": "`generateCityFromRepo` claims to be part of a deterministic translation layer, but it injects wall-clock time directly into the result. That hidden impurity makes caching, memoization, and behavioral reasoning harder because identical repo input does not produce identical city output.",
+      "evidence": "The file header at shared/repoCityGenerator.ts:1-3 says `Pure, deterministic translation layer: RepoModel -> GeneratedCity.` But `generateCityFromRepo` returns `generatedAt: new Date().toISOString()` at shared/repoCityGenerator.ts:1255-1265, so repeated calls with the same `RepoModel` produce different `GeneratedCity` objects.",
+      "recommended_action": "Make `generatedAt` an explicit input from the caller, or reuse `repo.generatedAt` when appropriate. Keep the generator referentially transparent for the same repo snapshot.",
+      "status": "open",
+      "found_at": "2026-03-08T17:06:08Z",
+      "cycle_number": 9,
+      "edge_cases": [
+        "Calling `generateCityFromRepo` twice for the same snapshot yields different `generatedAt` values, which defeats simple equality checks and can trigger avoidable downstream re-renders.",
+        "Any test or cache keyed on `GeneratedCity` shape becomes unstable because the generator's output changes even when repo modules, edges, and signals do not."
+      ]
     }
   ],
   "stop_policy": {
@@ -782,10 +1126,10 @@
     "trigger_reason": null
   },
   "current_slice_recommendation": {
-    "queue_entry_id": "q-003",
-    "title": "Scan frontend/src and worker/src for overly complex functions",
+    "queue_entry_id": "q-004",
+    "title": "Scan frontend/src and shared for unused module exports",
     "mode": "review",
-    "workstream": "complexity",
+    "workstream": "unused_exports",
     "score": 4.5,
     "why": "Highest-scored pending queue entry"
   },
