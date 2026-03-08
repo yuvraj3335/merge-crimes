@@ -19,6 +19,10 @@ import { ConnectionStatusBanner } from './ui/ConnectionStatusBanner';
 import { RepoCitySurface } from './ui/RepoCitySurface';
 import { installLocalSmokeBridge } from './localSmokeBridge';
 import { useGameStore } from './store/gameStore';
+import {
+  applyRepoRefreshCheckResult,
+  createInitialConnectedRepoRefreshStatus,
+} from '../../shared/repoRefresh';
 import * as api from './api';
 import './index.css';
 
@@ -60,6 +64,118 @@ function DistrictRoomPoller() {
 
         return () => clearInterval(interval);
     }, [apiAvailable, currentDistrict, setDistrictRoom]);
+
+    return null;
+}
+
+function ConnectedRepoRefreshPoller() {
+    const repoCityMode = useGameStore((s) => s.repoCityMode);
+    const connectedRepo = useGameStore((s) => s.connectedRepo);
+    const setConnectedRepoRefreshStatus = useGameStore((s) => s.setConnectedRepoRefreshStatus);
+    const githubAccessToken = useGameStore((s) => s.githubAccessToken);
+    const apiConnectionState = useGameStore((s) => s.apiConnectionState);
+
+    useEffect(() => {
+        if (
+            !repoCityMode
+            || !connectedRepo
+            || connectedRepo.metadata?.provider !== 'github'
+            || (connectedRepo.visibility === 'private' && !githubAccessToken)
+            || apiConnectionState === 'offline'
+        ) {
+            return;
+        }
+
+        const repoId = connectedRepo.repoId;
+        let activeController: AbortController | null = null;
+        let inFlight = false;
+
+        const getCurrentRefreshStatus = () => {
+            const currentRepo = useGameStore.getState().connectedRepo;
+            if (currentRepo?.repoId !== repoId) {
+                return null;
+            }
+
+            return useGameStore.getState().connectedRepoRefreshStatus
+                ?? createInitialConnectedRepoRefreshStatus(currentRepo.signals);
+        };
+
+        const checkRefreshStatus = async () => {
+            if (inFlight) {
+                return;
+            }
+
+            const currentStatus = getCurrentRefreshStatus();
+            if (!currentStatus) {
+                return;
+            }
+
+            inFlight = true;
+            activeController?.abort();
+            const controller = new AbortController();
+            activeController = controller;
+
+            setConnectedRepoRefreshStatus({
+                ...currentStatus,
+                isChecking: true,
+                errorMessage: null,
+            });
+
+            try {
+                const refreshCheck = await api.fetchGitHubRepoRefreshStatus(
+                    {
+                        owner: connectedRepo.owner,
+                        name: connectedRepo.name,
+                        defaultBranch: connectedRepo.defaultBranch,
+                        lastKnownCommitSha: currentStatus.lastKnownCommitSha,
+                    },
+                    controller.signal,
+                    githubAccessToken ?? undefined,
+                );
+
+                if (controller.signal.aborted || useGameStore.getState().connectedRepo?.repoId !== repoId) {
+                    return;
+                }
+
+                useGameStore.getState().setConnectedRepoRefreshStatus(applyRepoRefreshCheckResult(refreshCheck));
+            } catch (error: unknown) {
+                if (controller.signal.aborted || useGameStore.getState().connectedRepo?.repoId !== repoId) {
+                    return;
+                }
+
+                useGameStore.getState().setConnectedRepoRefreshStatus({
+                    ...currentStatus,
+                    status: 'error',
+                    isChecking: false,
+                    errorMessage: error instanceof Error
+                        ? error.message
+                        : 'Repo update status check failed.',
+                });
+            } finally {
+                inFlight = false;
+
+                if (activeController === controller) {
+                    activeController = null;
+                }
+            }
+        };
+
+        void checkRefreshStatus();
+        const intervalId = window.setInterval(() => {
+            void checkRefreshStatus();
+        }, 60_000);
+
+        return () => {
+            activeController?.abort();
+            window.clearInterval(intervalId);
+        };
+    }, [
+        apiConnectionState,
+        connectedRepo,
+        githubAccessToken,
+        repoCityMode,
+        setConnectedRepoRefreshStatus,
+    ]);
 
     return null;
 }
@@ -218,6 +334,7 @@ function App() {
 
       {/* District Room Poller (DO presence + capture) */}
       <DistrictRoomPoller />
+      <ConnectedRepoRefreshPoller />
 
       {/* UI Overlays */}
       <RepoCitySurface />

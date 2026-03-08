@@ -2,6 +2,7 @@
 // Fetches game data from the Worker API with seed-data fallback
 
 import type { GitHubRepoMetadataSnapshot } from '../../shared/repoModel';
+import type { RepoRefreshCheckRequest, RepoRefreshCheckResult } from '../../shared/repoRefresh';
 import type { District, Mission, LeaderboardEntry, CityEvent, MergeConflictEncounter } from '../../shared/types';
 import { getRuntimeApiBaseOverride } from './runtimeConfig';
 
@@ -484,6 +485,44 @@ export async function refreshGitHubRepo(
     }
 
     return payload as RepoRefreshResponse;
+}
+
+export async function fetchGitHubRepoRefreshStatus(
+    refreshCheck: RepoRefreshCheckRequest,
+    signal?: AbortSignal,
+    accessToken?: string,
+): Promise<RepoRefreshCheckResult> {
+    const headers = new Headers();
+    if (accessToken) {
+        headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+
+    const response = await request('/api/github/repo-refresh-status', {
+        method: 'POST',
+        signal,
+        headers,
+        body: JSON.stringify(refreshCheck),
+    });
+
+    if (!response) {
+        throw new Error('Worker API unavailable. Repo update status could not be checked.');
+    }
+
+    const payload = await response.json().catch(() => null) as Partial<RepoRefreshCheckResult> & { message?: string } | null;
+    if (!response.ok) {
+        throw new Error(payload?.message ?? `Repo update status failed (${response.status}).`);
+    }
+
+    if (
+        !payload
+        || typeof payload.status !== 'string'
+        || typeof payload.hasUpdates !== 'boolean'
+        || typeof payload.checkedAt !== 'string'
+    ) {
+        throw new Error('Worker returned an invalid repo refresh status response.');
+    }
+
+    return payload as RepoRefreshCheckResult;
 }
 
 // ─── Health Check ───

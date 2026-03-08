@@ -7,6 +7,10 @@ import { SEED_DISTRICTS } from '../../../shared/seed/districts';
 import { SEED_MISSIONS } from '../../../shared/seed/missions';
 import { SEED_EVENTS } from '../../../shared/seed/events';
 import { SEED_CONFLICTS } from '../../../shared/seed/conflicts';
+import {
+    createInitialConnectedRepoRefreshStatus,
+    type ConnectedRepoRefreshStatus,
+} from '../../../shared/repoRefresh';
 import * as api from '../api';
 import { getBootstrapRepoSnapshot, writeStoredSelectedGitHubRepoSnapshot } from '../repoCityBootstrap';
 import {
@@ -155,10 +159,12 @@ export interface GameState {
 
     // Repo City
     connectedRepo: RepoModel | null;
+    connectedRepoRefreshStatus: ConnectedRepoRefreshStatus | null;
     generatedCity: GeneratedCity | null;
     repoCityMode: boolean;
     loadRepoCity: (repo: RepoModel) => void;
     clearRepoCity: () => void;
+    setConnectedRepoRefreshStatus: (status: ConnectedRepoRefreshStatus | null) => void;
 
     // GitHub Auth
     githubAccessToken: string | null;
@@ -676,6 +682,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // Repo City
     connectedRepo: initialRepoSnapshot,
+    connectedRepoRefreshStatus: initialRepoSnapshot?.metadata?.provider === 'github'
+        ? createInitialConnectedRepoRefreshStatus(initialRepoSnapshot.signals)
+        : null,
     generatedCity: initialGeneratedCity,
     repoCityMode: initialGeneratedCity !== null,
     loadRepoCity: (repo) => {
@@ -691,6 +700,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         set({
             connectedRepo: repo,
+            connectedRepoRefreshStatus: repo.metadata?.provider === 'github'
+                ? createInitialConnectedRepoRefreshStatus(repo.signals)
+                : null,
             generatedCity: city,
             repoCityMode: true,
             districts,
@@ -718,6 +730,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         set({
             connectedRepo: null,
+            connectedRepoRefreshStatus: null,
             generatedCity: null,
             repoCityMode: false,
             districts: SEED_DISTRICTS,
@@ -737,6 +750,7 @@ export const useGameStore = create<GameState>((set, get) => ({
                 : get().apiStatusMessage,
         });
     },
+    setConnectedRepoRefreshStatus: (status) => set({ connectedRepoRefreshStatus: status }),
 
     // GitHub Auth
     githubAccessToken: null,

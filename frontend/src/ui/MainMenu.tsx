@@ -74,6 +74,7 @@ export function MainMenu() {
     const clearRepoCity = useGameStore((s) => s.clearRepoCity);
     const repoCityMode = useGameStore((s) => s.repoCityMode);
     const connectedRepo = useGameStore((s) => s.connectedRepo);
+    const connectedRepoRefreshStatus = useGameStore((s) => s.connectedRepoRefreshStatus);
     const generatedCity = useGameStore((s) => s.generatedCity);
     const githubAccessToken = useGameStore((s) => s.githubAccessToken);
     const githubAuthStatus = useGameStore((s) => s.githubAuthStatus);
@@ -274,6 +275,7 @@ export function MainMenu() {
     const canRefreshConnectedRepo = repoCityMode
         && connectedRepo?.metadata?.provider === 'github'
         && (connectedRepo.visibility === 'public' || Boolean(githubAccessToken));
+    const hasConnectedRepoUpdate = Boolean(connectedRepoRefreshStatus?.hasNewerRemote);
     const activeRefreshTone = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.tone : 'idle';
     const activeRefreshMessage = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.message : null;
     const refreshStatusCopy = activeRefreshTone === 'loading'
@@ -296,10 +298,17 @@ export function MainMenu() {
                           ?? 'GitHub did not return a fresh snapshot. Try the refresh action again.',
                   }
                 : {
-                      pill: 'Manual refresh',
-                      title: 'Refresh the connected snapshot',
-                      message: 'Pull the latest read-only repo metadata here without changing the current repo.',
+                      pill: hasConnectedRepoUpdate ? 'Update detected' : 'Manual refresh',
+                      title: hasConnectedRepoUpdate ? 'Newer snapshot available' : 'Refresh the connected snapshot',
+                      message: hasConnectedRepoUpdate && connectedRepo
+                          ? `GitHub reports newer commits on ${connectedRepo.defaultBranch}. Refresh when you want to load the latest read-only snapshot.`
+                          : 'Pull the latest read-only repo metadata here without changing the current repo.',
                   };
+    const refreshIndicatorTone = activeRefreshTone !== 'idle'
+        ? activeRefreshTone
+        : hasConnectedRepoUpdate
+            ? 'success'
+            : 'idle';
     const selectedRepoStatusCopy = buildSelectedRepoStatusCopy(
         selectedGitHubRepo,
         selectedGitHubRepoEligibility,
@@ -427,13 +436,13 @@ export function MainMenu() {
                                             <span>{isRefreshingRepo ? 'Refreshing Repo' : 'Refresh Repo'}</span>
                                         </button>
                                         <div
-                                            className={`repo-connection-feedback ${activeRefreshTone === 'idle' ? '' : activeRefreshTone}`.trim()}
+                                            className={`repo-connection-feedback ${refreshIndicatorTone === 'idle' ? '' : refreshIndicatorTone}`.trim()}
                                             aria-live="polite"
                                             aria-busy={isRefreshingRepo}
                                         >
                                             <div className="repo-connection-feedback-header">
                                                 <span
-                                                    className={`repo-connection-feedback-pill ${activeRefreshTone}`.trim()}
+                                                    className={`repo-connection-feedback-pill ${refreshIndicatorTone}`.trim()}
                                                 >
                                                     {refreshStatusCopy.pill}
                                                 </span>

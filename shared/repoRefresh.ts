@@ -25,6 +25,18 @@ export interface RepoRefreshCheckResult {
   status: RepoRefreshCheckStatus;
 }
 
+export type ConnectedRepoRefreshStatusState = RepoRefreshCheckStatus | 'idle' | 'error';
+
+export interface ConnectedRepoRefreshStatus {
+  status: ConnectedRepoRefreshStatusState;
+  checkedAt: string | null;
+  lastKnownCommitSha: string | null;
+  latestRemoteCommitSha: string | null;
+  hasNewerRemote: boolean;
+  isChecking: boolean;
+  errorMessage: string | null;
+}
+
 export function getLatestCommitShaFromSignals(signals: readonly RepoSignal[]): string | null {
   for (const signal of signals) {
     if (signal.type !== 'latest_commit') {
@@ -42,4 +54,32 @@ export function getLatestCommitShaFromSignals(signals: readonly RepoSignal[]): s
   }
 
   return null;
+}
+
+export function createInitialConnectedRepoRefreshStatus(
+  signals: readonly RepoSignal[],
+): ConnectedRepoRefreshStatus {
+  return {
+    status: 'idle',
+    checkedAt: null,
+    lastKnownCommitSha: getLatestCommitShaFromSignals(signals),
+    latestRemoteCommitSha: null,
+    hasNewerRemote: false,
+    isChecking: false,
+    errorMessage: null,
+  };
+}
+
+export function applyRepoRefreshCheckResult(
+  refreshCheck: RepoRefreshCheckResult,
+): ConnectedRepoRefreshStatus {
+  return {
+    status: refreshCheck.status,
+    checkedAt: refreshCheck.checkedAt,
+    lastKnownCommitSha: refreshCheck.lastKnownCommitSha,
+    latestRemoteCommitSha: refreshCheck.latestCommitSha,
+    hasNewerRemote: refreshCheck.hasUpdates,
+    isChecking: false,
+    errorMessage: null,
+  };
 }

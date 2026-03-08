@@ -65,6 +65,7 @@ const selectHudState = (state: GameState) => ({
     districtRooms: state.districtRooms,
     repoCityMode: state.repoCityMode,
     connectedRepo: state.connectedRepo,
+    connectedRepoRefreshStatus: state.connectedRepoRefreshStatus,
     generatedCity: state.generatedCity,
     repoCityTransit: state.repoCityTransit,
 });
@@ -105,6 +106,7 @@ export const HUD = memo(function HUD() {
         districtRooms,
         repoCityMode,
         connectedRepo,
+        connectedRepoRefreshStatus,
         generatedCity,
         repoCityTransit,
     } = useGameStore(useShallow(selectHudState));
@@ -204,6 +206,16 @@ export const HUD = memo(function HUD() {
             freshnessNow,
         )
         : null;
+    const repoRefreshNotice = repoCityMode
+        && connectedRepo
+        && connectedRepoRefreshStatus?.hasNewerRemote
+        ? {
+            title: 'Newer snapshot available',
+            detail: connectedRepoRefreshStatus.latestRemoteCommitSha
+                ? `New commits landed on ${connectedRepo.defaultBranch}. Open the menu to refresh this repo snapshot.`
+                : `New commits landed on ${connectedRepo.defaultBranch}. Open the menu to refresh this repo snapshot.`,
+        }
+        : null;
 
     return (
         <div className={`hud-overlay ${repoCityMode ? 'repo-city-hud' : ''}`}>
@@ -267,6 +279,14 @@ export const HUD = memo(function HUD() {
                                                 </time>
                                             )}
                                         </div>
+                                    </div>
+                                )}
+                                {repoRefreshNotice && (
+                                    <div className="repo-hud-refresh-available" role="status" aria-live="polite">
+                                        <span className="repo-hud-refresh-pill">Refresh available</span>
+                                        <span className="repo-hud-refresh-copy">
+                                            <strong>{repoRefreshNotice.title}.</strong> {repoRefreshNotice.detail}
+                                        </span>
                                     </div>
                                 )}
                             </div>

@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T17:48:54+05:30",
+  "last_updated": "2026-03-08T17:59:38+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -1042,25 +1042,38 @@
           "validation": {
             "worker_build": "pass"
           }
+        },
+        {
+          "title": "Connected snapshot refresh status — surface when a newer GitHub repo snapshot is available in play",
+          "summary": [
+            "The frontend now stores shared connected-repo refresh status, seeded from the active snapshot's existing latest_commit signal and updated from the worker refresh-check endpoint instead of auto-refreshing the city.",
+            "A root poller checks connected GitHub snapshots for newer default-branch commits, preserves the local snapshot SHA as the baseline, and records whether a newer remote snapshot is available without changing the loaded city.",
+            "Repo-city HUD and menu refresh surfaces now show a simple refresh-available signal when GitHub reports newer commits, so players can see that a newer read-only snapshot exists before choosing to refresh."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "worker_build": "pass",
+            "browser_smoke": "not_run — explicitly skipped per cycle instruction and permanently skipped in this sandbox"
+          }
         }
       ]
     }
   ],
   "smoke_blocker_status": "PERMANENTLY_SKIPPED — Wrangler cannot write logs outside /Users/yuvrajmuley/Library/Preferences/.wrangler/logs and cannot bind 127.0.0.1 in this sandbox. This has blocked browser:smoke for 8+ consecutive cycles. All future cycles must skip browser:smoke and note this permanently instead of reporting it as 'blocked' each time.",
   "current_slice_recommendation": {
-    "title": "Wire the GitHub refresh check into connected snapshot state so players can see when a newer repo snapshot is available",
-    "why": "The worker now exposes a real commit-level refresh signal, but nothing in the frontend or shared RepoModel flow calls it yet. The next smallest functional slice is to derive the baseline latest_commit SHA from the active GitHub snapshot, call the new refresh-check endpoint, and store or surface a refresh-available flag without auto-refreshing the city.",
-    "validity_gate": "This recommendation is functional, not cosmetic. It changes data flow or worker behavior, not just copy or CSS.",
+    "title": "Back off connected repo refresh polling when the tab is hidden or the worker is offline",
+    "why": "The new connected-snapshot polling path is functional, but it still checks on a fixed interval whenever the app is open. The next smallest Phase 7 slice is to pause or slow those refresh-status checks when the document is hidden or the worker connection is offline so the refresh signal stays efficient and stable on real repos.",
+    "validity_gate": "This recommendation is functional, not cosmetic. It changes polling behavior and stability characteristics rather than only copy or CSS.",
     "candidate_files": [
-      "shared/repoRefresh.ts",
-      "frontend/src/api.ts",
+      "frontend/src/App.tsx",
       "frontend/src/store/gameStore.ts",
-      "frontend/src/ui/MainMenu.tsx"
+      "shared/repoRefresh.ts"
     ],
     "acceptance_criteria": [
-      "Connected GitHub snapshots derive a baseline SHA from their existing latest_commit signal and call the refresh-check endpoint without requiring a backend restart.",
-      "RepoModel or menu state stores whether a newer commit was detected and makes that signal available for a later refresh CTA or auto-refresh policy.",
-      "No copy-only or CSS-only change satisfies this slice. At least one .ts or .tsx file outside of index.css must change in a way that affects data flow or user-actionable behavior."
+      "Connected GitHub refresh checks pause or use a longer retry window when the document is hidden or the worker connection is offline.",
+      "Returning to a visible, online state triggers a fresh repo-refresh-status check without requiring a manual full snapshot refresh.",
+      "No copy-only or CSS-only change satisfies this slice. At least one .ts or .tsx file must change in a way that materially affects refresh polling behavior."
     ]
   },
   "open_questions": [
