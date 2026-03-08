@@ -1,0 +1,51 @@
+A Codex implementation cycle ran but one or more validations failed.
+Generate a focused repair prompt to fix only the failures.
+
+## Failed cycle context
+
+Phase: {phase}
+Slice attempted: {slice_attempted}
+
+Files changed in the failed cycle:
+{changed_files}
+
+## Failed validations
+
+{failed_validations}
+
+## Validation error output
+
+{validation_errors}
+
+---
+
+## Requirements for the repair prompt you generate
+
+The repair prompt will be passed to the Codex CLI in full-auto mode.
+It must instruct Codex to:
+
+1. Fix ONLY the failed validations listed above.
+   - Do NOT start a new slice.
+   - Do NOT add new features or broaden scope.
+   - Do NOT rewrite files that are unrelated to the failures.
+
+2. Run the exact same validation commands that failed, to confirm they now pass:
+{failed_validations}
+
+3. Preserve the current tracker state.
+   - If the tracker already reflects progress from the first attempt, keep it.
+   - If the tracker claimed completion and validations failed, correct it.
+   - DO NOT claim completion if validations still fail after the repair.
+
+4. End the response with EXACTLY these eight section headings:
+
+   Phase:
+   Slice attempted:
+   Files changed:
+   Commands run:
+   Results:
+   What works now:
+   What is blocked:
+   Tracker changes Codex made:
+
+Keep the repair prompt minimal and targeted.  Aim for under 300 words.

@@ -224,6 +224,67 @@ export function RepoCitySurface() {
     const heatStatusLabel = statusDistrict
         ? getHeatLabel(statusDistrict.heatLevel)
         : 'idle';
+    const surfaceHeaderMeta = [
+        {
+            key: 'archetype',
+            label: 'Archetype',
+            value: generatedCity.archetype,
+        },
+        {
+            key: 'districts',
+            label: 'Districts',
+            value: generatedCity.districts.length.toLocaleString(),
+        },
+        {
+            key: 'routes',
+            label: 'Routes',
+            value: generatedCity.roads.length.toLocaleString(),
+        },
+    ] as const;
+    const surfaceLegendCards = [
+        {
+            key: 'status',
+            label: statusLabel,
+            value: statusValue,
+            meta: transitDistrict
+                ? 'Queued destination preview'
+                : statusDistrict
+                    ? `${statusDistrict.category} district status`
+                    : 'No district in focus yet',
+            pillClassName: null,
+        },
+        {
+            key: 'focus',
+            label: 'Surface focus',
+            value: focusLabel,
+            meta: transitDistrict
+                ? 'Transit keeps this district pinned'
+                : hoveredDistrict
+                    ? 'Hover preview updates live'
+                    : activeMission
+                        ? 'Mission context stays pinned'
+                        : 'Focus follows hover and selection',
+            pillClassName: null,
+        },
+        {
+            key: 'guidance',
+            label: activeMission ? 'Approach cue' : 'Entry cue',
+            value: canSelectDistricts || activeMission ? guidanceLabel : 'Keep moving with WASD',
+            meta: activeMission
+                ? 'Active route cue on the surface'
+                : canSelectDistricts
+                    ? 'Click a district to start transit'
+                    : 'District entry returns after the route',
+            pillClassName: null,
+        },
+        {
+            key: 'heat',
+            label: 'Heat status',
+            value: heatStatusLabel,
+            meta: statusDistrict ? `Heat ${statusDistrict.heatLevel}` : 'Awaiting district selection',
+            pillClassName: heatStatusClassName,
+        },
+    ] as const;
 
     function handleDistrictSelect(districtId: string) {
         if (!canSelectDistricts) {
@@ -245,16 +306,21 @@ export function RepoCitySurface() {
         <div className="repo-city-surface">
             <div className="repo-city-surface-shell">
                 <div className="repo-city-surface-header">
-                    <div>
-                        <div className="repo-city-surface-kicker">Repo city surface</div>
-                        <div className="repo-city-surface-title">
-                            {generatedCity.repoOwner}/{generatedCity.repoName}
+                    <div className="repo-city-surface-heading">
+                        <div className="repo-city-surface-heading-shell">
+                            <div className="repo-city-surface-kicker">Repo city surface</div>
+                            <div className="repo-city-surface-title">
+                                {generatedCity.repoOwner}/{generatedCity.repoName}
+                            </div>
                         </div>
                     </div>
                     <div className="repo-city-surface-meta">
-                        <span>{generatedCity.archetype}</span>
-                        <span>{generatedCity.districts.length} districts</span>
-                        <span>{generatedCity.roads.length} routes</span>
+                        {surfaceHeaderMeta.map((item) => (
+                            <div key={item.key} className={`repo-city-surface-meta-item ${item.key}`}>
+                                <span className="repo-city-surface-meta-label">{item.label}</span>
+                                <span className="repo-city-surface-meta-value">{item.value}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -456,31 +522,23 @@ export function RepoCitySurface() {
                     </svg>
 
                     <div className="repo-city-surface-legend">
-                        <div className="repo-city-surface-legend-row">
-                            <span className="repo-city-surface-legend-label">{statusLabel}</span>
-                            <span className="repo-city-surface-legend-value">
-                                {statusValue}
-                            </span>
-                        </div>
-                        <div className="repo-city-surface-legend-row">
-                            <span className="repo-city-surface-legend-label">Surface focus</span>
-                            <span className="repo-city-surface-legend-value">
-                                {focusLabel}
-                            </span>
-                        </div>
-                        <div className="repo-city-surface-legend-row">
-                            <span className="repo-city-surface-legend-label">
-                                {activeMission ? 'Approach cue' : 'Entry cue'}
-                            </span>
-                            <span className="repo-city-surface-legend-value">
-                                {canSelectDistricts || activeMission ? guidanceLabel : 'Keep moving with WASD'}
-                            </span>
-                        </div>
-                        <div className="repo-city-surface-legend-row">
-                            <span className="repo-city-surface-legend-label">Heat status</span>
-                            <span className={`repo-city-surface-legend-pill ${heatStatusClassName}`}>
-                                {heatStatusLabel}
-                            </span>
+                        <div className="repo-city-surface-legend-kicker">Surface metrics</div>
+                        <div className="repo-city-surface-legend-grid">
+                            {surfaceLegendCards.map((card) => (
+                                <div key={card.key} className={`repo-city-surface-legend-card ${card.key}`}>
+                                    <span className="repo-city-surface-legend-label">{card.label}</span>
+                                    {card.pillClassName ? (
+                                        <span className={`repo-city-surface-legend-pill ${card.pillClassName}`}>
+                                            {card.value}
+                                        </span>
+                                    ) : (
+                                        <span className="repo-city-surface-legend-value">
+                                            {card.value}
+                                        </span>
+                                    )}
+                                    <span className="repo-city-surface-legend-detail">{card.meta}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

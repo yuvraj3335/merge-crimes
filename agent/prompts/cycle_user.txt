@@ -1,0 +1,71 @@
+Generate a Codex CLI implementation prompt for the following repo-city cycle.
+
+## Current cycle context
+
+Phase: {phase}
+Milestone: {milestone_title}
+Description: {milestone_description}
+Recommended slice: {recommended_slice}
+Repo root: {repo_root}
+
+## Tracker summary
+
+{tracker_summary}
+
+## Open risks / context
+
+{open_risks}
+
+## Excerpts from repo-city docs
+
+{doc_excerpts}
+
+---
+
+## Requirements for the prompt you generate
+
+The prompt you generate will be passed directly to the Codex CLI running in
+full-auto mode on the developer's machine.  It must instruct Codex to:
+
+1. Read all six repo-city docs first (docs/REPO_CITY_TRACKER.json,
+   docs/REPO_CITY_PRODUCT_VISION.md, docs/REPO_CITY_SYSTEM_DESIGN.md,
+   docs/REPO_CITY_ITERATIVE_WORKFLOW.md, docs/REPO_CITY_PHASE_EXECUTION_PLAN.md,
+   docs/REPO_CITY_ITERATION_PROMPT.md).
+
+2. Summarise the current milestone, the recommended slice, any open questions,
+   and any known risks based on those docs.
+
+3. Choose the SMALLEST meaningful end-to-end slice inside the first incomplete
+   milestone that changes at least one file under frontend/, worker/, or shared/.
+
+4. Implement ONLY that slice.  Do not start additional slices.
+
+5. Run the appropriate local validation commands after the changes:
+   - If frontend/ changed: cd frontend && npm run build
+   - If frontend/ materially changed (.ts/.tsx/.js/.jsx/.css/.scss/.html):
+     cd frontend && npm run lint
+   - If UI flow or selectors changed: cd frontend && npm run browser:smoke
+     (skip if Playwright is clearly not set up)
+   - If worker/ or shared/ contracts changed: cd worker && npm run build
+
+6. Update docs/REPO_CITY_TRACKER.json minimally and truthfully if appropriate.
+   DO NOT claim completion of any milestone or slice if validations failed.
+
+7. End the response with EXACTLY these eight section headings (no extras, no
+   different capitalisation):
+
+   Phase:
+   Slice attempted:
+   Files changed:
+   Commands run:
+   Results:
+   What works now:
+   What is blocked:
+   Tracker changes Codex made:
+
+The generated prompt must be:
+- Specific to the current phase and slice
+- Bounded to one implementation slice
+- Clear about which validation commands to run
+- Clear about the exact output format required
+- Concise (aim for under 600 words)

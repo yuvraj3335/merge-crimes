@@ -458,6 +458,71 @@
             "frontend_build": "pass",
             "browser_smoke": "pass"
           }
+        },
+        {
+          "title": "Repo-city HUD control row aligns with shell action cards",
+          "summary": [
+            "Repo-city bottom HUD controls now render as calmer action cards with primary labels and secondary shortcut or state copy instead of shared legacy button text.",
+            "Mission, ranking, and bulletin toggles keep their existing behavior and smoke selector coverage while the repo-city row now reads coherently with the rest of the shell.",
+            "Classic mode keeps the previous HUD button treatment, so the slice stays isolated to repo-city presentation."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city top stat block aligns with shell metrics",
+          "summary": [
+            "Repo-city top HUD stats now render inside calmer shell metrics with a shared resources kicker, per-metric card framing, and secondary context copy instead of the older centered neon block.",
+            "Credits and reputation values keep their existing behavior while classic mode preserves the previous stat treatment, so the slice stays isolated to repo-city presentation.",
+            "Desktop and mobile repo-city layouts now keep the stat block aligned with the badge, transit card, and district shell without changing mission flow or smoke selectors."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city surface legend aligns with shell metrics",
+          "summary": [
+            "The repo-city surface legend now renders as a calmer metric-card grid with a shared shell kicker instead of flatter utility rows in the corner of the map.",
+            "District status, surface focus, entry or approach cue, and heat state keep their existing labels and logic while the legend now exposes clearer secondary context copy without changing movement or district-selection behavior.",
+            "Desktop and mobile repo-city surface layouts now keep those metrics readable as part of the shell while classic mode and smoke selectors remain unchanged."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city surface header meta aligns with shell chips",
+          "summary": [
+            "The repo-city surface header now renders archetype, district count, and route count inside structured shell chips instead of flatter utility spans beside the repo title.",
+            "The same repo identity and metric values remain exposed while the header meta now reads more coherently with the repo-city shell without changing surface behavior.",
+            "Desktop and mobile repo-city surface layouts now keep those chips readable and balanced beside the header title block while classic mode and smoke selectors remain unchanged."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city surface header title block aligns with shell copy",
+          "summary": [
+            "The repo-city surface header title block now renders inside a calmer shell card instead of a flatter kicker-plus-title stack while preserving the same repo owner/name and surface role text.",
+            "The title block now uses clearer chip-style role framing and calmer copy treatment without changing repo-city surface behavior or selectors.",
+            "Desktop and mobile repo-city surface headers now keep the identity block balanced beside the metric chips while classic mode remains unchanged."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
         }
       ]
     },
@@ -501,16 +566,16 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Align repo-city HUD control row with shell action cards",
-    "why": "The repo-city mission-active bar now matches the route shell, but the bottom HUD controls still read as shared legacy buttons with shortcut labels rather than repo-city action cards. The next bounded Phase 3 gap is making the repo-city control row feel consistent with the calmer shell without changing the underlying toggles.",
+    "title": "Align repo-city surface mission badges with shell chips",
+    "why": "The repo-city surface header now reads coherently, but the district mission count markers still use raw circular badge treatment that stands apart from the calmer shell chip language. The next bounded Phase 3 gap is to restyle those mission markers into clearer shell chips without changing mission availability logic or district selection behavior.",
     "candidate_files": [
-      "frontend/src/ui/HUD.tsx",
+      "frontend/src/ui/RepoCitySurface.tsx",
       "frontend/src/index.css"
     ],
     "acceptance_criteria": [
-      "Repo-city HUD controls use shell-style action labels and calmer button framing without changing toggle behavior or keyboard shortcuts",
-      "Classic mode keeps its existing HUD button treatment while repo-city mode reads coherently with the rest of the minimalist shell",
-      "frontend lint, build, and browser smoke pass after the HUD control-row slice"
+      "Repo-city surface mission badges use calmer shell-chip framing without changing mission counts or district selection behavior",
+      "Desktop and mobile repo-city surface mission markers remain readable while classic mode behavior stays unchanged",
+      "frontend lint, build, and browser smoke pass after the mission-badge slice"
     ]
   },
   "open_questions": [

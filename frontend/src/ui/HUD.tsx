@@ -124,23 +124,52 @@ export function HUD() {
             routeClassName: repoCityTransit.mode === 'roads' ? 'roads' : 'direct',
         }
         : null;
+    const repoCityStats = [
+        {
+            key: 'credits',
+            label: 'Credits',
+            value: credits.toLocaleString(),
+            meta: 'Current city recovery budget',
+        },
+        {
+            key: 'reputation',
+            label: 'Reputation',
+            value: reputation.toLocaleString(),
+            meta: 'Current maintainer standing',
+        },
+    ] as const;
 
     return (
         <div className={`hud-overlay ${repoCityMode ? 'repo-city-hud' : ''}`}>
             {/* Top Bar */}
             <div className={`hud-top-bar ${repoCityMode ? 'repo-city' : ''}`}>
                 <div className={`hud-shell-stack ${repoCityMode ? 'repo-city' : ''}`}>
-                    <div className={`hud-stats ${repoCityMode ? 'repo-city' : ''}`}>
-                        <div className="stat-item">
-                            <span className="stat-label">Credits</span>
-                            <span className="stat-value">{credits.toLocaleString()}</span>
+                    {repoCityMode ? (
+                        <div className="hud-stats repo-city">
+                            <div className="hud-stats-kicker">City resources</div>
+                            <div className="hud-stats-grid">
+                                {repoCityStats.map((stat) => (
+                                    <div key={stat.key} className={`hud-stat-card ${stat.key}`}>
+                                        <span className="hud-stat-card-label">{stat.label}</span>
+                                        <span className="hud-stat-card-value">{stat.value}</span>
+                                        <span className="hud-stat-card-meta">{stat.meta}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className="stat-divider" />
-                        <div className="stat-item">
-                            <span className="stat-label">Rep</span>
-                            <span className="stat-value">{reputation}</span>
+                    ) : (
+                        <div className="hud-stats">
+                            <div className="stat-item">
+                                <span className="stat-label">Credits</span>
+                                <span className="stat-value">{credits.toLocaleString()}</span>
+                            </div>
+                            <div className="stat-divider" />
+                            <div className="stat-item">
+                                <span className="stat-label">Rep</span>
+                                <span className="stat-value">{reputation}</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {repoCityMode && connectedRepo && (
                         <div className="repo-hud-badge repo-city">
@@ -356,19 +385,46 @@ export function HUD() {
                         data-testid="toggle-missions"
                         onClick={() => setShowMissionPanel(!showMissionPanel)}
                     >
-                        Missions [M]
+                        {repoCityMode ? (
+                            <>
+                                <span className="hud-control-label">Routes</span>
+                                <span className="hud-control-meta">
+                                    {showMissionPanel ? 'Hide mission routes [M]' : 'Browse mission routes [M]'}
+                                </span>
+                            </>
+                        ) : (
+                            'Missions [M]'
+                        )}
                     </button>
                     <button
                         className={`hud-btn ${showLeaderboard ? 'active' : ''}`}
                         onClick={() => setShowLeaderboard(!showLeaderboard)}
                     >
-                        Rankings [L]
+                        {repoCityMode ? (
+                            <>
+                                <span className="hud-control-label">Rankings</span>
+                                <span className="hud-control-meta">
+                                    {showLeaderboard ? 'Hide district standings [L]' : 'Open district standings [L]'}
+                                </span>
+                            </>
+                        ) : (
+                            'Rankings [L]'
+                        )}
                     </button>
                     <button
                         className={`hud-btn ${showBulletin ? 'active' : ''}`}
                         onClick={() => setShowBulletin(!showBulletin)}
                     >
-                        Bulletin [B]
+                        {repoCityMode ? (
+                            <>
+                                <span className="hud-control-label">Bulletin</span>
+                                <span className="hud-control-meta">
+                                    {showBulletin ? 'Hide repo alerts [B]' : 'Open repo alerts [B]'}
+                                </span>
+                            </>
+                        ) : (
+                            'Bulletin [B]'
+                        )}
                     </button>
                 </div>
 

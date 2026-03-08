@@ -93,40 +93,100 @@ body,
   gap: 16px;
 }
 
+.repo-city-surface-heading {
+  min-width: 0;
+  width: min(420px, 100%);
+}
+
+.repo-city-surface-heading-shell {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(214, 224, 255, 0.12);
+  background:
+    radial-gradient(circle at top left, rgba(156, 215, 255, 0.12), transparent 48%),
+    rgba(255, 255, 255, 0.04);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 .repo-city-surface-kicker {
+  display: inline-flex;
+  align-items: center;
+  justify-self: flex-start;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(156, 215, 255, 0.18);
+  background: rgba(156, 215, 255, 0.08);
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 2.4px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(180, 200, 255, 0.72);
+  color: rgba(207, 228, 255, 0.84);
 }
 
 .repo-city-surface-title {
-  margin-top: 5px;
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
   color: #f2f6ff;
+  overflow-wrap: anywhere;
 }
 
 .repo-city-surface-meta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(88px, 1fr));
   gap: 8px;
+  min-width: min(340px, 100%);
 }
 
-.repo-city-surface-meta span {
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
+.repo-city-surface-meta-item {
+  display: grid;
+  gap: 4px;
+  padding: 9px 11px;
+  border-radius: 16px;
   border: 1px solid rgba(214, 224, 255, 0.12);
-  color: rgba(226, 234, 255, 0.84);
-  font-size: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.repo-city-surface-meta-item.archetype {
+  border-color: rgba(255, 196, 138, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(255, 196, 138, 0.12), transparent 54%),
+    rgba(255, 255, 255, 0.04);
+}
+
+.repo-city-surface-meta-item.districts {
+  border-color: rgba(156, 215, 255, 0.16);
+}
+
+.repo-city-surface-meta-item.routes {
+  border-color: rgba(134, 240, 191, 0.16);
+}
+
+.repo-city-surface-meta-label {
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: rgba(182, 193, 226, 0.72);
+}
+
+.repo-city-surface-meta-value {
+  color: rgba(242, 246, 255, 0.92);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .repo-city-surface-map {
@@ -282,38 +342,92 @@ body,
   position: absolute;
   right: 16px;
   bottom: 16px;
-  width: min(240px, calc(100% - 32px));
+  width: min(360px, calc(100% - 32px));
   display: grid;
-  gap: 8px;
+  gap: 10px;
   pointer-events: auto;
-  padding: 12px;
-  border-radius: 16px;
+  padding: 14px;
+  border-radius: 18px;
   border: 1px solid rgba(214, 224, 255, 0.1);
-  background: rgba(7, 9, 18, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  background:
+    radial-gradient(circle at top left, rgba(101, 164, 255, 0.14), transparent 46%),
+    rgba(7, 9, 18, 0.76);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.repo-city-surface-legend-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.repo-city-surface-legend-kicker {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(182, 193, 226, 0.72);
+}
+
+.repo-city-surface-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
+.repo-city-surface-legend-card {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 88px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(214, 224, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.repo-city-surface-legend-card.status {
+  border-color: rgba(156, 215, 255, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(156, 215, 255, 0.12), transparent 52%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.repo-city-surface-legend-card.focus {
+  border-color: rgba(180, 197, 232, 0.16);
+}
+
+.repo-city-surface-legend-card.guidance {
+  border-color: rgba(255, 217, 95, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(255, 217, 95, 0.1), transparent 52%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.repo-city-surface-legend-card.heat {
+  border-color: rgba(255, 196, 138, 0.14);
+}
+
 .repo-city-surface-legend-label {
+  font-family: var(--font-display);
   color: rgba(182, 193, 226, 0.7);
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 }
 
 .repo-city-surface-legend-value {
   color: #f4f7ff;
   font-size: 11px;
-  text-align: right;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.repo-city-surface-legend-detail {
+  color: rgba(214, 224, 255, 0.74);
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 .repo-city-surface-legend-pill {
+  justify-self: start;
   padding: 4px 8px;
   border-radius: 999px;
   border: 1px solid rgba(214, 224, 255, 0.14);
@@ -367,8 +481,17 @@ body,
     align-items: stretch;
   }
 
+  .repo-city-surface-heading {
+    width: 100%;
+  }
+
+  .repo-city-surface-heading-shell {
+    padding: 11px 12px;
+  }
+
   .repo-city-surface-meta {
-    justify-content: flex-start;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
   }
 
   .repo-city-surface-map {
@@ -379,6 +502,14 @@ body,
     position: static;
     width: 100%;
     margin: 10px;
+  }
+
+  .repo-city-surface-legend-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .repo-city-surface-legend-card {
+    min-height: 0;
   }
 
   .repo-city-surface-label {
@@ -721,11 +852,74 @@ body,
 }
 
 .hud-stats.repo-city {
-  gap: 12px;
-  padding: 10px 14px;
+  display: grid;
+  gap: 10px;
+  width: min(340px, calc(100vw - 32px));
+  padding: 12px;
   background: rgba(7, 9, 18, 0.76);
   border-color: rgba(214, 224, 255, 0.12);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+}
+
+.hud-stats-kicker {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(182, 193, 226, 0.72);
+}
+
+.hud-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hud-stat-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(214, 224, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.hud-stat-card.credits {
+  border-color: rgba(255, 196, 138, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(255, 196, 138, 0.12), transparent 52%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.hud-stat-card.reputation {
+  border-color: rgba(138, 221, 255, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(138, 221, 255, 0.12), transparent 52%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.hud-stat-card-label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(182, 193, 226, 0.72);
+}
+
+.hud-stat-card-value {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: #f2f6ff;
+  line-height: 1.1;
+}
+
+.hud-stat-card-meta {
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(214, 224, 255, 0.74);
 }
 
 .stat-item {
@@ -959,9 +1153,41 @@ body,
 }
 
 .hud-controls.repo-city .hud-btn {
-  min-width: 122px;
+  min-width: 152px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(214, 224, 255, 0.1);
+}
+
+.hud-controls.repo-city .hud-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(214, 224, 255, 0.18);
+  text-shadow: none;
+}
+
+.hud-controls.repo-city .hud-btn.active {
+  background: rgba(138, 221, 255, 0.08);
+  border-color: rgba(138, 221, 255, 0.22);
+  color: rgba(242, 246, 255, 0.96);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.hud-control-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hud-control-meta {
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(214, 224, 255, 0.7);
 }
 
 /* ─── Mission Timer ─── */
@@ -3995,6 +4221,11 @@ body,
 
   .hud-shell-stack.repo-city {
     width: 100%;
+  }
+
+  .hud-stats.repo-city {
+    width: 100%;
+    min-width: 0;
   }
 
   .repo-transit-header {
