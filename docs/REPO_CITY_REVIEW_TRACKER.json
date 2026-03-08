@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 4,
+    "cycles_run": 5,
     "total_findings": 16,
     "total_resolved": 11,
-    "last_updated": "2026-03-08T16:33:57Z"
+    "last_updated": "2026-03-08T16:39:55Z"
   },
   "workstreams": [
     {
@@ -33,10 +33,10 @@
         "worker/src"
       ],
       "description": "Find duplicated logic that should be extracted into shared utilities",
-      "last_run_at": "2026-03-08T15:16:00Z",
-      "cycles_assigned": 1,
+      "last_run_at": "2026-03-08T16:30:54Z",
+      "cycles_assigned": 2,
       "open_findings_count": 0,
-      "findings_open": 6
+      "findings_open": 5
     },
     {
       "id": "complexity",
@@ -165,7 +165,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "q-004",
@@ -176,7 +176,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "q-005",
@@ -187,7 +187,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "q-006",
@@ -198,7 +198,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "q-007",
@@ -206,10 +206,10 @@
       "workstream_id": "correctness",
       "title": "Scan full codebase for feature correctness bugs and logic errors",
       "status": "pending",
-      "score": 5.0,
+      "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T00:00:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "q-008",
@@ -217,10 +217,10 @@
       "workstream_id": "performance",
       "title": "Scan frontend/src and worker/src for performance bottlenecks and inefficiencies",
       "status": "pending",
-      "score": 4.8,
+      "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T00:00:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "q-009",
@@ -228,10 +228,10 @@
       "workstream_id": "refactor_quality",
       "title": "Scan full codebase for code quality violations and refactoring opportunities",
       "status": "pending",
-      "score": 4.6,
+      "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T00:00:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "qfix-f-000001",
@@ -380,11 +380,12 @@
       "workstream_id": "duplication",
       "title": "Fix: Transit path-length accumulation is implemented three times across HUD, Repo Cit",
       "severity": "medium",
-      "status": "pending",
+      "status": "done",
       "score": 1.86,
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z",
+      "completed_at": "2026-03-08T16:39:55Z"
     },
     {
       "id": "qfix-f-000012",
@@ -398,7 +399,7 @@
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
       "last_scored_at": "2026-03-08T15:16:00Z",
-      "completed_at": "2026-03-08T16:33:57Z"
+      "completed_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "qfix-f-000015",
@@ -411,7 +412,7 @@
       "score": 1.68,
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "qfix-f-000016",
@@ -424,7 +425,7 @@
       "score": 1.64,
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T16:30:54Z"
     }
   ],
   "findings": [
@@ -651,13 +652,14 @@
       "description": "Transit path-length accumulation is implemented three times across HUD, Repo City surface, and the store, with each copy hand-rolling the same loop over path points.",
       "evidence": "frontend/src/ui/HUD.tsx:32-42\nfunction measureRouteDistance(start: [number, number, number], pathPoints: [number, number, number][]): number {\n    let total = 0;\n    let previous = start;\n\n    pathPoints.forEach((point) => {\n        total += Math.hypot(point[0] - previous[0], point[2] - previous[2]);\n        previous = point;\n    });\n\n    return total;\n}\n\nfrontend/src/ui/RepoCitySurface.tsx:66-79\nfunction measureSurfacePathDistance(\n    startPoint: { x: number; y: number },\n    pathPoints: Array<{ x: number; y: number }>,\n): number {\n    let total = 0;\n    let previous = startPoint;\n\n    pathPoints.forEach((point) => {\n        total += Math.hypot(point.x - previous.x, point.y - previous.y);\n        previous = point;\n    });\n\n    return total;\n}\n\nfrontend/src/store/gameStore.ts:233-243\nfunction measureTransitPathDistance(startPoint: TransitPoint, pathPoints: TransitPoint[]): number {\n    let total = 0;\n    let previous = startPoint;\n\n    pathPoints.forEach((point) => {\n        total += measureTransitDistance(previous, point);\n        previous = point;\n    });\n\n    return total;\n}",
       "recommended_action": "Move path-distance calculation into one shared utility and adapt callers to a single normalized point shape.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T15:26:13Z",
       "cycle_number": 4,
       "edge_cases": [
         "HUD builds `remainingTransitPath` from `pathPoints.slice(pathIndex)` plus `targetPosition`, while RepoCitySurface separately maps points into `{x,y}` objects; if one copy starts including or excluding the terminal point differently, the two overlays will disagree on remaining distance.",
         "The store reuses the same math when evaluating route quality in `buildRoadGuidedTransitPath`, so a future bug fix in one copy can change routing behavior without updating the distance the player sees in HUD or surface UI."
-      ]
+      ],
+      "resolved_at": "2026-03-08T16:39:55Z"
     },
     {
       "id": "f-000012",
@@ -678,7 +680,8 @@
       "edge_cases": [
         "If the rounding threshold changes, the floating waypoint label, the objective tracker, and the HUD arrow can show different distances for the same active waypoint.",
         "All three copies currently ignore the Y axis and handle missing waypoints differently (`return null`, `if (currentWp)`, `if (dist < 5) return null`), so adding vertical movement or alternate waypoint shapes would require synchronized fixes in multiple components."
-      ]
+      ],
+      "resolved_at": "2026-03-08T16:30:54Z"
     },
     {
       "id": "f-000013",

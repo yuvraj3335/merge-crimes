@@ -5,6 +5,7 @@ import type { GameState } from '../store/gameStore';
 import { SEED_FACTION_BY_ID } from '../../../shared/seed/factions';
 import type { District } from '../../../shared/types';
 import { getWaypointDistanceAndText } from '../game/waypointUtils';
+import { measure2DPathDistance } from '../utils/pathDistance';
 import { getHeatLabel } from './heatLabel';
 import { buildRepoHudRefreshNotice } from './repoRefreshCopy';
 import { type SnapshotSource, useSnapshotFreshnessCopy } from './snapshotFreshness';
@@ -22,18 +23,6 @@ function getHeatColor(heat: number): string {
     if (heat < 60) return '#ffff00';
     if (heat < 80) return '#ff6b35';
     return '#ff0044';
-}
-
-function measureRouteDistance(start: [number, number, number], pathPoints: [number, number, number][]): number {
-    let total = 0;
-    let previous = start;
-
-    pathPoints.forEach((point) => {
-        total += Math.hypot(point[0] - previous[0], point[2] - previous[2]);
-        previous = point;
-    });
-
-    return total;
 }
 
 function formatTransitDistance(distance: number): string {
@@ -183,7 +172,7 @@ export const HUD = memo(function HUD() {
         ? [
             ...repoCityTransit.pathPoints.slice(repoCityTransit.pathIndex),
             repoCityTransit.targetPosition,
-        ]
+        ].map((point) => ({ x: point[0], y: point[2] }))
         : [];
     const transitStatus = repoCityMode && repoCityTransit
         ? {
@@ -192,7 +181,10 @@ export const HUD = memo(function HUD() {
             routeDetail: repoCityTransit.mode === 'roads'
                 ? 'Following generated routes to the district edge'
                 : 'Cross-city approach with a straight entry line',
-            distanceLabel: formatTransitDistance(measureRouteDistance(playerPosition, remainingTransitPath)),
+            distanceLabel: formatTransitDistance(measure2DPathDistance([
+                { x: playerPosition[0], y: playerPosition[2] },
+                ...remainingTransitPath,
+            ])),
             arrivalLabel: transitGeneratedDistrict
                 ? `Approaching ${transitGeneratedDistrict.category} district`
                 : 'Arrival will update district context',

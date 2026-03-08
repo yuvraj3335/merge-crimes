@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-03-08T14:24:42Z",
-  "candidate_count": 9,
+  "generated_at": "2026-03-08T16:35:25Z",
+  "candidate_count": 14,
   "candidates": [
     {
       "finding_id": "f-000001",
@@ -109,6 +109,66 @@
       "rationale": "`RepoRefreshNotice` is exported but only referenced inside `repoRefreshCopy.ts` as the return type of `buildRepoHudRefreshNotice`. No other file imports it, so the exported interface is dead surface area.",
       "evidence": "{'code_snippet': 'export interface RepoRefreshNotice {\\n    title: string;\\n    detail: string;\\n}\\n...\\nexport function buildRepoHudRefreshNotice(\\n    connectedRepo: RepoModel | null,\\n    connected",
       "recommended_action": "Remove `export` from `RepoRefreshNotice`, or inline the return shape of `buildRepoHudRefreshNotice` if you want to avoid a named local interface."
+    },
+    {
+      "finding_id": "f-000010",
+      "workstream_id": "duplication",
+      "rule_id": "DUP-001",
+      "severity": "medium",
+      "file_path": "frontend/src/ui/HUD.tsx",
+      "symbol": "getHeatLabel",
+      "category": "duplication",
+      "rationale": "Heat-status classification is duplicated between the HUD and Repo City surface, and the copies have already diverged: the HUD switches to `watch` at 30 while the surface waits until 35.",
+      "evidence": "frontend/src/ui/HUD.tsx:25-30\nfunction getHeatLabel(heat: number): string {\n    if (heat < 30) return 'stable';\n    if (heat < 60) return 'watch';\n    if (heat < 80) return 'elevated';\n    return 'cri",
+      "recommended_action": "Extract one shared heat-status helper that returns the label and reuse it from both HUD and surface rendering."
+    },
+    {
+      "finding_id": "f-000011",
+      "workstream_id": "duplication",
+      "rule_id": "DUP-002",
+      "severity": "medium",
+      "file_path": "frontend/src/ui/HUD.tsx",
+      "symbol": "measureRouteDistance",
+      "category": "duplication",
+      "rationale": "Transit path-length accumulation is implemented three times across HUD, Repo City surface, and the store, with each copy hand-rolling the same loop over path points.",
+      "evidence": "frontend/src/ui/HUD.tsx:32-42\nfunction measureRouteDistance(start: [number, number, number], pathPoints: [number, number, number][]): number {\n    let total = 0;\n    let previous = start;\n\n    pathPoi",
+      "recommended_action": "Move path-distance calculation into one shared utility and adapt callers to a single normalized point shape."
+    },
+    {
+      "finding_id": "f-000012",
+      "workstream_id": "duplication",
+      "rule_id": "DUP-003",
+      "severity": "medium",
+      "file_path": "frontend/src/game/Waypoint.tsx",
+      "symbol": "waypoint distance formatting",
+      "category": "duplication",
+      "rationale": "Current-waypoint distance calculation and `m` formatting are duplicated across the 3D waypoint label, the mission objective tracker, and the HUD direction arrow.",
+      "evidence": "frontend/src/game/Waypoint.tsx:53-56,72-75,166-166\nconst dx = playerPosition[0] - waypoint.position[0];\nconst dz = playerPosition[2] - waypoint.position[2];\nconst dist = Math.sqrt(dx * dx + dz * dz);\n",
+      "recommended_action": "Centralize waypoint-distance calculation and formatting so every mission UI surface reads from the same helper."
+    },
+    {
+      "finding_id": "f-000015",
+      "workstream_id": "duplication",
+      "rule_id": "DUP-006",
+      "severity": "medium",
+      "file_path": "frontend/src/ui/MainMenu.tsx",
+      "symbol": "selected repo status state machine",
+      "category": "duplication",
+      "rationale": "Selected GitHub repo status is modeled twice: `selectedRepoStatusCopy.ts` has a shared loading/error/eligible/listed-only state machine, but `MainMenu.tsx` rebuilds the same branches inline for CTA and auth-card copy.",
+      "evidence": "frontend/src/ui/MainMenu.tsx:318-357\nconst githubRepoActionMeta = selectedGitHubRepo\n    ? selectedRepoStillIngesting\n        ? connectedRepo\n            ? `Waiting for GitHub ingest... ${selectedGitH",
+      "recommended_action": "Promote selected-repo UI state into one shared derived model and have MainMenu, the picker, and any status cards render from that single source."
+    },
+    {
+      "finding_id": "f-000016",
+      "workstream_id": "duplication",
+      "rule_id": "DUP-007",
+      "severity": "medium",
+      "file_path": "frontend/src/repoCityBootstrap.ts",
+      "symbol": "repo snapshot normalization",
+      "category": "duplication",
+      "rationale": "Bootstrap snapshot parsing and smoke-harness snapshot construction both manually clone and normalize repo snapshots from the same sample JSON, but they do it in separate, already-diverging code paths.",
+      "evidence": "frontend/src/repoCityBootstrap.ts:45-76\nconst modules = cloneModules(candidate.modules as RepoModule[]);\nconst allowedModuleIds = new Set(modules.map((module) => module.id));\n\nreturn {\n    ...\n    lan",
+      "recommended_action": "Extract one repo-snapshot normalization/cloning utility and have both bootstrap and smoke harness call it, with explicit options for truncation or commit override."
     }
   ]
 }

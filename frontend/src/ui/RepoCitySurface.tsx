@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { measure2DPathDistance } from '../utils/pathDistance';
 import { getHeatLabel } from './heatLabel';
 
 interface SurfaceBounds {
@@ -48,21 +49,6 @@ function computeSurfaceBounds(city: NonNullable<ReturnType<typeof useGameStore.g
 function formatDistance(distance: number): string {
     if (distance < 10) return `${distance.toFixed(1)}m`;
     return `${Math.round(distance)}m`;
-}
-
-function measureSurfacePathDistance(
-    startPoint: { x: number; y: number },
-    pathPoints: Array<{ x: number; y: number }>,
-): number {
-    let total = 0;
-    let previous = startPoint;
-
-    pathPoints.forEach((point) => {
-        total += Math.hypot(point.x - previous.x, point.y - previous.y);
-        previous = point;
-    });
-
-    return total;
 }
 
 function getMissionCountLabel(count: number): string {
@@ -137,6 +123,7 @@ export function RepoCitySurface() {
     const focusedDistrictMissionCount = focusedDistrict
         ? availableMissionCounts.get(focusedDistrict.id) ?? 0
         : 0;
+    const playerPathStart = { x: playerPosition[0], y: playerPosition[2] };
     const transitPathPoints = repoCityTransit
         ? repoCityTransit.pathPoints.slice(repoCityTransit.pathIndex).map((point) => ({ x: point[0], y: point[2] }))
         : [];
@@ -148,13 +135,13 @@ export function RepoCitySurface() {
             }],
             color: '#ffd95f',
             label: activeWaypoint.label,
-            distance: measureSurfacePathDistance(
-                { x: playerPosition[0], y: playerPosition[2] },
-                [{
+            distance: measure2DPathDistance([
+                playerPathStart,
+                {
                     x: activeWaypoint.position[0],
                     y: activeWaypoint.position[2],
-                }],
-            ),
+                },
+            ]),
         }
         : transitDistrict
             ? {
@@ -166,15 +153,15 @@ export function RepoCitySurface() {
                     }],
                 color: transitDistrict.emissive,
                 label: transitDistrict.name,
-                distance: measureSurfacePathDistance(
-                    { x: playerPosition[0], y: playerPosition[2] },
-                    transitPathPoints.length > 0
+                distance: measure2DPathDistance([
+                    playerPathStart,
+                    ...(transitPathPoints.length > 0
                         ? transitPathPoints
                         : [{
                             x: transitDistrict.position.x,
                             y: transitDistrict.position.y,
-                        }],
-                ),
+                        }]),
+                ]),
             }
             : canSelectDistricts && hoveredDistrict
             ? {
@@ -184,13 +171,13 @@ export function RepoCitySurface() {
                 }],
                 color: hoveredDistrict.emissive,
                 label: hoveredDistrict.name,
-                distance: measureSurfacePathDistance(
-                    { x: playerPosition[0], y: playerPosition[2] },
-                    [{
+                distance: measure2DPathDistance([
+                    playerPathStart,
+                    {
                         x: hoveredDistrict.position.x,
                         y: hoveredDistrict.position.y,
-                    }],
-                ),
+                    },
+                ]),
             }
             : null;
     const focusLabel = transitDistrict

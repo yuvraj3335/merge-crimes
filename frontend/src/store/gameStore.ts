@@ -17,6 +17,7 @@ import {
     getGitHubRepoTranslationEligibility,
     type GitHubRepoTranslationEligibility,
 } from '../repoTranslationEligibility';
+import { measure2DPathDistance } from '../utils/pathDistance';
 import type { ApiConnectionState, ApiRuntimeStatus, ApiWriteSessionState, GitHubReadableRepo } from '../api';
 
 // ─── Waypoint Persistence (ADR-017: Hybrid Policy) ───
@@ -230,16 +231,8 @@ function measureTransitDistance(a: TransitPoint, b: TransitPoint): number {
     return Math.hypot(b[0] - a[0], b[2] - a[2]);
 }
 
-function measureTransitPathDistance(startPoint: TransitPoint, pathPoints: TransitPoint[]): number {
-    let total = 0;
-    let previous = startPoint;
-
-    pathPoints.forEach((point) => {
-        total += measureTransitDistance(previous, point);
-        previous = point;
-    });
-
-    return total;
+function toPathPoint2D(point: TransitPoint) {
+    return { x: point[0], y: point[2] };
 }
 
 function appendTransitPoint(points: TransitPoint[], point: TransitPoint) {
@@ -255,11 +248,7 @@ function roadToTransitPoints(road: GeneratedRoad, playerY: number, reverse = fal
 }
 
 function measureRoadDistance(points: TransitPoint[]): number {
-    if (points.length < 2) {
-        return 0;
-    }
-
-    return measureTransitPathDistance(points[0], points.slice(1));
+    return measure2DPathDistance(points.map(toPathPoint2D));
 }
 
 function buildRoadGuidedTransitPath(
@@ -391,7 +380,10 @@ function buildRoadGuidedTransitPath(
     }
 
     const directDistance = measureTransitDistance(currentPosition, targetPosition);
-    const routedDistance = measureTransitPathDistance(currentPosition, normalizedPoints);
+    const routedDistance = measure2DPathDistance([
+        toPathPoint2D(currentPosition),
+        ...normalizedPoints.map(toPathPoint2D),
+    ]);
     if (
         directDistance <= REPO_CITY_ROUTE_POINT_EPSILON
         || routedDistance > directDistance * REPO_CITY_MAX_ROUTE_DISTANCE_RATIO
