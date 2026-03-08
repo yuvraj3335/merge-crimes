@@ -4,6 +4,7 @@ import { REPO_FIXTURES } from '../../../shared/seed/repoFixtures';
 import type { RepoModel } from '../../../shared/repoModel';
 import * as api from '../api';
 import { GitHubRepoPicker } from './GitHubRepoPicker';
+import { GitHubTrustNotice } from './GitHubTrustNotice';
 import { RepoPrivacyNotice } from './RepoPrivacyNotice';
 import { buildSnapshotFreshnessCopy } from './snapshotFreshness';
 
@@ -352,6 +353,7 @@ export function MainMenu() {
             </button>
 
             <div className={`menu-secondary-actions ${repoCityMode ? 'repo-city' : ''}`.trim()}>
+                {repoCityMode && !githubAuthCard && <GitHubTrustNotice />}
                 {githubAuthCard ? (
                     <div
                         className={`menu-repo-btn menu-auth-status ${repoCityMode ? 'repo-city' : ''}`.trim()}
