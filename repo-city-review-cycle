@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# repo-city-review-cycle — entrypoint for the review-and-hardening cycle runner.
+#
+# Usage:  ./repo-city-review-cycle
+#
+# Mode env vars (optional):
+#   REPO_CITY_REVIEW_MODE=review_only   (default)
+#   REPO_CITY_REVIEW_MODE=apply_fix
+#   REPO_CITY_REVIEW_DRY_RUN=true       (default — no commits)
+#   REPO_CITY_REVIEW_DRY_RUN=false      (write live files + commit)
+#
+# Behavior:
+#   1. Changes to the repo root (parent of this script)
+#   2. Loads .env if present (without clobbering already-set vars)
+#   3. Invokes the Python review cycle
+#   4. Exits non-zero on failure
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${SCRIPT_DIR}"
+
+cd "${REPO_ROOT}"
+
+# Load .env if present (do not override existing env vars)
+if [[ -f "${REPO_ROOT}/.env" ]]; then
+    echo "[repo-city-review-cycle] Loading .env from repo root"
+    set -o allexport
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/.env"
+    set +o allexport
+fi
+
+# Export repo root so the Python module knows where it lives
+export REPO_CITY_REPO_ROOT="${REPO_ROOT}"
+
+# Require Python 3.10+
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+if ! command -v "${PYTHON_BIN}" &>/dev/null; then
+    echo "[repo-city-review-cycle] ERROR: python3 not found. Install Python 3.10+." >&2
+    exit 1
+fi
+
+PY_MAJOR=$("${PYTHON_BIN}" -c 'import sys; print(sys.version_info.major)')
+PY_MINOR=$("${PYTHON_BIN}" -c 'import sys; print(sys.version_info.minor)')
+if [[ "${PY_MAJOR}" -lt 3 ]] || { [[ "${PY_MAJOR}" -eq 3 ]] && [[ "${PY_MINOR}" -lt 10 ]]; }; then
+    echo "[repo-city-review-cycle] ERROR: Python 3.10+ required (found ${PY_MAJOR}.${PY_MINOR})." >&2
+    exit 1
+fi
+
+# Check for openai package
+if ! "${PYTHON_BIN}" -c 'import openai' &>/dev/null; then
+    echo "[repo-city-review-cycle] ERROR: openai Python package not installed." >&2
+    echo "  Run: pip install openai" >&2
+    exit 1
+fi
+
+echo "[repo-city-review-cycle] Starting — repo root: ${REPO_ROOT}"
+echo "[repo-city-review-cycle] Mode: ${REPO_CITY_REVIEW_MODE:-review_only}"
+echo "[repo-city-review-cycle] Dry run: ${REPO_CITY_REVIEW_DRY_RUN:-true}"
+exec "${PYTHON_BIN}" -m agent.review_cycle "$@"

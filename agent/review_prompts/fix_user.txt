@@ -1,0 +1,41 @@
+You are fixing a specific issue in the merge-crimes project.
+
+FINDING ID:    {finding_id}
+TITLE:         {finding_title}
+FILE:          {finding_file}
+SEVERITY:      {severity}
+
+DESCRIPTION:
+{finding_description}
+
+EVIDENCE (from original review):
+{evidence}
+
+RECOMMENDED ACTION:
+{recommended_action}
+
+---
+
+TRACKER SUMMARY:
+{tracker_summary}
+
+---
+
+REPO ROOT: {repo_root}
+
+---
+
+INSTRUCTIONS:
+
+1. Read {finding_file} to understand the current state of the code.
+2. Confirm the issue described above still exists in the file.
+   - If it no longer exists (already fixed), mark finding {finding_id} as resolved in
+     docs/REPO_CITY_REVIEW_TRACKER.json and stop.
+3. Implement ONLY the fix described in "Recommended Action" above.
+4. Run the required validation commands (see system prompt for which ones apply).
+5. If validation passes: update docs/REPO_CITY_REVIEW_TRACKER.json to mark finding
+   {finding_id} as resolved and queue entry qfix-{finding_id} as done.
+6. Output the 8-section report (Phase / Slice attempted / Files changed / Commands run /
+   Results / What works now / What is blocked / Tracker changes Codex made).
+
+Remember: Fix ONLY this finding. Do not expand scope.

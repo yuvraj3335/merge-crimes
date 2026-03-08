@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0",
+  "project": "merge-crimes-review-campaign",
+  "campaign": {
+    "id": "rc-2026-03-08",
+    "state": "pending",
+    "cycles_run": 0,
+    "total_findings": 0,
+    "total_resolved": 0,
+    "last_updated": null
+  },
+  "workstreams": [
+    {
+      "id": "dead_code",
+      "priority": 1,
+      "scope": ["frontend/src", "shared", "worker/src"],
+      "description": "Find exports, functions, and variables that are never imported or called",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
+    },
+    {
+      "id": "duplication",
+      "priority": 2,
+      "scope": ["frontend/src", "shared", "worker/src"],
+      "description": "Find duplicated logic that should be extracted into shared utilities",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
+    },
+    {
+      "id": "complexity",
+      "priority": 3,
+      "scope": ["frontend/src", "shared", "worker/src"],
+      "description": "Find overly complex functions that should be simplified or split",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
+    },
+    {
+      "id": "unused_exports",
+      "priority": 4,
+      "scope": ["frontend/src", "shared"],
+      "description": "Find exports that are never consumed outside their own module",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
+    },
+    {
+      "id": "architecture",
+      "priority": 5,
+      "scope": ["frontend/src", "shared", "worker/src", "agent"],
+      "description": "Find architectural violations: wrong-direction imports, tight coupling, missing abstractions",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
+    },
+    {
+      "id": "hardening",
+      "priority": 6,
+      "scope": ["frontend/src", "shared", "worker/src", "agent"],
+      "description": "Find security, correctness, and regression risk issues to harden",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
+    }
+  ],
+  "queue": [
+    {
+      "id": "q-001",
+      "mode": "review",
+      "workstream_id": "dead_code",
+      "title": "Scan frontend/src and shared for dead exports",
+      "status": "pending",
+      "score": 0.0,
+      "priority_override": null,
+      "added_at": "2026-03-08T00:00:00Z"
+    },
+    {
+      "id": "q-002",
+      "mode": "review",
+      "workstream_id": "duplication",
+      "title": "Scan frontend/src and shared for duplicated logic",
+      "status": "pending",
+      "score": 0.0,
+      "priority_override": null,
+      "added_at": "2026-03-08T00:00:00Z"
+    },
+    {
+      "id": "q-003",
+      "mode": "review",
+      "workstream_id": "complexity",
+      "title": "Scan frontend/src and worker/src for overly complex functions",
+      "status": "pending",
+      "score": 0.0,
+      "priority_override": null,
+      "added_at": "2026-03-08T00:00:00Z"
+    },
+    {
+      "id": "q-004",
+      "mode": "review",
+      "workstream_id": "unused_exports",
+      "title": "Scan frontend/src and shared for unused module exports",
+      "status": "pending",
+      "score": 0.0,
+      "priority_override": null,
+      "added_at": "2026-03-08T00:00:00Z"
+    },
+    {
+      "id": "q-005",
+      "mode": "review",
+      "workstream_id": "architecture",
+      "title": "Scan full codebase for architectural violations and wrong-direction imports",
+      "status": "pending",
+      "score": 0.0,
+      "priority_override": null,
+      "added_at": "2026-03-08T00:00:00Z"
+    },
+    {
+      "id": "q-006",
+      "mode": "review",
+      "workstream_id": "hardening",
+      "title": "Scan full codebase for security, correctness, and regression risk issues",
+      "status": "pending",
+      "score": 0.0,
+      "priority_override": "defer",
+      "added_at": "2026-03-08T00:00:00Z"
+    }
+  ],
+  "findings": [],
+  "stop_policy": {
+    "max_cycles": 80,
+    "stop_on_findings_below": 3,
+    "stop_on_score_below": 10.0,
+    "max_consecutive_no_findings": 3,
+    "consecutive_no_findings": 0,
+    "triggered": false,
+    "trigger_reason": null
+  },
+  "current_slice_recommendation": null,
+  "known_risks": [
+    "Codex may hallucinate evidence — always verify file_path exists before storing finding",
+    "Fix mode is skipped in dry_run mode (no commits) but Codex still runs",
+    "hardening workstream (q-006) is deferred until higher-priority workstreams complete at least one cycle",
+    "decisions.json in docs/review_artifacts/ can be edited manually to mark findings as keep or defer"
+  ]
+}

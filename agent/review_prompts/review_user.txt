@@ -1,0 +1,54 @@
+You are reviewing the merge-crimes codebase for the following workstream.
+
+WORKSTREAM: {workstream}
+
+SCOPE:
+{scope_description}
+
+TARGET FILES (first 40 paths in scope):
+{scope_files_excerpt}
+
+---
+
+INVENTORY SUMMARY (top 50 lines):
+{inventory_excerpt}
+
+---
+
+ARCHITECTURE MAP (import edges for target scope):
+{arch_map_excerpt}
+
+---
+
+PRIOR FINDINGS IN THIS WORKSTREAM (last 5):
+{prior_findings}
+
+---
+
+OPEN RISKS (from tracker):
+{open_risks}
+
+---
+
+TRACKER SUMMARY:
+{tracker_summary}
+
+---
+
+REPO ROOT: {repo_root}
+
+---
+
+INSTRUCTIONS:
+
+1. Read the files in the target scope above (use the file paths provided).
+2. Focus on the workstream category: {workstream}
+3. Look for issues that match the workstream — e.g. if workstream=dead_code, look for
+   exports, functions, and variables that are never imported or called.
+4. For each finding, verify the evidence by reading the actual file content before
+   claiming it's an issue.
+5. Cross-reference against prior findings to avoid duplicating already-known issues.
+6. Produce your findings in the required JSON block format.
+
+Remember: Output exactly one ```json {{"findings": [...]}} ``` block.
+No findings is a valid result — output {{"findings": []}} if the scope is clean.
