@@ -123,6 +123,44 @@ const DEFAULT_THREAT_TEMPLATE: BattleThreatTemplate = {
 };
 
 export const BATTLE_THREAT_TEMPLATES: Readonly<Partial<Record<RepoSignalType, BattleThreatTemplate>>> = {
+  merge_conflict: {
+    id: 'merge-conflict-branch-deadlock',
+    encounterName: 'Branch Deadlock',
+    summary: 'Two incompatible route states are colliding in the district. Untangle the overlap and restore one readable path without acting out a literal merge tool.',
+    arenaTheme: 'A branch nexus of mirrored rails, crossing signal bridges, and lock gates that only open when one clean lane is stabilized.',
+    objective: 'Separate the crossing routes, preserve the clean anchor points, and reopen one stable branch corridor.',
+    tone: 'pressure',
+    mechanicHints: [
+      {
+        key: 'lane-separation',
+        label: 'Lane Separation',
+        description: 'Keep competing routes apart until the stable branch is obvious enough to lock in.',
+      },
+      {
+        key: 'anchor-lock',
+        label: 'Anchor Lock',
+        description: 'Claim steady anchors before the crossing waves overlap again and hide the safe line.',
+      },
+    ],
+    phases: [
+      {
+        key: 'collision-read',
+        label: 'Read the Collision',
+        objective: 'Trace where the two route states cross before either branch hardens into a deadlock.',
+        pressure: 'Crossing lanes pulse at different tempos and briefly erase the safe route.',
+      },
+      {
+        key: 'lock-the-branch',
+        label: 'Lock the Clean Branch',
+        objective: 'Hold the stable path long enough for the conflicting lane to collapse out of the room.',
+        pressure: 'Residual branch echoes keep trying to re-open the rejected route.',
+      },
+    ],
+    introScene: 'the branch nexus',
+    victoryState: 'one clean route stays open and the district can move again',
+    failureState: 'the room freezes into a full branch deadlock',
+    tags: ['merge', 'conflict', 'boss-template'],
+  },
   security_alert: {
     id: 'security-alert-quarantine',
     encounterName: 'Quarantine Breach',

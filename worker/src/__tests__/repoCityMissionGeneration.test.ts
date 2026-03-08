@@ -219,13 +219,38 @@ function testBossConflictUsesTheMergeThreatBotWhenDistrictHasMultipleThreats(): 
   assertEqual(conflicts.length, 1, 'Expected a single merge-conflict boss encounter.');
 
   const [conflict] = conflicts;
-  assertMatch(conflict.hunks[0].label, /^Conflict Core's patch$/i, 'Boss encounter copy should use the merge bot label.');
-  assertMatch(conflict.hunks[0].code, /Conflict Core suggests:/i, 'Boss encounter copy should use the merge bot name, not another district threat.');
+  assertMatch(conflict.title, /^Branch Deadlock at /i, 'Merge conflicts should use the dedicated merge battle template.');
+  assertMatch(conflict.description, /branch nexus/i, 'Merge conflict boss copy should come from the merge battle template.');
+  assertMatch(conflict.hunks[0].label, /^Conflict Core's pressure plan$/i, 'Boss encounter copy should use the merge bot label.');
+  assertMatch(conflict.hunks[2].label, /^Branch Deadlock resolution$/i, 'Boss encounter setup should carry the merge template encounter name.');
+}
+
+function testHighSeverityThreatEscalatesIntoTemplateDrivenBossEncounter(): void {
+  const city = generateCityFromRepo(buildRepo([
+    {
+      type: 'security_alert',
+      target: 'mod-api',
+      severity: 5,
+      title: 'Critical package vulnerability',
+      detail: 'A vulnerable transitive package has reached the API boundary.',
+    },
+  ]));
+
+  const bossMission = city.missions.find((mission) => mission.sourceSignalType === 'security_alert');
+  assert(bossMission, 'Expected a mission for the high-severity security alert.');
+  assertEqual(bossMission.type, 'boss', 'High-severity threats should escalate into boss missions.');
+  assertMatch(bossMission.description, /quarantine breach/i, 'Escalated boss missions should use template-driven battle copy.');
+
+  const conflicts = generatedCityToConflicts(city);
+  assertEqual(conflicts.length, 1, 'Expected one boss encounter for the high-severity threat.');
+  assertMatch(conflicts[0].title, /^Quarantine Breach at /i, 'High-severity security alerts should use the quarantine battle template.');
+  assertMatch(conflicts[0].hunks[2].code, /security-alert-quarantine/i, 'Boss encounter setup should embed the resolved battle template id.');
 }
 
 testRepoLevelPrSignalsGenerateMappedReviewMission();
 testSameTypeSignalsRollUpIntoOneMission();
 testBotsFollowMappedThreatGroupsInsteadOfRawSignals();
 testBossConflictUsesTheMergeThreatBotWhenDistrictHasMultipleThreats();
+testHighSeverityThreatEscalatesIntoTemplateDrivenBossEncounter();
 
 console.log('repoCityMissionGeneration.test.ts: ok');

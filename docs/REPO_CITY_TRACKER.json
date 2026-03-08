@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_6_in_progress",
-  "last_updated": "2026-03-08T14:15:40+05:30",
+  "last_updated": "2026-03-08T14:26:46+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 6 - AI Bot Battle Layer",
   "source_of_truth": [
@@ -754,6 +754,20 @@
             "worker_build": "pass",
             "battle_template_mapping_test": "pass — compiled worker/shared sources to /tmp and ran battleTemplateMapping.test.js"
           }
+        },
+        {
+          "title": "Boss encounter escalation from severe repo threats — apply battle templates to merge-conflict and high-severity fights",
+          "summary": [
+            "Boss encounter generation now resolves merge-conflict and severe threat groups through the shared battle-template contract instead of shipping one hard-coded conflict payload for every boss route.",
+            "High-severity mapped threats now escalate into one boss route per target while merge conflicts retain priority, keeping the existing district-based boss loop stable without widening into frontend changes.",
+            "Generated boss conflicts now expose template-driven encounter names, descriptions, and resolution copy, and worker coverage proves both merge-conflict and security-alert escalation paths."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "worker_lint": "pass",
+            "repo_city_generator_test": "pass — compiled worker/shared sources to /tmp/merge-crimes-worker-tests and ran repoCityMissionGeneration.test.js",
+            "battle_template_mapping_test": "pass — compiled worker/shared sources to /tmp/merge-crimes-worker-tests and ran battleTemplateMapping.test.js"
+          }
         }
       ]
     },
@@ -769,17 +783,17 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Boss encounter escalation from severe repo threats — apply battle templates to merge-conflict and high-severity fights",
-    "why": "Threat-to-template mapping now exists as a shared contract, so the next bounded Phase 6 slice is to feed that data into boss encounter generation for merge conflicts and other severe repo events. That keeps boss copy and setup aligned with the same threat vocabulary without widening into UI or battle-mechanic work yet.",
+    "title": "Template-driven boss overlay copy — remove merge-conflict-only wording from the existing boss UI shell",
+    "why": "Boss conflicts now arrive with template-driven encounter names, summaries, and resolution copy from the backend, so the next bounded Phase 6 slice is to read that payload in the existing boss shell and drop the remaining hard-coded merge-conflict language without rewriting the battle flow.",
     "candidate_files": [
-      "shared/repoCityGenerator.ts",
-      "shared/battleTemplates.ts",
-      "worker/src/__tests__/repoCityMissionGeneration.test.ts"
+      "frontend/src/ui/MergeConflictGame.tsx",
+      "frontend/src/store/gameStore.ts",
+      "frontend/scripts/browser-smoke.mjs"
     ],
     "acceptance_criteria": [
-      "Boss encounter generation uses getBattleTemplate or equivalent shared battle-template data for merge conflicts and other severe threat groups",
-      "Merge conflict and severe-threat boss setups produce distinct copy or setup data without adding UI invocation or freeform battle mechanics",
-      "cd worker && npm run build passes"
+      "The boss overlay no longer hard-codes merge-conflict-only wording when the conflict payload already carries template-driven encounter copy",
+      "Existing boss mission approach and resolution flow still works for merge-conflict and severe-threat encounters",
+      "cd frontend && npm run lint, cd frontend && npm run build, and cd frontend && npm run browser:smoke pass"
     ]
   },
   "open_questions": [

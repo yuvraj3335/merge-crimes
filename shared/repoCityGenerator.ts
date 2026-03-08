@@ -20,6 +20,7 @@ import type {
   BotArchetype,
   DependencyReason,
 } from './repoModel';
+import { getBattleTemplate } from './battleTemplates';
 import { calculateRepoModuleBaseHeat } from './repoSignalMapping';
 
 // ─── Module Kind -> District Category ───
@@ -370,6 +371,8 @@ interface ActionableSignalGroup {
   maxSeverity: RepoSignal['severity'];
 }
 
+const HIGH_SEVERITY_BOSS_THRESHOLD: RepoSignal['severity'] = 4;
+
 const SIGNAL_MISSION_COPY: Record<RepoSignalType, {
   singular: string;
   plural: string;
@@ -535,9 +538,65 @@ function groupActionableSignals(signals: RepoSignal[]): ActionableSignalGroup[] 
     );
 }
 
-function buildSignalDrivenMissionTitle(group: ActionableSignalGroup, districtLabel: string): string {
+function getActionableSignalGroupKey(group: ActionableSignalGroup): string {
+  return `${group.type}::${group.target}`;
+}
+
+function isBossEscalationSignalGroup(group: ActionableSignalGroup): boolean {
+  return group.type === 'merge_conflict'
+    || group.maxSeverity >= HIGH_SEVERITY_BOSS_THRESHOLD;
+}
+
+function shouldPreferBossEscalationGroup(
+  candidate: ActionableSignalGroup,
+  current: ActionableSignalGroup,
+): boolean {
+  const candidateIsMergeConflict = candidate.type === 'merge_conflict';
+  const currentIsMergeConflict = current.type === 'merge_conflict';
+
+  if (candidateIsMergeConflict !== currentIsMergeConflict) {
+    return candidateIsMergeConflict;
+  }
+
+  return candidate.maxSeverity > current.maxSeverity
+    || (
+      candidate.maxSeverity === current.maxSeverity
+      && (
+        candidate.signals.length > current.signals.length
+        || (
+          candidate.signals.length === current.signals.length
+          && candidate.type.localeCompare(current.type) < 0
+        )
+      )
+    );
+}
+
+function selectBossEscalationGroupKeys(groups: ActionableSignalGroup[]): Set<string> {
+  const selectedGroupsByTarget = new Map<string, ActionableSignalGroup>();
+
+  groups.forEach((group) => {
+    if (!isBossEscalationSignalGroup(group)) {
+      return;
+    }
+
+    const current = selectedGroupsByTarget.get(group.target);
+    if (!current || shouldPreferBossEscalationGroup(group, current)) {
+      selectedGroupsByTarget.set(group.target, group);
+    }
+  });
+
+  return new Set(
+    [...selectedGroupsByTarget.values()].map((group) => getActionableSignalGroupKey(group)),
+  );
+}
+
+function buildSignalDrivenMissionTitle(
+  group: ActionableSignalGroup,
+  districtLabel: string,
+  isBossEncounter: boolean,
+): string {
   const copy = SIGNAL_MISSION_COPY[group.type];
-  const prefix = group.type === 'merge_conflict' ? 'BOSS: ' : '';
+  const prefix = isBossEncounter ? 'BOSS: ' : '';
 
   return `${prefix}${copy.missionVerb} ${summarizeSignalGroup(group)} at ${districtLabel}`;
 }
@@ -587,12 +646,59 @@ function buildSignalDrivenMissionObjectives(
   return objectives;
 }
 
+function buildBossSignalDrivenMissionDescription(
+  group: ActionableSignalGroup,
+  districtLabel: string,
+  botArchetype: BotArchetype,
+): string {
+  const battleTemplate = getBattleTemplate(group.type, botArchetype);
+  const [primarySignal] = group.signals;
+  const detail = primarySignal.detail?.trim();
+  const descriptionParts = [
+    `${districtLabel} is under boss-level pressure from ${summarizeSignalGroup(group)}.`,
+    `${battleTemplate.encounterName} is the active encounter pattern for this threat.`,
+    battleTemplate.summary,
+    battleTemplate.copy.intro,
+  ];
+
+  if (detail && detail !== battleTemplate.summary) {
+    descriptionParts.push(`Signal report: ${detail}`);
+  }
+
+  if (group.signals.length > 1) {
+    descriptionParts.push(`This boss route condenses ${group.signals.length} mapped threat reports into one escalation point.`);
+  }
+
+  return descriptionParts.join(' ');
+}
+
+function buildBossSignalDrivenMissionObjectives(
+  group: ActionableSignalGroup,
+  districtLabel: string,
+  botArchetype: BotArchetype,
+): string[] {
+  const battleTemplate = getBattleTemplate(group.type, botArchetype);
+  const firstPhase = battleTemplate.phases[0];
+  const firstMechanic = battleTemplate.mechanicHints[0];
+
+  return [
+    `Enter ${battleTemplate.encounterName} in ${districtLabel}.`,
+    firstPhase?.objective ?? battleTemplate.objective,
+    firstMechanic
+      ? `Use ${firstMechanic.label.toLowerCase()} to keep the encounter readable.`
+      : 'Stabilize the encounter and lock in the clean route.',
+  ];
+}
+
 function generateSignalDrivenMissions(
   repo: RepoModel,
   districts: GeneratedDistrict[],
   signals: RepoSignal[],
 ): GeneratedMission[] {
-  return groupActionableSignals(signals).flatMap((group) => {
+  const groupedSignals = groupActionableSignals(signals);
+  const bossEscalationGroupKeys = selectBossEscalationGroupKeys(groupedSignals);
+
+  return groupedSignals.flatMap((group) => {
     const template = getMissionTemplate(group.type);
     if (!template) {
       return [];
@@ -601,21 +707,30 @@ function generateSignalDrivenMissions(
     const targetDistrict = districts.find((district) => district.moduleId === group.target);
     const districtId = targetDistrict?.id ?? districts[0]?.id ?? 'unknown';
     const districtLabel = targetDistrict?.label ?? targetDistrict?.name ?? humanizeModuleName(group.target);
+    const botProfile = getBotProfile(group.type);
+    const isBossEncounter = bossEscalationGroupKeys.has(getActionableSignalGroupKey(group));
     const effectiveSeverity = getGroupedSignalThreatLevel(group);
-    const difficulty = Math.min(5, Math.max(1, Math.round(
+    const baseDifficulty = Math.min(5, Math.max(1, Math.round(
       (template.baseDifficulty + effectiveSeverity) / 2,
     ))) as 1 | 2 | 3 | 4 | 5;
+    const difficulty = (isBossEncounter
+      ? Math.max(4, baseDifficulty)
+      : baseDifficulty) as 1 | 2 | 3 | 4 | 5;
 
     return [{
       id: makeId('mission', repo.repoId, group.type, group.target),
       districtId,
-      title: buildSignalDrivenMissionTitle(group, districtLabel),
-      type: template.type,
+      title: buildSignalDrivenMissionTitle(group, districtLabel, isBossEncounter),
+      type: isBossEncounter ? 'boss' : template.type,
       difficulty,
       sourceSignalType: group.type,
       targetRef: group.target,
-      description: buildSignalDrivenMissionDescription(group, districtLabel, template),
-      objectives: buildSignalDrivenMissionObjectives(group, districtLabel, template),
+      description: isBossEncounter
+        ? buildBossSignalDrivenMissionDescription(group, districtLabel, botProfile.archetype)
+        : buildSignalDrivenMissionDescription(group, districtLabel, template),
+      objectives: isBossEncounter
+        ? buildBossSignalDrivenMissionObjectives(group, districtLabel, botProfile.archetype)
+        : buildSignalDrivenMissionObjectives(group, districtLabel, template),
     }];
   });
 }
@@ -1259,11 +1374,16 @@ export function generatedCityToConflicts(city: GeneratedCity): MergeConflictEnco
       && b.sourceSignalType === bm.sourceSignalType
     )) ?? city.bots.find((b) => b.districtId === bm.districtId);
     const district = city.districts.find((d) => d.id === bm.districtId);
+    const districtLabel = district?.label ?? district?.name ?? bm.districtId;
+    const battleTemplate = getBattleTemplate(bm.sourceSignalType, bot?.archetype ?? 'saboteur');
+    const primaryMechanic = battleTemplate.mechanicHints[0];
+    const firstPhase = battleTemplate.phases[0];
+    const finalPhase = battleTemplate.phases[battleTemplate.phases.length - 1];
 
     return {
       id: `conflict-${bm.id}`,
-      title: bm.title,
-      description: bm.description,
+      title: `${battleTemplate.encounterName} at ${districtLabel}`,
+      description: `${battleTemplate.summary} ${battleTemplate.copy.intro}`,
       difficulty: bm.difficulty,
       timeLimit: 30,
       districtId: bm.districtId,
@@ -1271,20 +1391,20 @@ export function generatedCityToConflicts(city: GeneratedCity): MergeConflictEnco
       hunks: [
         {
           id: 1,
-          label: `${bot?.name ?? 'AI Bot'}'s patch`,
-          code: `// ${bot?.name ?? 'Bot'} suggests:\nconst fix = applyUnsafe(${district?.name ?? 'module'});\n// Looks correct but skips validation`,
+          label: `${bot?.name ?? battleTemplate.enemyRole}'s pressure plan`,
+          code: `// ${battleTemplate.copy.intro}\nconst route = rushThrough("${districtLabel}");\n// ${primaryMechanic?.description ?? 'Noise hides the readable path.'}`,
           side: 'theirs' as const,
         },
         {
           id: 2,
-          label: 'Your verified fix',
-          code: `// Verified approach:\nconst fix = applySafe(${district?.name ?? 'module'});\nvalidate(fix);\n// Slower but correct`,
+          label: 'Containment pass',
+          code: `// ${battleTemplate.objective}\nconst route = traceStableAnchors("${districtLabel}");\n// ${firstPhase?.objective ?? 'Read the room before you commit.'}`,
           side: 'ours' as const,
         },
         {
           id: 3,
-          label: 'Combined resolution',
-          code: `// Best of both:\nconst fix = applyOptimized(${district?.name ?? 'module'});\nassert(validate(fix));\n// Fast and verified`,
+          label: `${battleTemplate.encounterName} resolution`,
+          code: `// ${battleTemplate.copy.victory}\nconst route = applyCuratedTemplate("${battleTemplate.id}");\nlockRoute(route);\n// ${finalPhase?.objective ?? 'Hold the clean route until the pressure collapses.'}`,
           side: 'resolved' as const,
         },
       ],

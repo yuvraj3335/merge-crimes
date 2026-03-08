@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "wrangler dev",
         "build": "tsc --noEmit",
+        "lint": "tsc --noEmit",
         "deploy": "wrangler deploy",
         "seed": "curl -X POST http://localhost:8787/api/admin/seed"
     },
