@@ -217,19 +217,6 @@ export function MainMenu() {
     const footerNote = generatedCity
         ? `${generatedCity.repoName} snapshot · ${generatedCity.districts.length} districts ready`
         : 'Metadata-first seeded translation';
-    const githubAuthCard = githubAccessToken
-        ? {
-              title: selectedGitHubRepo ? 'GitHub repo selected' : 'Logged in as GitHub user',
-              meta: selectedGitHubRepo
-                  ? `${selectedGitHubRepo.fullName} · ${selectedGitHubRepoEligibility?.shortLabel ?? selectedGitHubRepo.visibility}`
-                  : 'GitHub login is active in this browser session.',
-          }
-        : githubAuthStatus === 'exchanging'
-            ? {
-                  title: 'Completing GitHub login',
-                  meta: 'Finishing the sign-in so the readable repo list can load.',
-              }
-            : null;
     const repoCitySummaryMetrics = generatedCity
         ? [
               { label: 'Districts', value: generatedCity.districts.length },
@@ -289,6 +276,29 @@ export function MainMenu() {
                         : `${selectedGitHubRepo.fullName} is eligible for repo-city translation in this flow.`
                     : `${selectedGitHubRepo.fullName} is listed only. ${selectedGitHubRepoEligibility?.menuDetail ?? "This repo can't be translated here yet."}`
         : 'Load the readable repo list without leaving this menu.';
+    const githubAuthCard = githubAccessToken
+        ? {
+              title: selectedGitHubRepo
+                  ? selectedRepoStillIngesting
+                      ? 'Waiting for GitHub snapshot'
+                      : selectedRepoIngestFailed
+                          ? 'GitHub snapshot failed'
+                          : selectedGitHubRepoEligibility?.eligible
+                              ? selectedGitHubRepoIsActive
+                                  ? 'GitHub repo active'
+                                  : 'GitHub repo selected'
+                              : 'GitHub repo listed only'
+                  : 'Logged in as GitHub user',
+              meta: selectedGitHubRepo
+                  ? githubRepoActionMeta
+                  : 'GitHub login is active in this browser session.',
+          }
+        : githubAuthStatus === 'exchanging'
+            ? {
+                  title: 'Completing GitHub login',
+                  meta: 'Finishing the sign-in so the readable repo list can load.',
+              }
+            : null;
 
     return (
         <div className={`main-menu ${repoCityMode ? 'repo-city' : ''}`.trim()}>

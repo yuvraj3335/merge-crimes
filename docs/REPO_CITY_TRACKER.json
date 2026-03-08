@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T16:51:09+05:30",
+  "last_updated": "2026-03-08T16:57:02+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -992,19 +992,33 @@
             "frontend_build": "pass",
             "browser_smoke": "not_run — copy-only secondary action meta update with no selector or flow changes"
           }
+        },
+        {
+          "title": "Selected-repo auth card status copy — align logged-in GitHub repo summary with active, waiting, and failed snapshot states",
+          "summary": [
+            "The logged-in GitHub summary card in the repo-city menu now derives its selected-repo title and meta from the same ingest-state checks already used by the main status banner, launch CTA, and secondary repo action.",
+            "Waiting and failed snapshot states now replace the older generic repo-name-and-visibility summary with explicit 'Waiting for GitHub snapshot' and 'GitHub snapshot failed' copy that keeps the current active snapshot context visible.",
+            "Active and listed-only selected repos now surface matching connected or listed-only wording in the auth card without changing GitHub ingest behavior, picker flow, or backend contracts."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Selected-repo auth card status copy — align logged-in GitHub repo summary with active, waiting, and failed snapshot states",
-    "why": "The selected-repo status banner, Enter Repo City CTA, and secondary Change GitHub Repo action now reflect pending-ingest and failed snapshot states, but the smaller logged-in GitHub summary card still falls back to generic selected-repo metadata. The next trust slice is to keep that remaining menu summary aligned with the same active-versus-pending snapshot state.",
+    "title": "Selected-repo auth card tone styling — align the logged-in GitHub summary card visuals with active, waiting, failed, and listed-only states",
+    "why": "The logged-in GitHub summary card now uses the right trust copy for active, waiting, failed, and listed-only repo states, but it still renders with one generic visual treatment. The next polish slice is to carry those same states into tone cues on the compact auth card so the smaller summary is as scannable as the larger status banner.",
     "candidate_files": [
-      "frontend/src/ui/MainMenu.tsx"
+      "frontend/src/ui/MainMenu.tsx",
+      "frontend/src/index.css"
     ],
     "acceptance_criteria": [
-      "When a selected public repo is still ingesting or has failed ingest, the logged-in GitHub summary card avoids generic selected or eligible wording and instead reflects the actual snapshot state.",
-      "The GitHub auth summary stays consistent with the selected-repo status banner, the launch CTA, and the secondary repo action about which snapshot is active versus pending.",
+      "The compact logged-in GitHub summary card applies distinct visual tone treatment for active, waiting, failed, and listed-only states without changing its behavior.",
+      "The auth summary remains copy-consistent with the selected-repo status banner, launch CTA, and secondary repo action.",
       "Frontend lint and build pass."
     ]
   },
