@@ -17,3 +17,4 @@ worker/node_modules/
 worker/.dev.vars
 worker/.wrangler/
 agent/logs/
+agent/review_logs/

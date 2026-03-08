@@ -1,31 +1,35 @@
-You are reviewing the merge-crimes codebase for the following workstream.
+Generate a Codex CLI review prompt for the following code review task.
+Your output will be passed verbatim to Codex running in full-auto mode.
+Write the prompt that Codex will execute — do NOT do the review yourself.
 
-WORKSTREAM: {workstream}
+---
 
-SCOPE:
+WORKSTREAM TO REVIEW: {workstream}
+
+SCOPE DESCRIPTION:
 {scope_description}
 
-TARGET FILES (first 40 paths in scope):
+TARGET FILES (Codex should read and inspect these):
 {scope_files_excerpt}
 
 ---
 
-INVENTORY SUMMARY (top 50 lines):
+INVENTORY CONTEXT (codebase size reference for the prompt):
 {inventory_excerpt}
 
 ---
 
-ARCHITECTURE MAP (import edges for target scope):
+ARCHITECTURE MAP (import edges — use to scope dead_code and architecture searches):
 {arch_map_excerpt}
 
 ---
 
-PRIOR FINDINGS IN THIS WORKSTREAM (last 5):
+PRIOR FINDINGS TO SKIP (tell Codex to avoid duplicating these):
 {prior_findings}
 
 ---
 
-OPEN RISKS (from tracker):
+OPEN RISKS (include as context in the generated prompt):
 {open_risks}
 
 ---
@@ -39,24 +43,16 @@ REPO ROOT: {repo_root}
 
 ---
 
-INSTRUCTIONS:
+Write a complete Codex review prompt (under 600 words) that:
 
-1. Read the files in the target scope above (use the file paths provided).
-2. Focus on the workstream category: {workstream}
-3. Look for issues that match the workstream — e.g. if workstream=dead_code, look for
-   exports, functions, and variables that are never imported or called.
-4. For each finding, verify the evidence by reading the actual file content before
-   claiming it's an issue.
-5. Cross-reference against prior findings to avoid duplicating already-known issues.
-6. For every high or medium severity finding, populate the "edge_cases" array with at
-   least 2 concrete scenarios:
-   - Inputs or states that trigger the bug (e.g. "empty array", "concurrent calls")
-   - Callers of the affected symbol and what they pass
-   - Boundary conditions (zero, null, max value, race condition timing)
-   - Any scenario where a naive fix could silently break something else
-   This edge_cases data will be used by the auto-fix system to pre-flight the fix
-   before applying it — make it specific and grounded in the actual code you read.
-7. Produce your findings in the required JSON block format.
+1. Names the specific files to read (from the TARGET FILES list above)
+2. Instructs Codex to focus exclusively on the "{workstream}" workstream category
+3. Tells Codex to verify every finding by actually reading the file and running rg/grep
+4. For dead_code: requires Codex to show the rg search command + output confirming
+   zero cross-file references before claiming a symbol is dead
+5. Tells Codex to skip anything that duplicates the PRIOR FINDINGS listed above
+6. Requires "edge_cases" in each finding with ≥2 entries grounded in the actual code
+7. Instructs Codex to output {"findings": []} if the scope is clean
+8. Reminds Codex: read-only review — do NOT change any files, do NOT run browser:smoke
 
-Remember: Output exactly one ```json {{"findings": [...]}} ``` block.
-No findings is a valid result — output {{"findings": []}} if the scope is clean.
+The prompt must be specific to this workstream and scope — not generic boilerplate.
