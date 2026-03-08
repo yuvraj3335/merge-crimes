@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T15:40:28+05:30",
+  "last_updated": "2026-03-08T15:47:24+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -849,22 +849,34 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "Connected snapshot freshness copy — show when GitHub data was last refreshed in the repo-city shell",
+          "summary": [
+            "The repo-city main menu now shows a source-aware freshness line on the connected repo card, using the existing snapshot generatedAt timestamp to render brief trust copy such as GitHub data refreshed just now or minutes ago.",
+            "GitHub-backed snapshots and seeded fixtures now use distinct source labels and summary badges so players can tell whether the active city came from read-only GitHub metadata or a local seeded fixture without implying live sync.",
+            "The freshness indicator also exposes an absolute timestamp detail and re-renders on a short interval while the menu stays open, keeping the shell copy current without changing refresh flows or polling behavior."
+          ],
+          "validation": {
+            "frontend_build": "pass",
+            "frontend_lint": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Connected snapshot freshness copy — show when GitHub data was last refreshed in the repo-city shell",
-    "why": "With loading, empty, and refresh states now explicit, the next bounded trust slice is to show how fresh the active GitHub-backed snapshot is so players can tell whether they are viewing a seeded fixture, an older cached repo snapshot, or the latest manual refresh.",
+    "title": "In-play snapshot provenance copy — carry GitHub vs seeded freshness into the repo-city HUD",
+    "why": "The menu shell now shows snapshot freshness, but that trust boundary disappears once players enter the city. The next bounded polish slice is to keep source and freshness context visible in the HUD without adding background refresh behavior.",
     "candidate_files": [
-      "frontend/src/ui/MainMenu.tsx",
       "frontend/src/ui/HUD.tsx",
       "frontend/src/index.css"
     ],
     "acceptance_criteria": [
-      "GitHub-backed repo-city surfaces show a clear last-refreshed or snapshot-generated timestamp without implying live sync",
-      "Seeded fixture state and GitHub-backed state are visually distinguishable so players understand the current trust boundary and data source",
-      "The copy stays privacy-safe and avoids implying write access, full source upload, or deep code understanding",
+      "Repo-city HUD shows whether the active city comes from a GitHub snapshot or a seeded fixture",
+      "GitHub-backed HUD copy can surface the existing snapshot timestamp without implying background polling or live sync",
+      "The copy stays privacy-safe, brief, and visually consistent with the existing minimalist shell",
       "cd frontend && npm run lint, cd frontend && npm run build, and cd frontend && npm run browser:smoke pass"
     ]
   },

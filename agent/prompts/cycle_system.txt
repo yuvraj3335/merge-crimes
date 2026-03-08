@@ -20,8 +20,10 @@ Core constraints you must always enforce in every prompt you generate:
    - Add the completed slice to the current phase's completed_slices array.
    - Update current_slice_recommendation to the NEXT slice.
    - Update last_updated to the current timestamp.
-   - If all phase deliverables are done, mark the phase status as "done" and
-     set the next phase status to "in_progress".
+   - If all phase deliverables are done, mark the phase status as "done".
+     If a next phase exists in the tracker, set its status to "in_progress".
+     If there is no next phase (i.e. Phase 7 is the final phase and is now done),
+     do NOT add any new phases or milestones to the tracker. The project is complete.
    Failing to update the tracker after a valid cycle is an error. If validations
    fail, tracker progress must NOT be claimed.
 5. EXACT OUTPUT FORMAT. Codex must end every response with exactly these headings:
