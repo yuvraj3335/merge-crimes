@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { REPO_FIXTURES } from '../../../shared/seed/repoFixtures';
 import type { RepoModel } from '../../../shared/repoModel';
@@ -6,7 +6,11 @@ import * as api from '../api';
 import { GitHubRepoPicker } from './GitHubRepoPicker';
 import { GitHubTrustNotice } from './GitHubTrustNotice';
 import { RepoPrivacyNotice } from './RepoPrivacyNotice';
-import { buildSnapshotFreshnessCopy } from './snapshotFreshness';
+import {
+    getSnapshotFreshnessBadge,
+    type SnapshotSource,
+    useSnapshotFreshnessCopy,
+} from './snapshotFreshness';
 import {
     buildSelectedRepoStatusCopy,
     didSelectedGitHubRepoSnapshotIngestFail,
@@ -67,6 +71,39 @@ function renderGitHubAuthCardGlyph(icon: Exclude<GitHubAuthCardIcon, 'spinner'>)
     }
 }
 
+interface MenuSnapshotFreshnessProps {
+    generatedAt: string;
+    source: SnapshotSource;
+}
+
+const MenuSnapshotFreshness = memo(function MenuSnapshotFreshness({
+    generatedAt,
+    source,
+}: MenuSnapshotFreshnessProps) {
+    const snapshotFreshness = useSnapshotFreshnessCopy(generatedAt, source);
+
+    return (
+        <div className={`repo-city-menu-freshness ${snapshotFreshness.source}`.trim()}>
+            <span className={`repo-city-menu-freshness-pill ${snapshotFreshness.source}`.trim()}>
+                {snapshotFreshness.sourceLabel}
+            </span>
+            <div className="repo-city-menu-freshness-copy">
+                <span className="repo-city-menu-freshness-primary">
+                    {snapshotFreshness.primary}
+                </span>
+                {snapshotFreshness.detail && (
+                    <time
+                        className="repo-city-menu-freshness-detail"
+                        dateTime={generatedAt}
+                    >
+                        {snapshotFreshness.detail}
+                    </time>
+                )}
+            </div>
+        </div>
+    );
+});
+
 export function MainMenu() {
     const phase = useGameStore((s) => s.phase);
     const setPhase = useGameStore((s) => s.setPhase);
@@ -88,7 +125,6 @@ export function MainMenu() {
 
     const [showRepoSelector, setShowRepoSelector] = useState(false);
     const [isRefreshingRepo, setIsRefreshingRepo] = useState(false);
-    const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
     const [repoRefreshStatus, setRepoRefreshStatus] = useState<RepoRefreshStatus>({
         tone: 'idle',
         message: null,
@@ -99,20 +135,6 @@ export function MainMenu() {
     useEffect(() => () => {
         refreshControllerRef.current?.abort();
     }, []);
-
-    useEffect(() => {
-        if (phase !== 'menu' || !repoCityMode || !connectedRepo) {
-            return;
-        }
-
-        const intervalId = window.setInterval(() => {
-            setFreshnessNow(Date.now());
-        }, 30_000);
-
-        return () => {
-            window.clearInterval(intervalId);
-        };
-    }, [connectedRepo, phase, repoCityMode]);
 
     if (phase !== 'menu') return null;
 
@@ -205,12 +227,13 @@ export function MainMenu() {
     const selectorHint = repoCityMode
         ? 'Choose a repo snapshot to translate into districts, routes, and threat signals.'
         : 'The repo inspires the city — districts, missions, and threats are generated from its structure.';
-    const snapshotFreshness = connectedRepo
-        ? buildSnapshotFreshnessCopy(
-            connectedRepo.generatedAt,
-            connectedRepo.metadata?.provider === 'github' ? 'github' : 'seeded',
-            freshnessNow,
-        )
+    const connectedRepoSnapshotSource: SnapshotSource | null = connectedRepo
+        ? connectedRepo.metadata?.provider === 'github'
+            ? 'github'
+            : 'seeded'
+        : null;
+    const snapshotFreshnessBadge = connectedRepoSnapshotSource
+        ? getSnapshotFreshnessBadge(connectedRepoSnapshotSource)
         : null;
     const selectedGitHubRepoIsActive = Boolean(
         selectedGitHubRepo
@@ -398,27 +421,11 @@ export function MainMenu() {
                                 <div className="repo-city-menu-repo-meta">
                                     {connectedRepo.defaultBranch} · {connectedRepo.visibility}
                                 </div>
-                                {snapshotFreshness && (
-                                    <div className={`repo-city-menu-freshness ${snapshotFreshness.source}`.trim()}>
-                                        <span
-                                            className={`repo-city-menu-freshness-pill ${snapshotFreshness.source}`.trim()}
-                                        >
-                                            {snapshotFreshness.sourceLabel}
-                                        </span>
-                                        <div className="repo-city-menu-freshness-copy">
-                                            <span className="repo-city-menu-freshness-primary">
-                                                {snapshotFreshness.primary}
-                                            </span>
-                                            {snapshotFreshness.detail && (
-                                                <time
-                                                    className="repo-city-menu-freshness-detail"
-                                                    dateTime={connectedRepo.generatedAt}
-                                                >
-                                                    {snapshotFreshness.detail}
-                                                </time>
-                                            )}
-                                        </div>
-                                    </div>
+                                {connectedRepoSnapshotSource && (
+                                    <MenuSnapshotFreshness
+                                        generatedAt={connectedRepo.generatedAt}
+                                        source={connectedRepoSnapshotSource}
+                                    />
                                 )}
                                 {canRefreshConnectedRepo && (
                                     <div className="repo-city-menu-repo-actions">
@@ -501,8 +508,8 @@ export function MainMenu() {
                         <div className="repo-city-summary repo-city">
                             <div className="repo-city-summary-header">
                                 <div className="repo-city-summary-copy">
-                                    <div className={`repo-city-badge ${snapshotFreshness?.source ?? ''}`.trim()}>
-                                        {snapshotFreshness?.badge ?? 'City snapshot ready'}
+                                    <div className={`repo-city-badge ${connectedRepoSnapshotSource ?? ''}`.trim()}>
+                                        {snapshotFreshnessBadge ?? 'City snapshot ready'}
                                     </div>
                                     <div className="repo-city-summary-title">
                                         {generatedCity.repoOwner}/{generatedCity.repoName}

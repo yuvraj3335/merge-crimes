@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 export type SnapshotSource = 'github' | 'seeded';
 
 export interface SnapshotFreshnessCopy {
@@ -15,6 +17,15 @@ const SNAPSHOT_DETAIL_FORMATTER = new Intl.DateTimeFormat(undefined, {
 const SNAPSHOT_RELATIVE_FORMATTER = new Intl.RelativeTimeFormat(undefined, {
     numeric: 'auto',
 });
+const SNAPSHOT_FRESHNESS_TICK_MS = 30_000;
+
+function getSnapshotSourceLabel(source: SnapshotSource): string {
+    return source === 'github' ? 'GitHub snapshot' : 'Seeded fixture';
+}
+
+function getSnapshotReadyBadge(source: SnapshotSource): string {
+    return source === 'github' ? 'GitHub snapshot ready' : 'Seeded fixture ready';
+}
 
 function formatSnapshotAge(timestampMs: number, nowMs: number): string {
     const diffMs = nowMs - timestampMs;
@@ -47,14 +58,14 @@ export function buildSnapshotFreshnessCopy(
     source: SnapshotSource,
     nowMs: number,
 ): SnapshotFreshnessCopy {
-    const sourceLabel = source === 'github' ? 'GitHub snapshot' : 'Seeded fixture';
+    const sourceLabel = getSnapshotSourceLabel(source);
     const fallbackPrimary = source === 'github'
         ? 'GitHub snapshot time unavailable'
         : 'Seeded fixture time unavailable';
 
     if (!generatedAt) {
         return {
-            badge: source === 'github' ? 'GitHub snapshot ready' : 'Seeded fixture ready',
+            badge: getSnapshotReadyBadge(source),
             detail: null,
             primary: fallbackPrimary,
             source,
@@ -65,7 +76,7 @@ export function buildSnapshotFreshnessCopy(
     const timestamp = new Date(generatedAt);
     if (Number.isNaN(timestamp.getTime())) {
         return {
-            badge: source === 'github' ? 'GitHub snapshot ready' : 'Seeded fixture ready',
+            badge: getSnapshotReadyBadge(source),
             detail: null,
             primary: fallbackPrimary,
             source,
@@ -76,7 +87,7 @@ export function buildSnapshotFreshnessCopy(
     const ageCopy = formatSnapshotAge(timestamp.getTime(), nowMs);
 
     return {
-        badge: source === 'github' ? 'GitHub snapshot ready' : 'Seeded fixture ready',
+        badge: getSnapshotReadyBadge(source),
         detail: SNAPSHOT_DETAIL_FORMATTER.format(timestamp),
         primary: source === 'github'
             ? `GitHub data refreshed ${ageCopy}`
@@ -84,4 +95,27 @@ export function buildSnapshotFreshnessCopy(
         source,
         sourceLabel,
     };
+}
+
+export function getSnapshotFreshnessBadge(source: SnapshotSource): string {
+    return getSnapshotReadyBadge(source);
+}
+
+export function useSnapshotFreshnessCopy(
+    generatedAt: string | null | undefined,
+    source: SnapshotSource,
+): SnapshotFreshnessCopy {
+    const [nowMs, setNowMs] = useState(() => Date.now());
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setNowMs(Date.now());
+        }, SNAPSHOT_FRESHNESS_TICK_MS);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, []);
+
+    return buildSnapshotFreshnessCopy(generatedAt, source, nowMs);
 }
