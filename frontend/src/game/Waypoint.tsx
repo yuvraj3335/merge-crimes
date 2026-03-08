@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '../store/gameStore';
 import { Html } from '@react-three/drei';
+import { getWaypointDistanceAndText } from './waypointUtils';
 
 const MISSION_TYPE_COLORS: Record<string, string> = {
     delivery: '#00ff88',
@@ -51,11 +52,9 @@ export function Waypoint() {
             : 0.15 + Math.sin(t * 2.5) * 0.1;
 
         // Check proximity
-        const dx = playerPosition[0] - waypoint.position[0];
-        const dz = playerPosition[2] - waypoint.position[2];
-        const dist = Math.sqrt(dx * dx + dz * dz);
+        const { distance } = getWaypointDistanceAndText(playerPosition, waypoint.position);
 
-        if (dist < waypoint.radius) {
+        if (distance < waypoint.radius) {
             reachWaypoint(waypoint.id);
         }
     });
@@ -70,9 +69,7 @@ export function Waypoint() {
     const beamColor = repoCityMode ? calmColor(color, 0.72) : color;
 
     // Calculate distance to player
-    const dx = playerPosition[0] - waypoint.position[0];
-    const dz = playerPosition[2] - waypoint.position[2];
-    const distance = Math.sqrt(dx * dx + dz * dz);
+    const { text: distanceText } = getWaypointDistanceAndText(playerPosition, waypoint.position);
 
     return (
         <group position={waypoint.position}>
@@ -163,7 +160,7 @@ export function Waypoint() {
                 }}>
                     <div style={{ marginBottom: '2px' }}>{waypoint.label}</div>
                     <div style={{ fontSize: '9px', opacity: repoCityMode ? 0.78 : 0.7, color: repoCityMode ? 'rgba(214, 224, 255, 0.72)' : color }}>
-                        {distance < 10 ? `${distance.toFixed(1)}m` : `${Math.round(distance)}m`}
+                        {distanceText}
                     </div>
                 </div>
             </Html>

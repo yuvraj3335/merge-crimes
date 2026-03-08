@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import type { GameState } from '../store/gameStore';
 import { SEED_FACTION_BY_ID } from '../../../shared/seed/factions';
 import type { District } from '../../../shared/types';
+import { getWaypointDistanceAndText } from '../game/waypointUtils';
 import { getHeatLabel } from './heatLabel';
 import { buildRepoHudRefreshNotice } from './repoRefreshCopy';
 import { type SnapshotSource, useSnapshotFreshnessCopy } from './snapshotFreshness';
@@ -540,18 +541,17 @@ export const HUD = memo(function HUD() {
 HUD.displayName = 'HUD';
 
 const DirectionArrow = memo(function DirectionArrow({ playerPosition, waypointPosition, color }: DirectionArrowProps) {
-    const dx = waypointPosition[0] - playerPosition[0];
-    const dz = waypointPosition[2] - playerPosition[2];
-    const dist = Math.sqrt(dx * dx + dz * dz);
+    const { distance, text: distText } = getWaypointDistanceAndText(playerPosition, waypointPosition);
 
     // Angle from player to waypoint (in screen space: -Z is "up" on screen)
     // atan2 gives angle, we convert to CSS rotation (0 = up)
-    const angle = Math.atan2(dx, -dz) * (180 / Math.PI);
+    const angle = Math.atan2(
+        waypointPosition[0] - playerPosition[0],
+        playerPosition[2] - waypointPosition[2],
+    ) * (180 / Math.PI);
 
     // Don't show if very close
-    if (dist < 5) return null;
-
-    const distText = dist < 10 ? `${dist.toFixed(1)}m` : `${Math.round(dist)}m`;
+    if (distance < 5) return null;
 
     return (
         <div className="direction-arrow" style={{ color }}>

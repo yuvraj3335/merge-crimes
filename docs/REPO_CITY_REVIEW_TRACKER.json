@@ -6,8 +6,8 @@
     "state": "running",
     "cycles_run": 4,
     "total_findings": 16,
-    "total_resolved": 10,
-    "last_updated": "2026-03-08T16:16:04Z"
+    "total_resolved": 11,
+    "last_updated": "2026-03-08T16:33:57Z"
   },
   "workstreams": [
     {
@@ -393,11 +393,12 @@
       "workstream_id": "duplication",
       "title": "Fix: Current-waypoint distance calculation and `m` formatting are duplicated across t",
       "severity": "medium",
-      "status": "pending",
+      "status": "done",
       "score": 1.9,
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T15:16:00Z",
+      "completed_at": "2026-03-08T16:33:57Z"
     },
     {
       "id": "qfix-f-000015",
@@ -671,7 +672,7 @@
       "description": "Current-waypoint distance calculation and `m` formatting are duplicated across the 3D waypoint label, the mission objective tracker, and the HUD direction arrow.",
       "evidence": "frontend/src/game/Waypoint.tsx:53-56,72-75,166-166\nconst dx = playerPosition[0] - waypoint.position[0];\nconst dz = playerPosition[2] - waypoint.position[2];\nconst dist = Math.sqrt(dx * dx + dz * dz);\n...\nconst distance = Math.sqrt(dx * dx + dz * dz);\n...\n{distance < 10 ? `${distance.toFixed(1)}m` : `${Math.round(distance)}m`}\n\nfrontend/src/ui/MissionObjectiveTracker.tsx:21-28\nlet distanceText = '';\nif (currentWp) {\n    const dx = playerPosition[0] - currentWp.position[0];\n    const dz = playerPosition[2] - currentWp.position[2];\n    const dist = Math.sqrt(dx * dx + dz * dz);\n    distanceText = dist < 10 ? `${dist.toFixed(1)}m` : `${Math.round(dist)}m`;\n}\n\nfrontend/src/ui/HUD.tsx:548-560\nconst dx = waypointPosition[0] - playerPosition[0];\nconst dz = waypointPosition[2] - playerPosition[2];\nconst dist = Math.sqrt(dx * dx + dz * dz);\n...\nconst distText = dist < 10 ? `${dist.toFixed(1)}m` : `${Math.round(dist)}m`;",
       "recommended_action": "Centralize waypoint-distance calculation and formatting so every mission UI surface reads from the same helper.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T15:26:13Z",
       "cycle_number": 4,
       "edge_cases": [

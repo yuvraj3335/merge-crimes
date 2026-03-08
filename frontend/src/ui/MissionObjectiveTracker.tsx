@@ -1,4 +1,5 @@
 import { useGameStore } from '../store/gameStore';
+import { getWaypointDistanceAndText } from '../game/waypointUtils';
 
 export function MissionObjectiveTracker() {
     const {
@@ -21,10 +22,7 @@ export function MissionObjectiveTracker() {
     // Calculate distance to current waypoint
     let distanceText = '';
     if (currentWp) {
-        const dx = playerPosition[0] - currentWp.position[0];
-        const dz = playerPosition[2] - currentWp.position[2];
-        const dist = Math.sqrt(dx * dx + dz * dz);
-        distanceText = dist < 10 ? `${dist.toFixed(1)}m` : `${Math.round(dist)}m`;
+        distanceText = getWaypointDistanceAndText(playerPosition, currentWp.position).text;
     }
 
     if (repoCityMode) {
