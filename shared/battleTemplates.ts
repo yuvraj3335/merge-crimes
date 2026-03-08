@@ -77,6 +77,11 @@ export interface BossMissionRouteCopy {
   objectives: [string, string, string];
 }
 
+export interface BossMissionApproachTemplate {
+  descriptionTemplate: string;
+  objectiveTemplates: readonly [string, string, string];
+}
+
 interface BattleThreatTemplate {
   id: string;
   encounterName: string;
@@ -99,6 +104,15 @@ interface BattleBotOverlay {
   failureOutcome: string;
   tags: readonly string[];
 }
+
+export const DEFAULT_BOSS_MISSION_APPROACH_TEMPLATE: BossMissionApproachTemplate = {
+  descriptionTemplate: 'Reach the encounter point, hold the route open, and prepare to restore district stability.',
+  objectiveTemplates: [
+    'Approach the active threat',
+    'Hold the route open to the encounter point',
+    'Enter the arena and neutralize the AI boss',
+  ],
+};
 
 const DEFAULT_THREAT_TEMPLATE: BattleThreatTemplate = {
   id: 'generic-threat-sweep',
@@ -403,23 +417,19 @@ export function buildBossMissionRouteCopy(
   escalationCount?: number,
 ): BossMissionRouteCopy {
   const battleTemplate = getBattleTemplate(threatType, botArchetype);
-  const firstPhase = battleTemplate.phases[0];
-  const firstMechanic = battleTemplate.mechanicHints[0];
+  const [approachObjective, routeObjective, resolutionObjective] = DEFAULT_BOSS_MISSION_APPROACH_TEMPLATE.objectiveTemplates;
 
   return {
     title: `BOSS: ${battleTemplate.encounterName} at ${districtLabel}`,
     description: [
-      `${battleTemplate.encounterName} has locked onto ${districtLabel} as the district's active boss route.`,
-      battleTemplate.summary,
-      battleTemplate.copy.intro,
+      `An AI boss is destabilizing ${districtLabel}.`,
+      DEFAULT_BOSS_MISSION_APPROACH_TEMPLATE.descriptionTemplate,
       buildBossRouteEscalationLine(escalationCount),
     ].join(' '),
     objectives: [
-      `Approach ${battleTemplate.encounterName} in ${districtLabel}`,
-      firstPhase?.objective ?? battleTemplate.objective,
-      firstMechanic
-        ? `Use ${firstMechanic.label.toLowerCase()} to keep the route readable`
-        : 'Stabilize the route and lock in the clean lane',
+      `${approachObjective} in ${districtLabel}`,
+      routeObjective,
+      resolutionObjective,
     ],
   };
 }

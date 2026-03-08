@@ -20,6 +20,12 @@ function assertMatch(value: string, pattern: RegExp, message: string): void {
   }
 }
 
+function assertDoesNotMatch(value: string, pattern: RegExp, message: string): void {
+  if (pattern.test(value)) {
+    throw new Error(`${message} (value: ${value})`);
+  }
+}
+
 function buildRepo(signals: RepoModel['signals']): RepoModel {
   return {
     repoId: 'github:mission-test',
@@ -215,6 +221,14 @@ function testBossConflictUsesTheMergeThreatBotWhenDistrictHasMultipleThreats(): 
     },
   ]));
 
+  const bossMission = city.missions.find((mission) => mission.sourceSignalType === 'merge_conflict');
+  assert(bossMission, 'Expected a boss mission for the merge-conflict threat.');
+  assertEqual(bossMission.type, 'boss', 'Merge conflicts should still escalate into boss missions.');
+  assertMatch(bossMission.description, /AI boss is destabilizing/i, 'Boss mission approach copy should stay neutral before the encounter starts.');
+  assertMatch(bossMission.objectives[0], /Approach the active threat in /i, 'Boss mission objectives should use the neutral approach template.');
+  assertMatch(bossMission.objectives[2], /neutralize the AI boss/i, 'Boss mission objectives should frame the encounter as an AI-boss threat.');
+  assertDoesNotMatch(bossMission.description, /branch nexus|deadlock|merge conflict/i, 'Boss mission approach copy should not reuse merge-conflict encounter jargon.');
+
   const conflicts = generatedCityToConflicts(city);
   assertEqual(conflicts.length, 1, 'Expected a single merge-conflict boss encounter.');
 
@@ -239,7 +253,9 @@ function testHighSeverityThreatEscalatesIntoTemplateDrivenBossEncounter(): void 
   const bossMission = city.missions.find((mission) => mission.sourceSignalType === 'security_alert');
   assert(bossMission, 'Expected a mission for the high-severity security alert.');
   assertEqual(bossMission.type, 'boss', 'High-severity threats should escalate into boss missions.');
-  assertMatch(bossMission.description, /quarantine breach/i, 'Escalated boss missions should use template-driven battle copy.');
+  assertMatch(bossMission.description, /AI boss is destabilizing/i, 'Escalated boss missions should use neutral boss-route approach copy.');
+  assertMatch(bossMission.objectives[1], /encounter point/i, 'Escalated boss objectives should guide the player through a generic boss approach route.');
+  assertDoesNotMatch(bossMission.description, /quarantine breach|dependency vault/i, 'Boss mission approach copy should stay generic until the encounter begins.');
 
   const conflicts = generatedCityToConflicts(city);
   assertEqual(conflicts.length, 1, 'Expected one boss encounter for the high-severity threat.');

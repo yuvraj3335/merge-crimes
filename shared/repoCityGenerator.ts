@@ -20,7 +20,7 @@ import type {
   BotArchetype,
   DependencyReason,
 } from './repoModel';
-import { buildBossMissionRouteCopy, getBattleTemplate } from './battleTemplates';
+import { buildBossMissionRouteCopy, DEFAULT_BOSS_MISSION_APPROACH_TEMPLATE, getBattleTemplate } from './battleTemplates';
 import { calculateRepoModuleBaseHeat } from './repoSignalMapping';
 
 // ─── Module Kind -> District Category ───
@@ -257,8 +257,8 @@ const SIGNAL_MISSION_TEMPLATES: Partial<Record<RepoSignalType, MissionTemplate>>
   merge_conflict: {
     titlePrefix: 'BOSS: Stabilize',
     type: 'boss',
-    descriptionTemplate: 'A boss route has condensed into crossing lanes. Approach the escalation point and reopen one stable corridor before the district locks down.',
-    objectiveTemplates: ['Approach the locked route', 'Read the crossing lanes', 'Reopen the stable corridor'],
+    descriptionTemplate: DEFAULT_BOSS_MISSION_APPROACH_TEMPLATE.descriptionTemplate,
+    objectiveTemplates: [...DEFAULT_BOSS_MISSION_APPROACH_TEMPLATE.objectiveTemplates],
     baseDifficulty: 4,
   },
   open_pr: {

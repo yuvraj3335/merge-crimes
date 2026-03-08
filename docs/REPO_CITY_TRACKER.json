@@ -1,9 +1,9 @@
 {
   "project": "merge-crimes-repo-city-pivot",
-  "status": "phase_6_in_progress",
-  "last_updated": "2026-03-08T14:36:25+05:30",
+  "status": "phase_7_in_progress",
+  "last_updated": "2026-03-08T14:56:13+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
-  "current_goal": "Phase 6 - AI Bot Battle Layer",
+  "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
     "docs/REPO_CITY_TRACKER.json",
     "docs/REPO_CITY_PRODUCT_VISION.md",
@@ -724,7 +724,7 @@
     },
     {
       "name": "Phase 6 - AI Bot Battle Layer",
-      "status": "in_progress",
+      "status": "done",
       "deliverables": [
         "Bot archetype system",
         "Battle template mapping",
@@ -781,12 +781,28 @@
             "frontend_build": "pass",
             "browser_smoke": "not_run — explicitly skipped per cycle instruction; overlay copy changed without selector or flow rewiring"
           }
+        },
+        {
+          "title": "Template-driven boss objective copy — remove conflict-zone wording from boss mission approach text",
+          "summary": [
+            "Boss mission route description and objective copy now comes from one shared neutral approach template instead of reusing merge-conflict-specific encounter language before the fight begins.",
+            "Generated boss missions and seeded boss missions now keep their encounter-specific battle payloads while using generic AI-boss approach wording such as approaching the threat and neutralizing the boss.",
+            "Worker coverage now asserts that pre-encounter boss mission copy stays threat-generic while merge-conflict and security-alert encounters still open the correct template-driven boss battles."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "repo_city_generator_test": "pass — compiled worker/shared sources to /tmp/merge-crimes-worker-tests, rewrote temporary ESM specifiers to .js for Node, and ran repoCityMissionGeneration.test.js",
+            "battle_template_mapping_test": "pass — compiled worker/shared sources to /tmp/merge-crimes-worker-tests, rewrote temporary ESM specifiers to .js for Node, and ran battleTemplateMapping.test.js",
+            "browser_smoke": "not_run — no frontend UI flow or selector files changed in this slice"
+          }
         }
       ]
     },
     {
       "name": "Phase 7 - Trust, refresh, and polish",
-      "status": "pending",
+      "status": "in_progress",
       "deliverables": [
         "Refresh/update cycle",
         "Privacy-safe copy",
@@ -796,17 +812,18 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Template-driven boss objective copy — remove conflict-zone wording from boss mission approach text",
-    "why": "The boss overlay now reads template-driven encounter copy, but generated boss mission objectives and seed boss objectives still say \"conflict zone\" and similar merge-conflict language before the encounter starts. The next bounded Phase 6 slice is to align that approach copy with threat-generic battle templates without changing mission flow.",
+    "title": "Manual repo refresh control — let players re-ingest the selected repo snapshot on demand",
+    "why": "Phase 7 starts with refresh/update cycle work. The smallest meaningful slice is a manual refresh action for the currently selected GitHub repo so cached repo-city state can be updated without forcing a new login or widening repository permissions.",
     "candidate_files": [
-      "shared/repoCityGenerator.ts",
-      "shared/seed/missions.ts",
-      "frontend/src/ui/MissionObjectiveTracker.tsx"
+      "frontend/src/ui/MainMenu.tsx",
+      "frontend/src/ui/GitHubRepoPicker.tsx",
+      "frontend/src/store/gameStore.ts",
+      "frontend/src/repoCityBootstrap.ts"
     ],
     "acceptance_criteria": [
-      "Boss mission objectives and approach text no longer assume every boss encounter is a merge conflict",
-      "Existing boss waypoint, mission-start, and encounter-start flow still works for merge-conflict and severe-threat encounters",
-      "cd worker && npm run build, cd frontend && npm run lint, and cd frontend && npm run build pass"
+      "The selected GitHub repo can be manually refreshed without restarting auth or losing the current repo-city session",
+      "A successful refresh replaces the cached repo snapshot and updates the connected repo metadata shown in the frontend",
+      "cd frontend && npm run lint, cd frontend && npm run build, and cd frontend && npm run browser:smoke pass"
     ]
   },
   "open_questions": [
