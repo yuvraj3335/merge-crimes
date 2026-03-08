@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 6,
+    "cycles_run": 7,
     "total_findings": 16,
     "total_resolved": 11,
-    "last_updated": "2026-03-08T16:48:35Z"
+    "last_updated": "2026-03-08T16:55:48Z"
   },
   "workstreams": [
     {
@@ -33,10 +33,10 @@
         "worker/src"
       ],
       "description": "Find duplicated logic that should be extracted into shared utilities",
-      "last_run_at": "2026-03-08T16:35:35Z",
-      "cycles_assigned": 3,
+      "last_run_at": "2026-03-08T16:41:43Z",
+      "cycles_assigned": 4,
       "open_findings_count": 0,
-      "findings_open": 5
+      "findings_open": 6
     },
     {
       "id": "complexity",
@@ -165,7 +165,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:35:35Z"
+      "last_scored_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "q-004",
@@ -176,7 +176,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:35:35Z"
+      "last_scored_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "q-005",
@@ -187,7 +187,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:35:35Z"
+      "last_scored_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "q-006",
@@ -198,7 +198,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:35:35Z"
+      "last_scored_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "q-007",
@@ -209,7 +209,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:35:35Z"
+      "last_scored_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "q-008",
@@ -220,7 +220,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:35:35Z"
+      "last_scored_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "q-009",
@@ -231,7 +231,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T16:35:35Z"
+      "last_scored_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "qfix-f-000001",
@@ -413,7 +413,7 @@
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
       "last_scored_at": "2026-03-08T16:35:35Z",
-      "completed_at": "2026-03-08T16:48:35Z"
+      "completed_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "qfix-f-000016",
@@ -422,11 +422,12 @@
       "workstream_id": "duplication",
       "title": "Fix: Bootstrap snapshot parsing and smoke-harness snapshot construction both manually",
       "severity": "medium",
-      "status": "pending",
+      "status": "done",
       "score": 1.64,
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T16:35:35Z"
+      "last_scored_at": "2026-03-08T16:41:43Z",
+      "completed_at": "2026-03-08T16:55:48Z"
     }
   ],
   "findings": [
@@ -746,7 +747,7 @@
         "The loading and failure branches both vary on whether `connectedRepo` exists; adding a new fallback path in only one copy will desynchronize the main CTA copy from the picker/status-card copy.",
         "Eligibility policy comes from `repoTranslationEligibility.ts`; if `internal` repos or another visibility state becomes eligible later, both the inline menu logic and the shared status builder must change together to avoid contradictory UI."
       ],
-      "resolved_at": "2026-03-08T16:48:35Z"
+      "resolved_at": "2026-03-08T16:41:43Z"
     },
     {
       "id": "f-000016",
@@ -761,13 +762,14 @@
       "description": "Bootstrap snapshot parsing and smoke-harness snapshot construction both manually clone and normalize repo snapshots from the same sample JSON, but they do it in separate, already-diverging code paths.",
       "evidence": "frontend/src/repoCityBootstrap.ts:45-76\nconst modules = cloneModules(candidate.modules as RepoModule[]);\nconst allowedModuleIds = new Set(modules.map((module) => module.id));\n\nreturn {\n    ...\n    languages: Array.isArray(candidate.languages)\n        ? candidate.languages.map((language) => ({ ...language }))\n        : [],\n    modules,\n    dependencyEdges: Array.isArray(candidate.dependencyEdges)\n        ? cloneDependencyEdges(candidate.dependencyEdges as DependencyEdge[], allowedModuleIds)\n        : [],\n    signals: Array.isArray(candidate.signals)\n        ? cloneSignals(candidate.signals as RepoSignal[], allowedModuleIds)\n        : [],\n    ...(candidate.metadata ? { metadata: { ...candidate.metadata, topics: Array.isArray(candidate.metadata.topics) ? [...candidate.metadata.topics] : [] } } : {}),\n};\n\nfrontend/src/localSmokeBridge.ts:96-144\nreturn {\n    ...baseSnapshot,\n    repoId: SMOKE_CONNECTED_REPO_ID,\n    generatedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,\n    languages: baseSnapshot.languages.map((language) => ({ ...language })),\n    modules: baseSnapshot.modules.map((module) => ({ ...module })),\n    dependencyEdges: baseSnapshot.dependencyEdges.map((edge) => ({ ...edge })),\n    signals: [\n        ...cloneSignals(baseSnapshot.signals).filter((signal) => signal.type !== 'latest_commit'),\n        { type: 'latest_commit', ... }\n    ],\n    metadata: {\n        ...(baseSnapshot.metadata ?? { ... }),\n        provider: 'github',\n        providerRepoId: SMOKE_CONNECTED_REPO_PROVIDER_ID,\n        updatedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,\n        pushedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,\n        topics: [...(baseSnapshot.metadata?.topics ?? [])],\n    },\n};",
       "recommended_action": "Extract one repo-snapshot normalization/cloning utility and have both bootstrap and smoke harness call it, with explicit options for truncation or commit override.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T15:26:13Z",
       "cycle_number": 4,
       "edge_cases": [
         "Bootstrap truncates to `MAX_BOOTSTRAP_MODULES` and filters `dependencyEdges` and `signals` to `allowedModuleIds`, while `buildSmokeConnectedRepo` keeps the full module graph; the same sample snapshot can therefore drive different districts, missions, and signals in normal and smoke flows.",
         "If `RepoModel` gains another nested array or metadata field, both manual clone paths need updates or one environment will silently retain shared references or omit fields that the other preserves."
-      ]
+      ],
+      "resolved_at": "2026-03-08T16:55:48Z"
     }
   ],
   "stop_policy": {

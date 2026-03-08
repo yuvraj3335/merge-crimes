@@ -1,79 +1,16 @@
 import sampleRepoSnapshotJson from '../../shared/snapshots/sample_repo_snapshot.json';
-import type { DependencyEdge, RepoModel, RepoModule, RepoSignal } from '../../shared/repoModel';
+import type { RepoModel } from '../../shared/repoModel';
+import { normalizeRepoSnapshot } from './normalizeRepoSnapshot';
 import { isLocalSmokeMode } from './runtimeConfig';
 
 const MAX_BOOTSTRAP_MODULES = 10;
 const SELECTED_GITHUB_REPO_SNAPSHOT_STORAGE_KEY = 'merge-crimes-selected-github-repo-snapshot';
 
-function cloneModules(modules: RepoModule[]): RepoModule[] {
-    return modules.slice(0, MAX_BOOTSTRAP_MODULES).map((module) => ({ ...module }));
-}
-
-function cloneDependencyEdges(
-    dependencyEdges: DependencyEdge[],
-    allowedModuleIds: Set<string>,
-): DependencyEdge[] {
-    return dependencyEdges
-        .filter((edge) => allowedModuleIds.has(edge.fromModuleId) && allowedModuleIds.has(edge.toModuleId))
-        .map((edge) => ({ ...edge }));
-}
-
-function cloneSignals(signals: RepoSignal[], allowedModuleIds: Set<string>): RepoSignal[] {
-    return signals
-        .filter((signal) => allowedModuleIds.has(signal.target))
-        .map((signal) => ({ ...signal }));
-}
-
 function readBootstrapRepoSnapshot(input: unknown): RepoModel | null {
-    if (!input || typeof input !== 'object') {
-        return null;
-    }
-
-    const candidate = input as Partial<RepoModel>;
-    if (
-        !candidate.repoId
-        || !candidate.owner
-        || !candidate.name
-        || !candidate.defaultBranch
-        || !candidate.visibility
-        || !Array.isArray(candidate.modules)
-        || candidate.modules.length === 0
-    ) {
-        return null;
-    }
-
-    const modules = cloneModules(candidate.modules as RepoModule[]);
-    const allowedModuleIds = new Set(modules.map((module) => module.id));
-
-    return {
-        repoId: candidate.repoId,
-        owner: candidate.owner,
-        name: candidate.name,
-        defaultBranch: candidate.defaultBranch,
-        visibility: candidate.visibility,
-        archetype: candidate.archetype ?? 'unknown',
-        languages: Array.isArray(candidate.languages)
-            ? candidate.languages.map((language) => ({ ...language }))
-            : [],
-        modules,
-        dependencyEdges: Array.isArray(candidate.dependencyEdges)
-            ? cloneDependencyEdges(candidate.dependencyEdges as DependencyEdge[], allowedModuleIds)
-            : [],
-        signals: Array.isArray(candidate.signals)
-            ? cloneSignals(candidate.signals as RepoSignal[], allowedModuleIds)
-            : [],
-        generatedAt: typeof candidate.generatedAt === 'string'
-            ? candidate.generatedAt
-            : new Date().toISOString(),
-        ...(candidate.metadata
-            ? {
-                metadata: {
-                    ...candidate.metadata,
-                    topics: Array.isArray(candidate.metadata.topics) ? [...candidate.metadata.topics] : [],
-                },
-            }
-            : {}),
-    };
+    return normalizeRepoSnapshot(input, {
+        moduleLimit: MAX_BOOTSTRAP_MODULES,
+        filterRelationsToModuleIds: true,
+    });
 }
 
 const bootstrapRepoSnapshot = readBootstrapRepoSnapshot(sampleRepoSnapshotJson);

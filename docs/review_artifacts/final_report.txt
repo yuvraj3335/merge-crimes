@@ -1,23 +1,22 @@
 Campaign:
 ID:      rc-2026-03-08
-Cycle:   6
+Cycle:   7
 Mode:    apply_fix
 Dry run: False
 
 Mode and slice:
 Mode:        apply_fix
 Workstream:  duplication
-Slice:       Fix: Transit path-length accumulation is implemented three times across HUD, Repo Cit
+Slice:       Fix: Selected GitHub repo status is modeled twice: `selectedRepoStatusCopy.ts` has a 
 
 Files involved:
   docs/REPO_CITY_REVIEW_TRACKER.json
   docs/review_artifacts/final_report.txt
   docs/review_artifacts/removal_candidates.json
   docs/review_artifacts/summary.json
-  frontend/src/store/gameStore.ts
-  frontend/src/ui/HUD.tsx
-  frontend/src/ui/RepoCitySurface.tsx
-  frontend/src/utils/
+  frontend/dist-smoke-ssr/browser-smoke-runner.js
+  frontend/src/ui/MainMenu.tsx
+  frontend/src/ui/selectedRepoStatusCopy.ts
 
 Commands run:
   cd frontend && npm run build
@@ -27,8 +26,8 @@ Findings this cycle:
 New findings: 0
 
 Total finding queue:
-Open findings: 4
-Pending queue: 9 total  (7 review, 2 fix)
+Open findings: 3
+Pending queue: 8 total  (7 review, 1 fix)
 
 Artifacts written:
   /Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/REPO_CITY_REVIEW_TRACKER.json
@@ -37,8 +36,7 @@ Artifacts written:
 What is now safer or simpler:
 BUG_VERIFIED: true
 FIX_STATUS: APPLIED
-All required frontend validations passed.
-Existing dirty files under `docs/review_artifacts/` were left untouched.
+The only failure during validation was a stale `githubRepoActionMeta` reference left in `MainMenu.tsx`; that was patched and all final validations passed.
 
 Stop policy decision:
 Continuing — next slice available
@@ -50,12 +48,12 @@ Tracker changes:
    "campaign": {
      "id": "rc-2026-03-08",
      "state": "running",
--    "cycles_run": 5,
-+    "cycles_run": 6,
+-    "cycles_run": 6,
++    "cycles_run": 7,
      "total_findings": 16,
      "total_resolved": 10,
--    "last_updated": "2026-03-08T16:30:54Z"
-+    "last_updated": "2026-03-08T16:35:35Z"
+-    "last_updated": "2026-03-08T16:35:35Z"
++    "last_updated": "2026-03-08T16:41:43Z"
    },
    "workstreams": [
      {
@@ -63,10 +61,10 @@ Tracker changes:
          "worker/src"
        ],
        "description": "Find duplicated logic that should be extracted into shared utilities",
--      "last_run_at": "2026-03-08T16:30:54Z",
--      "cycles_assigned": 2,
-+      "last_run_at": "2026-03-08T16:35:35Z",
-+      "cycles_assigned": 3,
+-      "last_run_at": "2026-03-08T16:35:35Z",
+-      "cycles_assigned": 3,
++      "last_run_at": "2026-03-08T16:41:43Z",
++      "cycles_assigned": 4,
        "open_findings_count": 0,
        "findings_open": 6
      },
@@ -74,8 +72,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T16:30:54Z"
-+      "last_scored_at": "2026-03-08T16:35:35Z"
+-      "last_scored_at": "2026-03-08T16:35:35Z"
++      "last_scored_at": "2026-03-08T16:41:43Z"
      },
      {
        "id": "q-004",
@@ -83,8 +81,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T16:30:54Z"
-+      "last_scored_at": "2026-03-08T16:35:35Z"
+-      "last_scored_at": "2026-03-08T16:35:35Z"
++      "last_scored_at": "2026-03-08T16:41:43Z"
      },
      {
        "id": "q-005",
@@ -92,8 +90,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T16:30:54Z"
-+      "last_scored_at": "2026-03-08T16:35:35Z"
+-      "last_scored_at": "2026-03-08T16:35:35Z"
++      "last_scored_at": "2026-03-08T16:41:43Z"
      },
      {
        "id": "q-006",
@@ -101,8 +99,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": "defer",
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T16:30:54Z"
-+      "last_scored_at": "2026-03-08T16:35:35Z"
+-      "last_scored_at": "2026-03-08T16:35:35Z"
++      "last_scored_at": "2026-03-08T16:41:43Z"
      },
      {
        "id": "q-007",
@@ -110,8 +108,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T16:30:54Z"
-+      "last_scored_at": "2026-03-08T16:35:35Z"
+-      "last_scored_at": "2026-03-08T16:35:35Z"
++      "last_scored_at": "2026-03-08T16:41:43Z"
      },
      {
        "id": "q-008",

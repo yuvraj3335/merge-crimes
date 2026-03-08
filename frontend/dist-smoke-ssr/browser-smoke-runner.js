@@ -2239,46 +2239,90 @@ async function completeMission(id) {
 async function failMission(id) {
   return writeApiFetch(`/api/missions/${encodeURIComponent(id)}/fail`, { method: "POST" });
 }
-const MAX_BOOTSTRAP_MODULES = 10;
-const SELECTED_GITHUB_REPO_SNAPSHOT_STORAGE_KEY = "merge-crimes-selected-github-repo-snapshot";
-function cloneModules(modules2) {
-  return modules2.slice(0, MAX_BOOTSTRAP_MODULES).map((module) => ({ ...module }));
+function cloneLanguages(languages2) {
+  return languages2.map((language) => ({ ...language }));
+}
+function cloneModules(modules2, moduleLimit) {
+  const visibleModules = typeof moduleLimit === "number" ? modules2.slice(0, moduleLimit) : modules2;
+  return visibleModules.map((module) => ({ ...module }));
 }
 function cloneDependencyEdges(dependencyEdges2, allowedModuleIds) {
-  return dependencyEdges2.filter((edge) => allowedModuleIds.has(edge.fromModuleId) && allowedModuleIds.has(edge.toModuleId)).map((edge) => ({ ...edge }));
+  return dependencyEdges2.filter((edge) => !allowedModuleIds || allowedModuleIds.has(edge.fromModuleId) && allowedModuleIds.has(edge.toModuleId)).map((edge) => ({ ...edge }));
 }
 function cloneSignals$1(signals2, allowedModuleIds) {
-  return signals2.filter((signal) => allowedModuleIds.has(signal.target)).map((signal) => ({ ...signal }));
+  return signals2.filter((signal) => !allowedModuleIds || allowedModuleIds.has(signal.target)).map((signal) => ({ ...signal }));
 }
-function readBootstrapRepoSnapshot(input) {
+function cloneMetadata(metadata2) {
+  return {
+    ...metadata2,
+    topics: Array.isArray(metadata2.topics) ? [...metadata2.topics] : []
+  };
+}
+function resolveMetadataFallback(snapshot, metadataFallback) {
+  if (!metadataFallback) {
+    return void 0;
+  }
+  return typeof metadataFallback === "function" ? metadataFallback(snapshot) : metadataFallback;
+}
+function normalizeMetadata(metadata2, snapshot, options) {
+  const metadataSource = metadata2 ?? resolveMetadataFallback(snapshot, options.metadataFallback);
+  if (!metadataSource) {
+    return void 0;
+  }
+  const clonedMetadata = cloneMetadata(metadataSource);
+  if (!options.metadataOverrides) {
+    return clonedMetadata;
+  }
+  return {
+    ...clonedMetadata,
+    ...options.metadataOverrides,
+    topics: Array.isArray(options.metadataOverrides.topics) ? [...options.metadataOverrides.topics] : clonedMetadata.topics
+  };
+}
+function normalizeRepoSnapshot(input, options = {}) {
   if (!input || typeof input !== "object") {
     return null;
   }
   const candidate = input;
-  if (!candidate.repoId || !candidate.owner || !candidate.name || !candidate.defaultBranch || !candidate.visibility || !Array.isArray(candidate.modules) || candidate.modules.length === 0) {
+  if (typeof candidate.repoId !== "string" || typeof candidate.owner !== "string" || typeof candidate.name !== "string" || typeof candidate.defaultBranch !== "string" || candidate.visibility !== "public" && candidate.visibility !== "private" || !Array.isArray(candidate.modules) || candidate.modules.length === 0) {
     return null;
   }
-  const modules2 = cloneModules(candidate.modules);
+  const modules2 = cloneModules(candidate.modules, options.moduleLimit);
   const allowedModuleIds = new Set(modules2.map((module) => module.id));
-  return {
-    repoId: candidate.repoId,
+  const relationFilter = options.filterRelationsToModuleIds ? allowedModuleIds : void 0;
+  const dependencyEdges2 = Array.isArray(candidate.dependencyEdges) ? cloneDependencyEdges(candidate.dependencyEdges, relationFilter) : [];
+  const baseSignals = Array.isArray(candidate.signals) ? cloneSignals$1(candidate.signals, relationFilter) : [];
+  const baseSnapshot = {
+    repoId: options.repoIdOverride ?? candidate.repoId,
     owner: candidate.owner,
     name: candidate.name,
     defaultBranch: candidate.defaultBranch,
     visibility: candidate.visibility,
     archetype: candidate.archetype ?? "unknown",
-    languages: Array.isArray(candidate.languages) ? candidate.languages.map((language) => ({ ...language })) : [],
+    languages: Array.isArray(candidate.languages) ? cloneLanguages(candidate.languages) : [],
     modules: modules2,
-    dependencyEdges: Array.isArray(candidate.dependencyEdges) ? cloneDependencyEdges(candidate.dependencyEdges, allowedModuleIds) : [],
-    signals: Array.isArray(candidate.signals) ? cloneSignals$1(candidate.signals, allowedModuleIds) : [],
-    generatedAt: typeof candidate.generatedAt === "string" ? candidate.generatedAt : (/* @__PURE__ */ new Date()).toISOString(),
-    ...candidate.metadata ? {
-      metadata: {
-        ...candidate.metadata,
-        topics: Array.isArray(candidate.metadata.topics) ? [...candidate.metadata.topics] : []
-      }
-    } : {}
+    dependencyEdges: dependencyEdges2,
+    signals: baseSignals,
+    generatedAt: options.generatedAtOverride ?? (typeof candidate.generatedAt === "string" ? candidate.generatedAt : (/* @__PURE__ */ new Date()).toISOString())
   };
+  const signals2 = options.transformSignals ? options.transformSignals(baseSignals, { allowedModuleIds, snapshot: baseSnapshot }).map((signal) => ({ ...signal })) : baseSignals;
+  const normalizedSnapshot = {
+    ...baseSnapshot,
+    signals: signals2
+  };
+  const metadata2 = normalizeMetadata(candidate.metadata, normalizedSnapshot, options);
+  return metadata2 ? {
+    ...normalizedSnapshot,
+    metadata: metadata2
+  } : normalizedSnapshot;
+}
+const MAX_BOOTSTRAP_MODULES = 10;
+const SELECTED_GITHUB_REPO_SNAPSHOT_STORAGE_KEY = "merge-crimes-selected-github-repo-snapshot";
+function readBootstrapRepoSnapshot(input) {
+  return normalizeRepoSnapshot(input, {
+    moduleLimit: MAX_BOOTSTRAP_MODULES,
+    filterRelationsToModuleIds: true
+  });
 }
 const bootstrapRepoSnapshot = readBootstrapRepoSnapshot(sampleRepoSnapshotJson);
 function readStoredBootstrapRepoSnapshot() {

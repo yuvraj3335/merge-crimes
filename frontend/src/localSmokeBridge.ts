@@ -1,11 +1,12 @@
 import sampleRepoSnapshotJson from '../../shared/snapshots/sample_repo_snapshot.json';
-import type { GitHubRepoMetadataSnapshot, RepoSignal } from '../../shared/repoModel';
+import type { GitHubRepoMetadataSnapshot, RepoMetadata, RepoModel } from '../../shared/repoModel';
 import {
     createInitialConnectedRepoRefreshStatus,
     type ConnectedRepoRefreshStatus,
 } from '../../shared/repoRefresh';
 import type { GitHubReadableRepo } from './api';
 import { SESSION_ID } from './api';
+import { normalizeRepoSnapshot } from './normalizeRepoSnapshot';
 import { getGitHubRepoTranslationEligibility } from './repoTranslationEligibility';
 import { isLocalSmokeMode } from './runtimeConfig';
 import type { GamePhase } from './store/gameStore';
@@ -89,59 +90,61 @@ const SMOKE_LISTED_ONLY_REPO: GitHubReadableRepo = {
     visibility: 'private',
 };
 
-function cloneSignals(signals: RepoSignal[]): RepoSignal[] {
-    return signals.map((signal) => ({ ...signal }));
+function buildSmokeMetadataFallback(snapshot: RepoModel): RepoMetadata {
+    return {
+        provider: 'github',
+        providerRepoId: SMOKE_CONNECTED_REPO_PROVIDER_ID,
+        fullName: `${snapshot.owner}/${snapshot.name}`,
+        description: null,
+        htmlUrl: 'https://github.com/yuvrajmuley/merge-crimes',
+        homepageUrl: null,
+        topics: [],
+        stars: 0,
+        forks: 0,
+        watchers: 0,
+        openIssues: 0,
+        primaryLanguage: 'TypeScript',
+        license: null,
+        archived: false,
+        fork: false,
+        updatedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,
+        pushedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,
+    };
 }
 
 function buildSmokeConnectedRepo(): GitHubRepoMetadataSnapshot {
-    const baseSnapshot = sampleRepoSnapshotJson as GitHubRepoMetadataSnapshot;
-    const latestCommitTarget = baseSnapshot.modules[0]?.id ?? 'mod-frontend';
-
-    return {
-        ...baseSnapshot,
-        repoId: SMOKE_CONNECTED_REPO_ID,
-        generatedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,
-        languages: baseSnapshot.languages.map((language) => ({ ...language })),
-        modules: baseSnapshot.modules.map((module) => ({ ...module })),
-        dependencyEdges: baseSnapshot.dependencyEdges.map((edge) => ({ ...edge })),
-        signals: [
-            ...cloneSignals(baseSnapshot.signals).filter((signal) => signal.type !== 'latest_commit'),
-            {
-                type: 'latest_commit',
-                target: latestCommitTarget,
-                severity: 0,
-                title: `Latest commit on ${baseSnapshot.defaultBranch}`,
-                detail: SMOKE_ACTIVE_COMMIT_SHA,
-                value: SMOKE_ACTIVE_COMMIT_SHA,
-            },
-        ],
-        metadata: {
-            ...(baseSnapshot.metadata ?? {
-                provider: 'github',
-                providerRepoId: SMOKE_CONNECTED_REPO_PROVIDER_ID,
-                fullName: `${baseSnapshot.owner}/${baseSnapshot.name}`,
-                description: null,
-                htmlUrl: 'https://github.com/yuvrajmuley/merge-crimes',
-                homepageUrl: null,
-                topics: [],
-                stars: 0,
-                forks: 0,
-                watchers: 0,
-                openIssues: 0,
-                primaryLanguage: 'TypeScript',
-                license: null,
-                archived: false,
-                fork: false,
-                updatedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,
-                pushedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,
-            }),
+    const smokeSnapshot = normalizeRepoSnapshot(sampleRepoSnapshotJson, {
+        repoIdOverride: SMOKE_CONNECTED_REPO_ID,
+        generatedAtOverride: SMOKE_CONNECTED_REPO_GENERATED_AT,
+        metadataFallback: buildSmokeMetadataFallback,
+        metadataOverrides: {
             provider: 'github',
             providerRepoId: SMOKE_CONNECTED_REPO_PROVIDER_ID,
             updatedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,
             pushedAt: SMOKE_CONNECTED_REPO_GENERATED_AT,
-            topics: [...(baseSnapshot.metadata?.topics ?? [])],
         },
-    };
+        transformSignals: (signals, { snapshot }) => {
+            const latestCommitTarget = snapshot.modules[0]?.id ?? 'mod-frontend';
+
+            return [
+                ...signals.filter((signal) => signal.type !== 'latest_commit'),
+                {
+                    type: 'latest_commit',
+                    target: latestCommitTarget,
+                    severity: 0,
+                    title: `Latest commit on ${snapshot.defaultBranch}`,
+                    detail: SMOKE_ACTIVE_COMMIT_SHA,
+                    value: SMOKE_ACTIVE_COMMIT_SHA,
+                },
+            ];
+        },
+    });
+
+    if (!smokeSnapshot) {
+        throw new Error('Failed to normalize the smoke repo snapshot.');
+    }
+
+    return smokeSnapshot;
 }
 
 function buildIdleRefreshStatus(repo: GitHubRepoMetadataSnapshot): ConnectedRepoRefreshStatus {
