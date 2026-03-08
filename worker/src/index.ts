@@ -8,6 +8,7 @@ import { seedDatabase } from './seed';
 import { SEED_DISTRICTS } from '../../shared/seed/districts';
 import { REPO_FIXTURES } from '../../shared/seed/repoFixtures';
 import { generateCityFromRepo, generatedCityToDistricts, generatedCityToMissions, generatedCityToConflicts } from '../../shared/repoCityGenerator';
+import type { GitHubRepoMetadataSnapshot, RepoLanguage } from '../../shared/repoModel';
 
 // ─── Types ───
 type Bindings = {
@@ -57,12 +58,50 @@ interface GitHubAccessTokenResponse {
     error_description?: string;
 }
 
+interface GitHubRepoResponse {
+    id: number;
+    owner: { login: string };
+    name: string;
+    full_name: string;
+    description: string | null;
+    html_url: string;
+    homepage: string | null;
+    topics?: string[];
+    stargazers_count: number;
+    forks_count: number;
+    watchers_count: number;
+    subscribers_count?: number;
+    open_issues_count: number;
+    default_branch: string;
+    language: string | null;
+    private: boolean;
+    archived: boolean;
+    fork: boolean;
+    updated_at: string;
+    pushed_at: string | null;
+    license: {
+        spdx_id: string | null;
+        name: string;
+    } | null;
+}
+
+type GitHubRepoLanguagesResponse = Record<string, number>;
+
+interface GitHubApiErrorResponse {
+    message?: string;
+}
+
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder();
 const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
 const LOCAL_DEV_PUBLIC_SESSION_SECRET = 'merge-crimes-local-dev-public-session';
 const DEFAULT_GITHUB_CLIENT_ID_PLACEHOLDER = 'replace-with-github-client-id';
 const DEFAULT_GITHUB_OAUTH_SCOPE = 'read:user';
+const DEFAULT_GITHUB_REPO_OWNER = 'octocat';
+const DEFAULT_GITHUB_REPO_NAME = 'Hello-World';
+const GITHUB_API_ACCEPT = 'application/vnd.github+json';
+const GITHUB_API_VERSION = '2022-11-28';
+const GITHUB_API_USER_AGENT = 'merge-crimes-worker';
 const LOCAL_DEV_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
@@ -159,6 +198,103 @@ function getGitHubClientSecret(env: Bindings): string | null {
 
 function getGitHubOAuthScope(env: Bindings): string {
     return env.GITHUB_OAUTH_SCOPE?.trim() || DEFAULT_GITHUB_OAUTH_SCOPE;
+}
+
+function getGitHubRepoRequestHeaders(): HeadersInit {
+    return {
+        Accept: GITHUB_API_ACCEPT,
+        'User-Agent': GITHUB_API_USER_AGENT,
+        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+    };
+}
+
+function isGitHubApiErrorResponse(value: unknown): value is GitHubApiErrorResponse {
+    return value !== null
+        && typeof value === 'object'
+        && 'message' in value
+        && typeof (value as GitHubApiErrorResponse).message === 'string';
+}
+
+async function fetchGitHubJson<T>(url: string): Promise<
+    { ok: true; data: T }
+    | { ok: false; status: number; message: string }
+> {
+    const response = await fetch(url, {
+        headers: getGitHubRepoRequestHeaders(),
+    });
+
+    const contentType = response.headers.get('Content-Type') ?? '';
+    const payload = contentType.includes('application/json')
+        ? await response.json()
+        : await response.text();
+
+    if (!response.ok) {
+        const message = isGitHubApiErrorResponse(payload)
+            ? payload.message ?? `GitHub request failed with status ${response.status}`
+            : typeof payload === 'string' && payload.trim().length > 0
+                ? payload
+                : `GitHub request failed with status ${response.status}`;
+        return {
+            ok: false,
+            status: response.status,
+            message,
+        };
+    }
+
+    return {
+        ok: true,
+        data: payload as T,
+    };
+}
+
+function normalizeGitHubLanguages(payload: GitHubRepoLanguagesResponse): RepoLanguage[] {
+    const totalBytes = Object.values(payload).reduce((sum, bytes) => sum + bytes, 0);
+
+    return Object.entries(payload)
+        .sort(([, leftBytes], [, rightBytes]) => rightBytes - leftBytes)
+        .map(([name, bytes]) => ({
+            name,
+            bytes,
+            share: totalBytes > 0 ? bytes / totalBytes : 0,
+        }));
+}
+
+function normalizeGitHubRepoSnapshot(
+    repo: GitHubRepoResponse,
+    languages: GitHubRepoLanguagesResponse,
+): GitHubRepoMetadataSnapshot {
+    return {
+        repoId: `github:${repo.id}`,
+        owner: repo.owner.login,
+        name: repo.name,
+        defaultBranch: repo.default_branch,
+        visibility: repo.private ? 'private' : 'public',
+        archetype: 'unknown',
+        languages: normalizeGitHubLanguages(languages),
+        modules: [],
+        dependencyEdges: [],
+        signals: [],
+        generatedAt: new Date().toISOString(),
+        metadata: {
+            provider: 'github',
+            providerRepoId: repo.id,
+            fullName: repo.full_name,
+            description: repo.description,
+            htmlUrl: repo.html_url,
+            homepageUrl: repo.homepage,
+            topics: repo.topics ?? [],
+            stars: repo.stargazers_count,
+            forks: repo.forks_count,
+            watchers: repo.subscribers_count ?? repo.watchers_count,
+            openIssues: repo.open_issues_count,
+            primaryLanguage: repo.language,
+            license: repo.license?.spdx_id ?? repo.license?.name ?? null,
+            archived: repo.archived,
+            fork: repo.fork,
+            updatedAt: repo.updated_at,
+            pushedAt: repo.pushed_at,
+        },
+    };
 }
 
 function isAllowedRedirectUri(request: Request, env: Bindings, redirectUri: string): boolean {
@@ -484,6 +620,10 @@ const GitHubTokenExchangeBody = z.object({
     code: z.string().min(1),
     redirectUri: z.string().url(),
 });
+const GitHubRepoMetadataQuery = z.object({
+    owner: z.string().trim().min(1).optional(),
+    name: z.string().trim().min(1).optional(),
+});
 const MissionsQuery = z.object({
     district: z.string().optional(),
     sessionId: z.string().uuid().optional(),
@@ -705,6 +845,42 @@ app.post('/api/auth/github/token', async (c) => {
         tokenType: payload.token_type ?? 'bearer',
         scope: payload.scope ?? getGitHubOAuthScope(c.env),
     });
+});
+
+app.get('/api/github/repo-metadata', async (c) => {
+    const query = GitHubRepoMetadataQuery.safeParse({
+        owner: c.req.query('owner'),
+        name: c.req.query('name'),
+    });
+    if (!query.success) {
+        return c.json({ error: 'invalid_query', details: query.error.flatten() }, 400);
+    }
+
+    const owner = query.data.owner ?? DEFAULT_GITHUB_REPO_OWNER;
+    const name = query.data.name ?? DEFAULT_GITHUB_REPO_NAME;
+    const repoPath = `${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
+
+    const repoResponse = await fetchGitHubJson<GitHubRepoResponse>(`https://api.github.com/repos/${repoPath}`);
+    if (!repoResponse.ok) {
+        return c.json({
+            error: repoResponse.status === 404 ? 'github_repo_not_found' : 'github_repo_fetch_failed',
+            message: repoResponse.message,
+            owner,
+            name,
+        }, repoResponse.status === 404 ? 404 : 502);
+    }
+
+    const languagesResponse = await fetchGitHubJson<GitHubRepoLanguagesResponse>(`https://api.github.com/repos/${repoPath}/languages`);
+    if (!languagesResponse.ok) {
+        return c.json({
+            error: 'github_repo_languages_fetch_failed',
+            message: languagesResponse.message,
+            owner,
+            name,
+        }, 502);
+    }
+
+    return c.json(normalizeGitHubRepoSnapshot(repoResponse.data, languagesResponse.data));
 });
 
 // ─── Anonymous Write Session ───

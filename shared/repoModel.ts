@@ -71,6 +71,26 @@ export interface RepoSignal {
   detail?: string;
 }
 
+export interface RepoMetadata {
+  provider: 'github';
+  providerRepoId: number;
+  fullName: string;
+  description: string | null;
+  htmlUrl: string;
+  homepageUrl: string | null;
+  topics: string[];
+  stars: number;
+  forks: number;
+  watchers: number;
+  openIssues: number;
+  primaryLanguage: string | null;
+  license: string | null;
+  archived: boolean;
+  fork: boolean;
+  updatedAt: string;
+  pushedAt: string | null;
+}
+
 export interface RepoModel {
   repoId: string;
   owner: string;
@@ -83,6 +103,11 @@ export interface RepoModel {
   dependencyEdges: DependencyEdge[];
   signals: RepoSignal[];
   generatedAt: string; // ISO date
+  metadata?: RepoMetadata;
+}
+
+export interface GitHubRepoMetadataSnapshot extends RepoModel {
+  metadata: RepoMetadata;
 }
 
 // ─── Generated City Types ───
