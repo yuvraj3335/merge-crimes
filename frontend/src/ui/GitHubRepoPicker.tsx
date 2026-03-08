@@ -15,6 +15,7 @@ interface GitHubRepoPickerProps {
 
 type PickerStatus = 'idle' | 'loading' | 'ready' | 'error';
 type PickerTone = 'idle' | 'loading' | 'success' | 'error' | 'empty';
+type SelectedRepoRowTone = 'active' | 'waiting' | 'failed' | 'listed-only';
 
 interface TokenScopedError {
     token: string;
@@ -298,6 +299,33 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
             });
     }
 
+    function getSelectedRepoRowTone(
+        repo: api.GitHubReadableRepo,
+        repoEligible: boolean,
+        isSelected: boolean,
+    ): SelectedRepoRowTone | null {
+        if (!isSelected) {
+            return null;
+        }
+
+        const repoIsActive = Boolean(
+            connectedRepo?.metadata?.provider === 'github'
+            && connectedRepo.metadata.providerRepoId === repo.id,
+        );
+
+        if (repoEligible && !repoIsActive) {
+            if (selectedGitHubRepoIngestState.tone === 'loading' && selectedGitHubRepoIngestState.repoId === repo.id) {
+                return 'waiting';
+            }
+
+            if (selectedGitHubRepoIngestState.tone === 'error' && selectedGitHubRepoIngestState.repoId === repo.id) {
+                return 'failed';
+            }
+        }
+
+        return repoEligible ? 'active' : 'listed-only';
+    }
+
     return (
         <div className={`repo-selector-panel ${repoCityMode ? 'repo-city' : ''}`.trim()} data-testid="github-repo-picker">
             {repoCityMode && <GitHubTrustNotice context="picker" />}
@@ -411,13 +439,17 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                     <div className="repo-selector-list">
                         {visibleRepos.map((repo) => {
                             const eligibilityCopy = getGitHubRepoTranslationEligibility(repo.visibility);
+                            const isSelected = selectedGitHubRepo?.id === repo.id;
+                            const selectedRowTone = getSelectedRepoRowTone(repo, eligibilityCopy.eligible, isSelected);
 
                             return (
                                 <button
                                     key={repo.id}
                                     type="button"
                                     data-testid={`github-repo-${repo.id}`}
-                                    className={`repo-selector-item ${selectedGitHubRepo?.id === repo.id ? 'selected' : ''} ${repoCityMode ? 'repo-city' : ''}`.trim()}
+                                    className={
+                                        `repo-selector-item ${isSelected ? 'selected' : ''} ${selectedRowTone ? `selected-tone-${selectedRowTone}` : ''} ${repoCityMode ? 'repo-city' : ''}`.trim()
+                                    }
                                     onClick={() => handleRepoSelection(repo)}
                                 >
                                     <div className="repo-item-topline">

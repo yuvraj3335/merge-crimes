@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T17:05:45+05:30",
+  "last_updated": "2026-03-08T17:13:55+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -1018,21 +1018,34 @@
             "frontend_build": "pass",
             "browser_smoke": "not_run — explicitly skipped per cycle instruction because browser:smoke was disabled in this environment"
           }
+        },
+        {
+          "title": "GitHub repo picker selected-row tone styling — carry active, waiting, failed, and listed-only trust cues into the authenticated repo list",
+          "summary": [
+            "The authenticated GitHub repo picker now derives a selected-row tone from the same repo eligibility and ingest-state checks already used by the compact auth summary and selected-repo status copy.",
+            "Selected rows now render distinct active, waiting, failed, and listed-only backgrounds, borders, text tint, and badge treatment so trust state is visible directly inside the repo list instead of relying on copy alone.",
+            "The slice stays isolated to GitHubRepoPicker presentation and CSS, without changing GitHub selection flow, ingest behavior, backend contracts, or repo translation rules."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "GitHub repo picker selected-row tone styling — carry active, waiting, failed, and listed-only trust cues into the authenticated repo list",
-    "why": "The compact auth card now reflects selected-repo state with distinct tone styling, but the authenticated picker still relies mostly on copy and small badges. The next trust-and-polish slice is to make the selected repo row inside the picker surface the same active, waiting, failed, and listed-only cues at the moment users choose a repo.",
+    "title": "Browser smoke sandbox compatibility — make Phase 7 UI validation repeatable in this environment",
+    "why": "Phase 7 frontend slices now have the core trust polish in place for the authenticated GitHub picker, but browser:smoke is still blocked by Wrangler log writes and fixed loopback binding during the local worker migration step. The next stability slice is to make the smoke harness run cleanly in this sandbox so trust-and-polish UI work can be validated end to end.",
     "candidate_files": [
-      "frontend/src/ui/GitHubRepoPicker.tsx",
-      "frontend/src/index.css"
+      "frontend/scripts/browser-smoke.mjs",
+      "worker/wrangler.toml"
     ],
     "acceptance_criteria": [
-      "The selected GitHub repo row in the picker applies distinct visual tone treatment for active, waiting, failed, and listed-only states without changing selection or ingest behavior.",
-      "Picker row styling remains copy-consistent with the picker status banner, selected-repo auth summary, and main status banner.",
-      "Frontend lint and build pass."
+      "browser:smoke can run in this environment without Wrangler trying to write logs outside the allowed workspace or temp locations.",
+      "The local worker migration and dev startup path no longer hard-fail on the current loopback binding restriction, or degrades with a supported fallback that still exercises the smoke flow.",
+      "Phase 7 frontend UI slices can report browser:smoke pass instead of a repeated sandbox block."
     ]
   },
   "open_questions": [
