@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T17:13:55+05:30",
+  "last_updated": "2026-03-08T17:48:54+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -1031,23 +1031,35 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "GitHub commit refresh check endpoint — expose backend update detection for connected repos",
+          "summary": [
+            "The worker now exposes POST /api/github/repo-refresh-status, which compares a caller's last known default-branch commit SHA against the current head commit returned by the GitHub commits API.",
+            "Shared refresh-check contracts now live under shared/repoRefresh.ts, including a reusable helper for reading the last known latest_commit SHA from an existing RepoModel signal list.",
+            "The refresh check returns explicit update_detected, up_to_date, missing_baseline, and branch_empty states so downstream RepoModel or UI work can consume a real refresh signal without forcing a model or menu refresh yet."
+          ],
+          "validation": {
+            "worker_build": "pass"
+          }
         }
       ]
     }
   ],
   "smoke_blocker_status": "PERMANENTLY_SKIPPED — Wrangler cannot write logs outside /Users/yuvrajmuley/Library/Preferences/.wrangler/logs and cannot bind 127.0.0.1 in this sandbox. This has blocked browser:smoke for 8+ consecutive cycles. All future cycles must skip browser:smoke and note this permanently instead of reporting it as 'blocked' each time.",
   "current_slice_recommendation": {
-    "title": "Phase 7 gate check — audit remaining core deliverables and either implement refresh logic or declare Phase 7 done",
-    "why": "Phase 7 has accumulated 10+ copy-and-CSS-only slices. The three named Phase 7 deliverables that touch real behavior are: (1) refresh logic — detecting when a connected repo has changed on GitHub and offering a city refresh; (2) functional error states — real error recovery paths not just error copy; (3) performance pass. Privacy copy is done. Before adding any more polish, audit which of these real deliverables are actually incomplete. If all core behavior is in place, declare Phase 7 done and advance.",
+    "title": "Wire the GitHub refresh check into connected snapshot state so players can see when a newer repo snapshot is available",
+    "why": "The worker now exposes a real commit-level refresh signal, but nothing in the frontend or shared RepoModel flow calls it yet. The next smallest functional slice is to derive the baseline latest_commit SHA from the active GitHub snapshot, call the new refresh-check endpoint, and store or surface a refresh-available flag without auto-refreshing the city.",
     "validity_gate": "This recommendation is functional, not cosmetic. It changes data flow or worker behavior, not just copy or CSS.",
     "candidate_files": [
-      "worker/src/githubIngest.ts",
+      "shared/repoRefresh.ts",
+      "frontend/src/api.ts",
       "frontend/src/store/gameStore.ts",
-      "frontend/src/ui/RepoCityMenu.tsx"
+      "frontend/src/ui/MainMenu.tsx"
     ],
     "acceptance_criteria": [
-      "If refresh logic is missing: worker exposes a staleness check endpoint or the frontend polls/detects that the cached snapshot is older than a threshold and surfaces a refresh CTA that re-triggers ingest.",
-      "If refresh logic already exists: Phase 7 is declared done in the tracker, its status set to 'done', and the next phase is set to 'in_progress'.",
+      "Connected GitHub snapshots derive a baseline SHA from their existing latest_commit signal and call the refresh-check endpoint without requiring a backend restart.",
+      "RepoModel or menu state stores whether a newer commit was detected and makes that signal available for a later refresh CTA or auto-refresh policy.",
       "No copy-only or CSS-only change satisfies this slice. At least one .ts or .tsx file outside of index.css must change in a way that affects data flow or user-actionable behavior."
     ]
   },

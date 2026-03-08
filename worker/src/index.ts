@@ -14,6 +14,7 @@ import {
     type GitHubRepoLanguagesResponse,
     type GitHubRepoResponse,
 } from './github/normalizeRepoSnapshot';
+import { checkGitHubRepoRefresh } from './github/checkRepoRefresh';
 
 // ─── Types ───
 type Bindings = {
@@ -617,6 +618,12 @@ const RefreshRepoBody = z.object({
     owner: z.string().trim().min(1),
     name: z.string().trim().min(1),
 });
+const RepoRefreshCheckBody = z.object({
+    owner: z.string().trim().min(1),
+    name: z.string().trim().min(1),
+    defaultBranch: z.string().trim().min(1),
+    lastKnownCommitSha: z.string().trim().min(1).nullable().optional(),
+});
 const MissionsQuery = z.object({
     district: z.string().optional(),
     sessionId: z.string().uuid().optional(),
@@ -882,6 +889,25 @@ app.post('/api/refresh-repo', async (c) => {
         message: 'Repo refresh completed.',
         snapshot: result.snapshot,
     });
+});
+
+app.post('/api/github/repo-refresh-status', async (c) => {
+    const parsed = await parseJsonBody(c, RepoRefreshCheckBody);
+    if (!parsed.ok) {
+        return parsed.response;
+    }
+
+    const accessToken = getGitHubAccessTokenFromAuthorizationHeader(c.req.header('Authorization'));
+    const result = await checkGitHubRepoRefresh({
+        ...parsed.data,
+        fetchGitHubJson: <T>(url: string) => fetchGitHubJson<T>(url, accessToken),
+    });
+
+    if (!result.ok) {
+        return c.json(result.body, result.status);
+    }
+
+    return c.json(result.refreshCheck);
 });
 
 // ─── Anonymous Write Session ───
