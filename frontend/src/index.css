@@ -284,6 +284,7 @@ body,
   pointer-events: none;
 }
 
+.repo-city-surface-mission-label,
 .repo-city-surface-mission-count {
   text-anchor: middle;
   dominant-baseline: middle;
@@ -307,18 +308,32 @@ body,
 }
 
 .repo-city-surface-mission-chip {
-  fill: rgba(9, 12, 22, 0.82);
-  stroke: rgba(214, 224, 255, 0.18);
+  fill: rgba(8, 11, 21, 0.88);
+  stroke: rgba(214, 224, 255, 0.16);
   stroke-width: 0.7px;
   filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.22));
 }
 
-.repo-city-surface-mission-count {
-  fill: rgba(242, 246, 255, 0.86);
+.repo-city-surface-mission-pill {
+  fill: rgba(255, 219, 118, 0.14);
+  stroke: rgba(255, 226, 155, 0.26);
+  stroke-width: 0.55px;
+}
+
+.repo-city-surface-mission-label {
+  fill: rgba(186, 198, 228, 0.78);
   font-family: var(--font-display);
-  font-size: 2.45px;
+  font-size: 1.55px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.2em;
+}
+
+.repo-city-surface-mission-count {
+  fill: rgba(255, 246, 221, 0.94);
+  font-family: var(--font-display);
+  font-size: 2.25px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 .repo-city-surface-player-ring,

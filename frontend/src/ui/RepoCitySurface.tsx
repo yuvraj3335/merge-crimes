@@ -84,8 +84,14 @@ function getMissionCountLabel(count: number): string {
     return `${count} missions ready`;
 }
 
-function getMissionChipWidth(count: number): number {
-    return Math.max(8.8, count.toLocaleString().length * 3.6 + 6.4);
+const MISSION_CHIP_STATUS_LABEL = 'READY';
+
+function getMissionCountPillWidth(countLabel: string): number {
+    return Math.max(5.4, countLabel.length * 2.8 + 3.4);
+}
+
+function getMissionChipWidth(countLabel: string): number {
+    return getMissionCountPillWidth(countLabel) + 10.8;
 }
 
 export function RepoCitySurface() {
@@ -393,15 +399,21 @@ export function RepoCitySurface() {
                             const isQueued = repoCityTransit?.districtId === district.id;
                             const missionCount = availableMissionCounts.get(district.id) ?? 0;
                             const missionChipLabel = missionCount > 0 ? missionCount.toLocaleString() : null;
-                            const missionChipHeight = 6.4;
+                            const missionChipHeight = 6.8;
+                            const missionChipInset = 0.55;
                             const x = mapX(district.position.x - district.footprint.width / 2);
                             const y = mapY(district.position.y + district.footprint.height / 2);
-                            const missionChipWidth = missionChipLabel ? getMissionChipWidth(missionCount) : 0;
+                            const missionChipWidth = missionChipLabel ? getMissionChipWidth(missionChipLabel) : 0;
+                            const missionCountPillWidth = missionChipLabel ? getMissionCountPillWidth(missionChipLabel) : 0;
                             const missionChipX = Math.max(
                                 x + 1.8,
                                 x + district.footprint.width - missionChipWidth - 1.8,
                             );
                             const missionChipY = y + 1.8;
+                            const missionCountPillX = missionChipX + missionChipWidth - missionCountPillWidth - missionChipInset;
+                            const missionCountPillHeight = missionChipHeight - missionChipInset * 2;
+                            const missionLabelCenterX = missionChipX + (missionChipWidth - missionCountPillWidth - missionChipInset) / 2;
+                            const missionPillCenterY = missionChipY + missionChipHeight / 2;
 
                             return (
                                 <g key={district.id}>
@@ -492,9 +504,24 @@ export function RepoCitySurface() {
                                                 rx={missionChipHeight / 2}
                                                 className="repo-city-surface-mission-chip"
                                             />
+                                            <rect
+                                                x={missionCountPillX}
+                                                y={missionChipY + missionChipInset}
+                                                width={missionCountPillWidth}
+                                                height={missionCountPillHeight}
+                                                rx={missionCountPillHeight / 2}
+                                                className="repo-city-surface-mission-pill"
+                                            />
                                             <text
-                                                x={missionChipX + missionChipWidth / 2}
-                                                y={missionChipY + missionChipHeight / 2}
+                                                x={missionLabelCenterX}
+                                                y={missionPillCenterY}
+                                                className="repo-city-surface-mission-label"
+                                            >
+                                                {MISSION_CHIP_STATUS_LABEL}
+                                            </text>
+                                            <text
+                                                x={missionCountPillX + missionCountPillWidth / 2}
+                                                y={missionPillCenterY}
                                                 className="repo-city-surface-mission-count"
                                             >
                                                 {missionChipLabel}
