@@ -48,7 +48,15 @@ INSTRUCTIONS:
 4. For each finding, verify the evidence by reading the actual file content before
    claiming it's an issue.
 5. Cross-reference against prior findings to avoid duplicating already-known issues.
-6. Produce your findings in the required JSON block format.
+6. For every high or medium severity finding, populate the "edge_cases" array with at
+   least 2 concrete scenarios:
+   - Inputs or states that trigger the bug (e.g. "empty array", "concurrent calls")
+   - Callers of the affected symbol and what they pass
+   - Boundary conditions (zero, null, max value, race condition timing)
+   - Any scenario where a naive fix could silently break something else
+   This edge_cases data will be used by the auto-fix system to pre-flight the fix
+   before applying it — make it specific and grounded in the actual code you read.
+7. Produce your findings in the required JSON block format.
 
 Remember: Output exactly one ```json {{"findings": [...]}} ``` block.
 No findings is a valid result — output {{"findings": []}} if the scope is clean.

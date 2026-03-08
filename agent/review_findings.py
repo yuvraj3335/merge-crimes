@@ -52,6 +52,7 @@ class Finding:
     status: str = "open"
     found_at: str = ""
     cycle_number: int = 0
+    edge_cases: List[str] = field(default_factory=list)
 
     def as_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -225,6 +226,12 @@ def parse_findings_from_codex_output(
             raw_f.get("recommended_action", raw_f.get("recommendation", ""))
         ).strip()
 
+        raw_edge_cases = raw_f.get("edge_cases", [])
+        if isinstance(raw_edge_cases, list):
+            edge_cases = [str(e).strip() for e in raw_edge_cases if str(e).strip()]
+        else:
+            edge_cases = []
+
         finding = Finding(
             id=_next_finding_id(all_existing + findings),
             workstream_id=workstream_id,
@@ -241,6 +248,7 @@ def parse_findings_from_codex_output(
             status="open",
             found_at=now_ts,
             cycle_number=cycle_number,
+            edge_cases=edge_cases,
         )
         findings.append(finding)
 
@@ -370,6 +378,7 @@ def load_findings_from_artifacts(artifacts_dir: str) -> List[Finding]:
                     data = json.load(fh)
                 for raw in data.get("findings", []):
                     try:
+                        raw_ec = raw.get("edge_cases", [])
                         f = Finding(
                             id=raw.get("id", ""),
                             workstream_id=raw.get("workstream_id", ""),
@@ -386,6 +395,7 @@ def load_findings_from_artifacts(artifacts_dir: str) -> List[Finding]:
                             status=raw.get("status", "open"),
                             found_at=raw.get("found_at", ""),
                             cycle_number=int(raw.get("cycle_number", 0)),
+                            edge_cases=raw_ec if isinstance(raw_ec, list) else [],
                         )
                         result.append(f)
                     except (TypeError, ValueError):

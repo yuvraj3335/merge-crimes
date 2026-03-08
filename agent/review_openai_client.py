@@ -56,6 +56,7 @@ class FixPromptContext:
     severity: str
     repo_root: str
     tracker_summary: str
+    edge_cases: str = ""   # formatted edge case list from the original review finding
 
 
 @dataclass
@@ -159,6 +160,7 @@ class ReviewOpenAIClient:
             severity=ctx.severity,
             repo_root=ctx.repo_root,
             tracker_summary=ctx.tracker_summary or "(not available)",
+            edge_cases=ctx.edge_cases or "(none documented)",
         )
         return self._call(system, user_message, temperature=0.2)
 
@@ -245,9 +247,46 @@ def build_fallback_fix_prompt(
     finding_description: str,
     recommended_action: str,
     repo_root: str,
+    edge_cases: str = "",
 ) -> str:
-    """Simple fallback fix prompt when OpenAI generation fails."""
+    """Fallback fix prompt when OpenAI generation fails."""
+    edge_cases_section = (
+        f"\nEDGE CASES TO VERIFY YOUR FIX HANDLES:\n{edge_cases}\n"
+        if edge_cases else ""
+    )
     return f"""You are fixing a specific issue in the merge-crimes project.
+Follow these steps IN ORDER:
+
+STEP 1 — GROUND TRUTH CHECK
+Read {finding_file} and every file that imports the affected symbol.
+Search for this exact evidence: {finding_description}
+Output: BUG_VERIFIED: true  OR  BUG_VERIFIED: false
+If BUG_VERIFIED: false — output BUG_NOT_FOUND, mark finding {finding_id} resolved in
+docs/REPO_CITY_REVIEW_TRACKER.json, and skip to the output section.
+
+STEP 2 — REASON ABOUT FIX (only if BUG_VERIFIED: true)
+Write out: root cause, exact lines to change, what the fix will and won't touch.
+Stop and report as blocked if the fix requires more than 3 files.
+
+STEP 3 — PRE-FLIGHT CHECK (only if BUG_VERIFIED: true)
+{edge_cases_section}
+For each edge case above, confirm your proposed fix handles it correctly.
+Check all callers of the affected symbol still work after your change.
+
+STEP 4 — APPLY FIX (only if BUG_VERIFIED: true)
+Implement ONLY the fix from STEP 2. No scope creep.
+
+STEP 5 — VALIDATE
+  - frontend/ changed: cd frontend && npm run build
+  - frontend/ .ts/.tsx changed: also cd frontend && npm run lint
+  - worker/ changed: cd worker && npm run build
+If validation fails after 3 attempts: revert all changes, output FIX_STATUS: REVERTED.
+If validation passes: output FIX_STATUS: APPLIED.
+
+STEP 6 — TRACKER
+If APPLIED or BUG_NOT_FOUND: mark finding {finding_id} resolved in
+docs/REPO_CITY_REVIEW_TRACKER.json and queue entry qfix-{finding_id} as done.
+If REVERTED: leave tracker unchanged.
 
 Finding ID: {finding_id}
 File: {finding_file}
@@ -255,17 +294,7 @@ Issue: {finding_description}
 Action: {recommended_action}
 Repo root: {repo_root}
 
-Instructions:
-1. Read {finding_file} and understand the issue.
-2. Implement ONLY the fix described in 'Action' above.
-3. Do NOT expand scope or fix other issues.
-4. Run validation:
-   - If frontend/ file changed: cd frontend && npm run build
-   - If frontend/ materially changed: cd frontend && npm run lint
-   - If worker/ file changed: cd worker && npm run build
-5. Update docs/REPO_CITY_REVIEW_TRACKER.json: mark finding {finding_id} as resolved.
-6. Print exactly these sections at the end:
-
+Output these 8 sections at the end:
 Phase:
 Slice attempted:
 Files changed:

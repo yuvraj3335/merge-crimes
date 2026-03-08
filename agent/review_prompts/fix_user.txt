@@ -1,4 +1,7 @@
-You are fixing a specific issue in the merge-crimes project.
+You are fixing a specific code review finding in the merge-crimes project.
+Follow the 6-step process defined in your system instructions exactly.
+
+---
 
 FINDING ID:    {finding_id}
 TITLE:         {finding_title}
@@ -8,11 +11,14 @@ SEVERITY:      {severity}
 DESCRIPTION:
 {finding_description}
 
-EVIDENCE (from original review):
+EVIDENCE (from original review — this is what you must find in the file to confirm the bug):
 {evidence}
 
 RECOMMENDED ACTION:
 {recommended_action}
+
+EDGE CASES (documented during review — verify your fix handles ALL of these):
+{edge_cases}
 
 ---
 
@@ -25,17 +31,30 @@ REPO ROOT: {repo_root}
 
 ---
 
-INSTRUCTIONS:
+EXECUTION CHECKLIST (work through each in order):
 
-1. Read {finding_file} to understand the current state of the code.
-2. Confirm the issue described above still exists in the file.
-   - If it no longer exists (already fixed), mark finding {finding_id} as resolved in
-     docs/REPO_CITY_REVIEW_TRACKER.json and stop.
-3. Implement ONLY the fix described in "Recommended Action" above.
-4. Run the required validation commands (see system prompt for which ones apply).
-5. If validation passes: update docs/REPO_CITY_REVIEW_TRACKER.json to mark finding
-   {finding_id} as resolved and queue entry qfix-{finding_id} as done.
-6. Output the 8-section report (Phase / Slice attempted / Files changed / Commands run /
-   Results / What works now / What is blocked / Tracker changes Codex made).
+[ ] STEP 1 — Read {finding_file} and every file that imports/calls the reported symbol.
+             Search for the exact text in EVIDENCE above.
+             Output: BUG_VERIFIED: true   OR   BUG_VERIFIED: false
 
-Remember: Fix ONLY this finding. Do not expand scope.
+[ ] STEP 2 — (Skip if BUG_VERIFIED: false) Write out root cause, exact lines to change,
+             and confirm fix won't break the module interface.
+
+[ ] STEP 3 — (Skip if BUG_VERIFIED: false) For each edge case listed above, state
+             whether your proposed fix handles it. Revise the fix if any case is not covered.
+
+[ ] STEP 4 — (Skip if BUG_VERIFIED: false) Apply the fix from STEP 2/3. Scope: this
+             finding only. No extra changes.
+
+[ ] STEP 5 — Run validation (npm run build / lint as appropriate).
+             Output: FIX_STATUS: APPLIED   OR   FIX_STATUS: REVERTED
+
+[ ] STEP 6 — Update docs/REPO_CITY_REVIEW_TRACKER.json:
+             If APPLIED or BUG_NOT_FOUND → mark finding {finding_id} resolved,
+             mark queue entry qfix-{finding_id} done.
+             If REVERTED → leave tracker unchanged.
+
+---
+
+Output the 8-section report at the end (see system prompt for format).
+Remember: Fix ONLY finding {finding_id}. One finding. One fix.

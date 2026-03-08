@@ -74,6 +74,7 @@ from .review_openai_client import (
 from .logging_utils import RunLogger, setup_run_logger
 from .codex_runner import run_codex, run_codex_repair, CodexResult
 from .validator import (
+    CycleValidity,
     classify_changes,
     evaluate_cycle_validity,
     get_changed_files,
@@ -124,6 +125,7 @@ class ReviewCycle:
         # apply_fix state (mirrors delivery lane)
         self._changed_files: List[str] = []
         self._consecutive_no_findings: int = 0
+        self._bug_dismissed: bool = False   # True when Codex confirms bug no longer exists
 
     # -----------------------------------------------------------------------
     # Shared Step: Preflight
@@ -417,6 +419,12 @@ class ReviewCycle:
 
         tracker_summary = summarize_review_tracker(self._tracker_data)
 
+        raw_edge_cases = finding.get("edge_cases", [])
+        if isinstance(raw_edge_cases, list) and raw_edge_cases:
+            edge_cases_str = "\n".join(f"  - {ec}" for ec in raw_edge_cases)
+        else:
+            edge_cases_str = "(none documented — verify manually)"
+
         fix_ctx = FixPromptContext(
             finding_id=finding_id,
             finding_title=self._winning_entry.get("title", ""),
@@ -427,6 +435,7 @@ class ReviewCycle:
             severity=finding.get("severity", "medium"),
             repo_root=cfg.repo_root,
             tracker_summary=tracker_summary,
+            edge_cases=edge_cases_str,
         )
 
         try:
@@ -443,6 +452,7 @@ class ReviewCycle:
                 fix_ctx.finding_description,
                 fix_ctx.recommended_action,
                 cfg.repo_root,
+                fix_ctx.edge_cases,
             )
 
         log.save_text("cycle_prompt.txt", self._cycle_prompt)
@@ -460,11 +470,63 @@ class ReviewCycle:
         log.info(self._codex_result.summary())
 
     # -----------------------------------------------------------------------
+    # apply_fix: Step — Handle BUG_NOT_FOUND signal
+    # -----------------------------------------------------------------------
+
+    def step_handle_bug_not_found(self) -> None:
+        """Check if Codex determined the bug no longer exists in the codebase.
+
+        Codex emits 'BUG_NOT_FOUND' in its output when STEP 1 (ground truth
+        verification) finds no evidence of the reported issue.  In that case:
+          - The finding is a false positive or was already fixed elsewhere.
+          - We mark it dismissed in the tracker (not as an error).
+          - We skip validation, repair, commit — no code was changed.
+        """
+        log = self.log
+        stdout = self._codex_result.stdout if self._codex_result else ""
+
+        if "BUG_NOT_FOUND" not in stdout and "BUG_VERIFIED: false" not in stdout:
+            log.info("Step: Bug verification — BUG_NOT_FOUND signal absent, proceeding with fix")
+            return
+
+        finding_id = self._winning_entry.get("finding_id", "unknown")
+        log.info(
+            f"Step: Bug not found — Codex confirmed finding {finding_id} no longer exists. "
+            "Marking as dismissed (false positive or already fixed)."
+        )
+        self._bug_dismissed = True
+        self.report.cycle_valid = True
+        self.report.ai_narrative = (
+            f"Finding {finding_id} was not found in the codebase during ground truth "
+            "verification. It has been dismissed as a false positive or already-fixed issue."
+        )
+
+        # Mark finding dismissed in tracker data so step_update_tracker handles it
+        finding_id_str = self._winning_entry.get("finding_id", "")
+        for f in self._tracker_data.get("findings", []):
+            if f.get("id") == finding_id_str:
+                f["status"] = "dismissed"
+                f["dismissed_at"] = self._timestamp
+                f["dismissed_reason"] = "BUG_NOT_FOUND: Codex ground truth check found no evidence"
+                break
+
+        # Mark the fix queue entry done too
+        for entry in self._tracker_data.get("queue", []):
+            if entry.get("finding_id") == finding_id_str and entry.get("mode") == "fix":
+                entry["status"] = "done"
+                break
+
+    # -----------------------------------------------------------------------
     # apply_fix: Step — Inspect changes
     # -----------------------------------------------------------------------
 
     def step_inspect_changes(self) -> None:
         log = self.log
+        if self._bug_dismissed:
+            log.info("Step: Skipping inspect — bug was not found (dismissed)")
+            self._changed_files = []
+            self._change_flags = classify_changes([])
+            return
         log.info("Step: Inspecting git changes")
         self._changed_files = get_changed_files(self.cfg.repo_root)
         self._change_flags = classify_changes(self._changed_files)
@@ -477,6 +539,12 @@ class ReviewCycle:
 
     def step_validate(self) -> None:
         log = self.log
+        if self._bug_dismissed:
+            log.info("Step: Skipping validate — bug was not found (dismissed)")
+            self._validation_results = []
+            self._cycle_validity = CycleValidity(valid=True, reason="Bug dismissed — no code changes", all_validations_passed=True)
+            self.report.cycle_valid = True
+            return
         log.info("Step: Running validations")
 
         cmds = required_validation_commands(self._change_flags, skip_smoke=self.cfg.skip_smoke)
@@ -517,6 +585,10 @@ class ReviewCycle:
     def step_repair_pass(self) -> None:
         log = self.log
         cfg = self.cfg
+
+        if self._bug_dismissed:
+            log.info("Step: Skipping repair — bug was not found (dismissed)")
+            return
 
         if self._cycle_validity.valid:
             log.info("Step: Skipping repair (already valid)")
@@ -604,6 +676,10 @@ class ReviewCycle:
 
     def step_accept_or_revert(self) -> None:
         log = self.log
+        if self._bug_dismissed:
+            log.info("Step: Skipping accept/revert — bug was not found (dismissed, no code changed)")
+            self.report.tracker_changes = "Bug dismissed — finding marked dismissed in tracker"
+            return
         log.info("Step: Tracker acceptance check")
 
         changed = review_tracker_changed(self._tracker_snapshot, self.cfg.review_tracker_path)
@@ -639,6 +715,10 @@ class ReviewCycle:
         log = self.log
         cfg = self.cfg
         log.info("Step: Commit and push")
+
+        if self._bug_dismissed:
+            log.info("Skipping commit — bug was not found (no code changes to commit)")
+            return
 
         if not self._cycle_validity.valid:
             log.info("Skipping commit — fix cycle is invalid.")
@@ -690,18 +770,22 @@ class ReviewCycle:
         cfg = self.cfg
         log.info("Step: Updating review tracker")
 
-        # For apply_fix mode, mark finding resolved if valid
+        # For apply_fix mode, mark finding resolved/dismissed based on outcome
         new_findings_for_tracker = []
         if cfg.mode == "review_only":
             new_findings_for_tracker = [f.as_dict() for f in self._new_findings]
-        elif cfg.mode == "apply_fix" and self._cycle_validity.valid if hasattr(self, "_cycle_validity") and self._cycle_validity else False:
-            # Mark the finding resolved
+        elif cfg.mode == "apply_fix":
             finding_id = self._winning_entry.get("finding_id", "")
-            for f in self._tracker_data.get("findings", []):
-                if f.get("id") == finding_id:
-                    f["status"] = "resolved"
-                    f["resolved_at"] = self._timestamp
-            log.info(f"Marked finding {finding_id} as resolved")
+            if self._bug_dismissed:
+                # Already mutated in step_handle_bug_not_found — just log
+                log.info(f"Finding {finding_id} was dismissed (BUG_NOT_FOUND)")
+            elif hasattr(self, "_cycle_validity") and self._cycle_validity and self._cycle_validity.valid:
+                # Mark the finding resolved
+                for f in self._tracker_data.get("findings", []):
+                    if f.get("id") == finding_id:
+                        f["status"] = "resolved"
+                        f["resolved_at"] = self._timestamp
+                log.info(f"Marked finding {finding_id} as resolved")
 
         # Build updated tracker
         updated_tracker = build_tracker_update(
@@ -904,6 +988,7 @@ class ReviewCycle:
                 self.step_preflight,
                 self.step_build_fix_context,
                 self.step_run_fix_codex,
+                self.step_handle_bug_not_found,
                 self.step_inspect_changes,
                 self.step_validate,
                 self.step_repair_pass,

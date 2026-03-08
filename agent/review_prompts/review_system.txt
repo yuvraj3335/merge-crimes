@@ -32,6 +32,11 @@ FINDING SCHEMA — each finding must have ALL of these fields:
   "description"       — 1–3 sentences explaining the problem
   "evidence"          — quoted code snippet or search result proving the issue
   "recommended_action"— concrete, specific action (e.g. "Delete lines 42–67 in foo.ts")
+  "edge_cases"        — array of strings, each describing a specific scenario, boundary
+                        condition, or caller pattern where this bug manifests or matters.
+                        Example: ["called with empty array input", "race condition when two
+                        players join simultaneously", "no-op when score is already 0"].
+                        Minimum 2 entries for high/medium severity. Use [] for low.
 
 ---
 
