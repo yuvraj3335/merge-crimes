@@ -1,6 +1,9 @@
 // ─── Merge Crimes — Repo City Model Types ───
 // Translation layer: GitHub repo metadata -> playable city
 
+import type { RepoSignal, RepoSignalType } from './types';
+export type { RepoSignal, RepoSignalType } from './types';
+
 // ─── Repo Snapshot Types ───
 
 export type RepoArchetype =
@@ -54,24 +57,6 @@ export interface DependencyEdge {
   toModuleId: string;
   weight: number; // 0–1
   reason: DependencyReason;
-}
-
-export type RepoSignalType =
-  | 'failing_workflow'
-  | 'open_pr'
-  | 'merge_conflict'
-  | 'security_alert'
-  | 'issue_spike'
-  | 'stale_pr'
-  | 'flaky_tests'
-  | 'dependency_drift';
-
-export interface RepoSignal {
-  type: RepoSignalType;
-  target: string; // module id or path
-  severity: number; // 1–5
-  title?: string;
-  detail?: string;
 }
 
 export interface RepoMetadata {

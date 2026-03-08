@@ -232,13 +232,20 @@ interface MissionTemplate {
   baseDifficulty: 1 | 2 | 3 | 4 | 5;
 }
 
-const SIGNAL_MISSION_TEMPLATES: Record<RepoSignalType, MissionTemplate> = {
+const SIGNAL_MISSION_TEMPLATES: Partial<Record<RepoSignalType, MissionTemplate>> = {
   failing_workflow: {
     titlePrefix: 'Defend',
     type: 'defense',
     descriptionTemplate: 'The deployment pipeline is under attack. Hold the control terminal until the workflow stabilizes.',
     objectiveTemplates: ['Reach the control terminal', 'Defend the pipeline', 'Restore workflow stability'],
     baseDifficulty: 3,
+  },
+  open_issue: {
+    titlePrefix: 'Stabilize',
+    type: 'recovery',
+    descriptionTemplate: 'Open issues are piling up in the district. Recover clean artifacts before the queue overruns the maintainers.',
+    objectiveTemplates: ['Assess incoming issue reports', 'Recover clean artifacts', 'Restore district stability'],
+    baseDifficulty: 2,
   },
   merge_conflict: {
     titlePrefix: 'BOSS: Resolve',
@@ -293,8 +300,9 @@ const SIGNAL_MISSION_TEMPLATES: Record<RepoSignalType, MissionTemplate> = {
 
 // ─── Signal -> Bot Archetype ───
 
-const SIGNAL_TO_BOT: Record<RepoSignalType, BotArchetype> = {
+const SIGNAL_TO_BOT: Partial<Record<RepoSignalType, BotArchetype>> = {
   failing_workflow: 'saboteur',
+  open_issue: 'regression',
   merge_conflict: 'merge',
   open_pr: 'hallucination',
   security_alert: 'dependency',
@@ -313,6 +321,20 @@ const BOT_NAMES: Record<BotArchetype, string[]> = {
   refactor: ['Refactor Storm', 'Dead Code Walker', 'Cleanup Mirage'],
   saboteur: ['Test Saboteur', 'Pipeline Wrecker', 'CI Gremlin'],
 };
+
+function getMissionTemplate(signalType: RepoSignalType): MissionTemplate | null {
+  return SIGNAL_MISSION_TEMPLATES[signalType] ?? null;
+}
+
+function getBotArchetype(signalType: RepoSignalType): BotArchetype | null {
+  return SIGNAL_TO_BOT[signalType] ?? null;
+}
+
+function isActionableSignal(signal: RepoSignal): boolean {
+  return signal.severity > 0
+    && getMissionTemplate(signal.type) !== null
+    && getBotArchetype(signal.type) !== null;
+}
 
 // ─── Layout Helpers ───
 
@@ -507,7 +529,7 @@ function clamp(value: number, min: number, max: number): number {
 
 function deriveHeat(mod: RepoModule, signals: RepoSignal[]): number {
   const signalHeat = signals
-    .filter((s) => s.target === mod.id)
+    .filter((s) => s.target === mod.id && isActionableSignal(s))
     .reduce((sum, s) => sum + s.severity * 12, 0);
   const riskHeat = mod.riskScore * 0.35;
   const activityHeat = mod.activityScore * 0.18;
@@ -817,10 +839,15 @@ export function generateCityFromRepo(repo: RepoModel): GeneratedCity {
   });
 
   const roads = generateRoads(repo, districts, archetype);
+  const actionableSignals = repo.signals.filter(isActionableSignal);
 
   // Generate missions from signals
-  const missions: GeneratedMission[] = repo.signals.map((signal, idx) => {
-    const template = SIGNAL_MISSION_TEMPLATES[signal.type];
+  const missions: GeneratedMission[] = actionableSignals.flatMap((signal, idx) => {
+    const template = getMissionTemplate(signal.type);
+    if (!template) {
+      return [];
+    }
+
     const targetDistrict = districts.find((d) => d.moduleId === signal.target);
     const districtId = targetDistrict?.id ?? districts[0]?.id ?? 'unknown';
 
@@ -832,7 +859,7 @@ export function generateCityFromRepo(repo: RepoModel): GeneratedCity {
       ? `${template.titlePrefix}: ${signal.title}`
       : `${template.titlePrefix}: ${signal.type.replace(/_/g, ' ')} in ${targetDistrict?.name ?? 'unknown'}`;
 
-    return {
+    return [{
       id: makeId('mission', repo.repoId, signal.type, String(idx)),
       districtId,
       title,
@@ -842,24 +869,28 @@ export function generateCityFromRepo(repo: RepoModel): GeneratedCity {
       targetRef: signal.target,
       description: signal.detail ?? template.descriptionTemplate,
       objectives: template.objectiveTemplates,
-    };
+    }];
   });
 
   // Generate bots from signals
-  const bots: GeneratedBot[] = repo.signals.map((signal, idx) => {
-    const archetype = SIGNAL_TO_BOT[signal.type];
+  const bots: GeneratedBot[] = actionableSignals.flatMap((signal, idx) => {
+    const archetype = getBotArchetype(signal.type);
+    if (!archetype) {
+      return [];
+    }
+
     const names = BOT_NAMES[archetype];
     const name = names[idx % names.length];
     const targetDistrict = districts.find((d) => d.moduleId === signal.target);
     const districtId = targetDistrict?.id ?? districts[0]?.id ?? 'unknown';
 
-    return {
+    return [{
       id: makeId('bot', repo.repoId, archetype, String(idx)),
       archetype,
       name,
       districtId,
       threatLevel: signal.severity,
-    };
+    }];
   });
 
   return {

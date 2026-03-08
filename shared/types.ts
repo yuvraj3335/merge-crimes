@@ -25,6 +25,27 @@ export interface RepoSource {
   lastActivity: string; // ISO date
 }
 
+export type RepoSignalType =
+  | 'failing_workflow'
+  | 'open_issue'
+  | 'open_pr'
+  | 'merge_conflict'
+  | 'security_alert'
+  | 'issue_spike'
+  | 'stale_pr'
+  | 'flaky_tests'
+  | 'dependency_drift'
+  | 'latest_commit';
+
+export interface RepoSignal {
+  type: RepoSignalType;
+  target: string; // module id or repo-level path
+  severity: 0 | 1 | 2 | 3 | 4 | 5;
+  title?: string;
+  detail?: string;
+  value?: number | string;
+}
+
 export type MissionType = 'delivery' | 'escape' | 'recovery' | 'defense' | 'boss';
 
 export type MissionStatus = 'available' | 'active' | 'completed' | 'failed';

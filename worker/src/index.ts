@@ -8,8 +8,12 @@ import { seedDatabase } from './seed';
 import { SEED_DISTRICTS } from '../../shared/seed/districts';
 import { REPO_FIXTURES } from '../../shared/seed/repoFixtures';
 import { generateCityFromRepo, generatedCityToDistricts, generatedCityToMissions, generatedCityToConflicts } from '../../shared/repoCityGenerator';
-import type { GitHubRepoMetadataSnapshot, RepoLanguage } from '../../shared/repoModel';
-import { attachTopLevelRepoModules, type RepoTopLevelTreeEntry } from '../../shared/repoTopLevelModules';
+import {
+    normalizeGitHubRepoSnapshot,
+    type GitHubRepoContentsResponse,
+    type GitHubRepoLanguagesResponse,
+    type GitHubRepoResponse,
+} from './github/normalizeRepoSnapshot';
 
 // ─── Types ───
 type Bindings = {
@@ -58,44 +62,6 @@ interface GitHubAccessTokenResponse {
     error?: string;
     error_description?: string;
 }
-
-interface GitHubRepoResponse {
-    id: number;
-    owner: { login: string };
-    name: string;
-    full_name: string;
-    description: string | null;
-    html_url: string;
-    homepage: string | null;
-    topics?: string[];
-    stargazers_count: number;
-    forks_count: number;
-    watchers_count: number;
-    subscribers_count?: number;
-    open_issues_count: number;
-    default_branch: string;
-    language: string | null;
-    private: boolean;
-    archived: boolean;
-    fork: boolean;
-    updated_at: string;
-    pushed_at: string | null;
-    license: {
-        spdx_id: string | null;
-        name: string;
-    } | null;
-}
-
-type GitHubRepoLanguagesResponse = Record<string, number>;
-
-interface GitHubRepoContentEntry {
-    name: string;
-    path: string;
-    type: 'file' | 'dir' | 'symlink' | 'submodule';
-    size?: number;
-}
-
-type GitHubRepoContentsResponse = GitHubRepoContentEntry | GitHubRepoContentEntry[];
 
 interface GitHubApiErrorResponse {
     message?: string;
@@ -210,11 +176,20 @@ function getGitHubOAuthScope(env: Bindings): string {
     return env.GITHUB_OAUTH_SCOPE?.trim() || DEFAULT_GITHUB_OAUTH_SCOPE;
 }
 
-function getGitHubRepoRequestHeaders(): HeadersInit {
-    return {
+function getGitHubRepoRequestHeaders(accessToken?: string | null): HeadersInit {
+    const headers: HeadersInit = {
         Accept: GITHUB_API_ACCEPT,
         'User-Agent': GITHUB_API_USER_AGENT,
         'X-GitHub-Api-Version': GITHUB_API_VERSION,
+    };
+
+    if (!accessToken) {
+        return headers;
+    }
+
+    return {
+        ...headers,
+        Authorization: `Bearer ${accessToken}`,
     };
 }
 
@@ -225,12 +200,12 @@ function isGitHubApiErrorResponse(value: unknown): value is GitHubApiErrorRespon
         && typeof (value as GitHubApiErrorResponse).message === 'string';
 }
 
-async function fetchGitHubJson<T>(url: string): Promise<
+async function fetchGitHubJson<T>(url: string, accessToken?: string | null): Promise<
     { ok: true; data: T }
     | { ok: false; status: number; message: string }
 > {
     const response = await fetch(url, {
-        headers: getGitHubRepoRequestHeaders(),
+        headers: getGitHubRepoRequestHeaders(accessToken),
     });
 
     const contentType = response.headers.get('Content-Type') ?? '';
@@ -256,74 +231,6 @@ async function fetchGitHubJson<T>(url: string): Promise<
         data: payload as T,
     };
 }
-
-function normalizeGitHubLanguages(payload: GitHubRepoLanguagesResponse): RepoLanguage[] {
-    const totalBytes = Object.values(payload).reduce((sum, bytes) => sum + bytes, 0);
-
-    return Object.entries(payload)
-        .sort(([, leftBytes], [, rightBytes]) => rightBytes - leftBytes)
-        .map(([name, bytes]) => ({
-            name,
-            bytes,
-            share: totalBytes > 0 ? bytes / totalBytes : 0,
-        }));
-}
-
-function normalizeGitHubTopLevelEntries(payload: GitHubRepoContentsResponse): RepoTopLevelTreeEntry[] {
-    const entries = Array.isArray(payload) ? payload : [payload];
-
-    return entries.flatMap((entry) => {
-        if (entry.type !== 'dir' && entry.type !== 'file') {
-            return [];
-        }
-
-        return [{
-            name: entry.name,
-            path: entry.path,
-            type: entry.type === 'dir' ? 'directory' : 'file',
-            size: entry.size ?? 0,
-        }];
-    });
-}
-
-function normalizeGitHubRepoSnapshot(
-    repo: GitHubRepoResponse,
-    languages: GitHubRepoLanguagesResponse,
-): GitHubRepoMetadataSnapshot {
-    return {
-        repoId: `github:${repo.id}`,
-        owner: repo.owner.login,
-        name: repo.name,
-        defaultBranch: repo.default_branch,
-        visibility: repo.private ? 'private' : 'public',
-        archetype: 'unknown',
-        languages: normalizeGitHubLanguages(languages),
-        modules: [],
-        dependencyEdges: [],
-        signals: [],
-        generatedAt: new Date().toISOString(),
-        metadata: {
-            provider: 'github',
-            providerRepoId: repo.id,
-            fullName: repo.full_name,
-            description: repo.description,
-            htmlUrl: repo.html_url,
-            homepageUrl: repo.homepage,
-            topics: repo.topics ?? [],
-            stars: repo.stargazers_count,
-            forks: repo.forks_count,
-            watchers: repo.subscribers_count ?? repo.watchers_count,
-            openIssues: repo.open_issues_count,
-            primaryLanguage: repo.language,
-            license: repo.license?.spdx_id ?? repo.license?.name ?? null,
-            archived: repo.archived,
-            fork: repo.fork,
-            updatedAt: repo.updated_at,
-            pushedAt: repo.pushed_at,
-        },
-    };
-}
-
 function isAllowedRedirectUri(request: Request, env: Bindings, redirectUri: string): boolean {
     let parsedRedirectUri: URL;
     try {
@@ -886,8 +793,12 @@ app.get('/api/github/repo-metadata', async (c) => {
     const owner = query.data.owner ?? DEFAULT_GITHUB_REPO_OWNER;
     const name = query.data.name ?? DEFAULT_GITHUB_REPO_NAME;
     const repoPath = `${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
+    const authorizationHeader = c.req.header('Authorization');
+    const accessToken = authorizationHeader?.startsWith('Bearer ')
+        ? authorizationHeader.slice('Bearer '.length).trim()
+        : null;
 
-    const repoResponse = await fetchGitHubJson<GitHubRepoResponse>(`https://api.github.com/repos/${repoPath}`);
+    const repoResponse = await fetchGitHubJson<GitHubRepoResponse>(`https://api.github.com/repos/${repoPath}`, accessToken);
     if (!repoResponse.ok) {
         return c.json({
             error: repoResponse.status === 404 ? 'github_repo_not_found' : 'github_repo_fetch_failed',
@@ -898,8 +809,8 @@ app.get('/api/github/repo-metadata', async (c) => {
     }
 
     const [languagesResponse, contentsResponse] = await Promise.all([
-        fetchGitHubJson<GitHubRepoLanguagesResponse>(`https://api.github.com/repos/${repoPath}/languages`),
-        fetchGitHubJson<GitHubRepoContentsResponse>(`https://api.github.com/repos/${repoPath}/contents`),
+        fetchGitHubJson<GitHubRepoLanguagesResponse>(`https://api.github.com/repos/${repoPath}/languages`, accessToken),
+        fetchGitHubJson<GitHubRepoContentsResponse>(`https://api.github.com/repos/${repoPath}/contents`, accessToken),
     ]);
 
     if (!languagesResponse.ok) {
@@ -911,10 +822,14 @@ app.get('/api/github/repo-metadata', async (c) => {
         }, 502);
     }
 
-    const snapshot = normalizeGitHubRepoSnapshot(repoResponse.data, languagesResponse.data);
-    const topLevelEntries = contentsResponse.ok ? normalizeGitHubTopLevelEntries(contentsResponse.data) : [];
+    const snapshot = await normalizeGitHubRepoSnapshot({
+        repo: repoResponse.data,
+        languages: languagesResponse.data,
+        contents: contentsResponse.ok ? contentsResponse.data : undefined,
+        fetchGitHubJson: <T>(url: string) => fetchGitHubJson<T>(url, accessToken),
+    });
 
-    return c.json(attachTopLevelRepoModules(snapshot, topLevelEntries));
+    return c.json(snapshot);
 });
 
 // ─── Anonymous Write Session ───
