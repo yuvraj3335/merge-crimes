@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import os
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
@@ -65,43 +66,37 @@ def _build_command(
     return cmd
 
 
+_HEARTBEAT_INTERVAL = 30  # seconds between "still running" log lines
+
+
 def _run_codex(
     cmd: List[str],
     cwd: str,
     env: Optional[Dict[str, str]],
     timeout: int,
+    log_fn: Optional[Callable[[str], None]] = None,
 ) -> CodexResult:
-    """Execute *cmd* and return a CodexResult."""
+    """Execute *cmd* and return a CodexResult.
+
+    When *log_fn* is provided (e.g. ``logger.info``), a background heartbeat
+    thread emits a progress line every 30 s so the operator can see that
+    Codex is still alive during long reviews.
+    """
     effective_env = dict(os.environ)
     if env:
         effective_env.update(env)
 
     start = time.monotonic()
+
+    # --- launch subprocess ---------------------------------------------------
     try:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             cmd,
             cwd=cwd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout,
             env=effective_env,
-        )
-        duration = time.monotonic() - start
-        return CodexResult(
-            exit_code=proc.returncode,
-            stdout=proc.stdout or "",
-            stderr=proc.stderr or "",
-            duration_seconds=duration,
-            command=cmd,
-        )
-    except subprocess.TimeoutExpired:
-        duration = time.monotonic() - start
-        return CodexResult(
-            exit_code=-1,
-            stdout="",
-            stderr=f"Codex process timed out after {timeout}s.",
-            duration_seconds=duration,
-            command=cmd,
         )
     except FileNotFoundError:
         duration = time.monotonic() - start
@@ -126,6 +121,72 @@ def _run_codex(
             command=cmd,
         )
 
+    if log_fn:
+        log_fn(f"  [codex] pid={proc.pid} started — timeout: {timeout}s")
+
+    # --- background threads: drain stdout / stderr ---------------------------
+    stdout_chunks: List[str] = []
+    stderr_chunks: List[str] = []
+
+    def _read_stdout() -> None:
+        assert proc.stdout is not None
+        for chunk in iter(lambda: proc.stdout.read(4096), ""):
+            stdout_chunks.append(chunk)
+
+    def _read_stderr() -> None:
+        assert proc.stderr is not None
+        for chunk in iter(lambda: proc.stderr.read(4096), ""):
+            stderr_chunks.append(chunk)
+
+    t_out = threading.Thread(target=_read_stdout, daemon=True)
+    t_err = threading.Thread(target=_read_stderr, daemon=True)
+    t_out.start()
+    t_err.start()
+
+    # --- heartbeat thread ----------------------------------------------------
+    if log_fn:
+        def _heartbeat() -> None:
+            while proc.poll() is None:
+                time.sleep(_HEARTBEAT_INTERVAL)
+                if proc.poll() is not None:
+                    break
+                elapsed = time.monotonic() - start
+                captured = sum(len(c) for c in stdout_chunks)
+                log_fn(
+                    f"  [codex] still running — {elapsed:.0f}s elapsed, "
+                    f"{captured} stdout bytes captured"
+                )
+
+        threading.Thread(target=_heartbeat, daemon=True).start()
+
+    # --- wait for completion -------------------------------------------------
+    try:
+        proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        t_out.join(timeout=5)
+        t_err.join(timeout=5)
+        duration = time.monotonic() - start
+        return CodexResult(
+            exit_code=-1,
+            stdout="".join(stdout_chunks),
+            stderr=f"Codex process timed out after {timeout}s.",
+            duration_seconds=duration,
+            command=cmd,
+        )
+
+    t_out.join(timeout=10)
+    t_err.join(timeout=10)
+
+    duration = time.monotonic() - start
+    return CodexResult(
+        exit_code=proc.returncode,
+        stdout="".join(stdout_chunks),
+        stderr="".join(stderr_chunks),
+        duration_seconds=duration,
+        command=cmd,
+    )
+
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -139,6 +200,7 @@ def run_codex(
     extra_args: Optional[List[str]] = None,
     env: Optional[Dict[str, str]] = None,
     timeout: int = 1800,
+    log_fn: Optional[Callable[[str], None]] = None,
 ) -> CodexResult:
     """Run a full implementation cycle with Codex.
 
@@ -149,12 +211,14 @@ def run_codex(
         extra_args: Additional CLI flags (from REPO_CITY_CODEX_EXTRA_ARGS).
         env:        Extra environment variables to inject (secrets never logged).
         timeout:    Maximum seconds to wait before killing the process.
+        log_fn:     Optional callable (e.g. logger.info) — receives heartbeat
+                    progress lines every 30 s while Codex is running.
 
     Returns:
         A CodexResult with exit_code, stdout, stderr, and timing.
     """
     cmd = _build_command(codex_bin, prompt, extra_args or [])
-    return _run_codex(cmd, cwd, env, timeout)
+    return _run_codex(cmd, cwd, env, timeout, log_fn=log_fn)
 
 
 def run_codex_repair(
@@ -164,6 +228,7 @@ def run_codex_repair(
     extra_args: Optional[List[str]] = None,
     env: Optional[Dict[str, str]] = None,
     timeout: int = 900,
+    log_fn: Optional[Callable[[str], None]] = None,
 ) -> CodexResult:
     """Run a focused repair pass with Codex.
 
@@ -171,4 +236,4 @@ def run_codex_repair(
     The repair prompt must be generated externally (see openai_client.py).
     """
     cmd = _build_command(codex_bin, prompt, extra_args or [])
-    return _run_codex(cmd, cwd, env, timeout)
+    return _run_codex(cmd, cwd, env, timeout, log_fn=log_fn)

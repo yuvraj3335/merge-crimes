@@ -280,11 +280,13 @@ class ReviewCycle:
         log.save_text("cycle_prompt.txt", self._cycle_prompt)
 
         # Run Codex
+        log.info("  [codex] launching Codex (full-auto review) — this takes several minutes")
         self._codex_result = run_codex(
             prompt=self._cycle_prompt,
             cwd=cfg.repo_root,
             codex_bin=cfg.codex_bin,
             extra_args=cfg.codex_extra_args,
+            log_fn=log.info,
         )
         log.save_codex_output(
             self._codex_result.stdout, self._codex_result.stderr, attempt=0, is_repair=False
@@ -457,11 +459,13 @@ class ReviewCycle:
 
         log.save_text("cycle_prompt.txt", self._cycle_prompt)
 
+        log.info("  [codex] launching Codex (full-auto fix) — this takes several minutes")
         self._codex_result = run_codex(
             prompt=self._cycle_prompt,
             cwd=cfg.repo_root,
             codex_bin=cfg.codex_bin,
             extra_args=cfg.codex_extra_args,
+            log_fn=log.info,
         )
         log.save_codex_output(
             self._codex_result.stdout, self._codex_result.stderr, attempt=0, is_repair=False
@@ -649,6 +653,7 @@ class ReviewCycle:
             repair_result = run_codex_repair(
                 prompt=repair_prompt, cwd=cfg.repo_root,
                 codex_bin=cfg.codex_bin, extra_args=cfg.codex_extra_args,
+                log_fn=log.info,
             )
             log.save_codex_output(repair_result.stdout, repair_result.stderr, attempt=attempt, is_repair=True)
             self.report.repair_attempts += 1
