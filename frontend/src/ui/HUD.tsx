@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SEED_FACTION_BY_ID } from '../../../shared/seed/factions';
 import type { District } from '../../../shared/types';
+import { buildSnapshotFreshnessCopy } from './snapshotFreshness';
 
 const MISSION_TYPE_COLORS: Record<string, string> = {
     delivery: '#00ff88',
@@ -65,8 +67,24 @@ export function HUD() {
         generatedCity,
         repoCityTransit,
     } = useGameStore();
+    const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
+    const hideHud = phase === 'menu' || phase === 'boss';
 
-    if (phase === 'menu' || phase === 'boss') return null;
+    useEffect(() => {
+        if (hideHud || !repoCityMode || !connectedRepo) {
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            setFreshnessNow(Date.now());
+        }, 30_000);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [connectedRepo, hideHud, repoCityMode]);
+
+    if (hideHud) return null;
 
     // Current waypoint info for the mission-active bar
     const currentWp = activeMission?.waypoints[currentWaypointIndex];
@@ -138,6 +156,13 @@ export function HUD() {
             meta: 'Current maintainer standing',
         },
     ] as const;
+    const snapshotFreshness = repoCityMode && connectedRepo
+        ? buildSnapshotFreshnessCopy(
+            connectedRepo.generatedAt,
+            connectedRepo.metadata?.provider === 'github' ? 'github' : 'seeded',
+            freshnessNow,
+        )
+        : null;
 
     return (
         <div className={`hud-overlay ${repoCityMode ? 'repo-city-hud' : ''}`}>
@@ -180,6 +205,28 @@ export function HUD() {
                                     <span className="repo-hud-count">
                                         {generatedCity.districts.length} districts · {generatedCity.bots.length} threats
                                     </span>
+                                )}
+                                {snapshotFreshness && (
+                                    <div className="repo-hud-provenance">
+                                        <span
+                                            className={`repo-hud-provenance-pill ${snapshotFreshness.source}`.trim()}
+                                        >
+                                            {snapshotFreshness.sourceLabel}
+                                        </span>
+                                        <div className="repo-hud-provenance-copy">
+                                            <span className="repo-hud-provenance-primary">
+                                                {snapshotFreshness.primary}
+                                            </span>
+                                            {snapshotFreshness.detail && (
+                                                <time
+                                                    className="repo-hud-provenance-detail"
+                                                    dateTime={connectedRepo.generatedAt}
+                                                >
+                                                    {snapshotFreshness.detail}
+                                                </time>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>

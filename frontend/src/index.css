@@ -4679,6 +4679,7 @@ body,
 .repo-hud-copy {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .repo-hud-icon {
@@ -4706,6 +4707,59 @@ body,
   padding: 0;
   background: transparent;
   color: rgba(255, 196, 138, 0.84);
+}
+
+.repo-hud-provenance {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.repo-hud-provenance-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(214, 224, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 246, 255, 0.88);
+}
+
+.repo-hud-provenance-pill.github {
+  border-color: rgba(138, 221, 255, 0.24);
+  background: rgba(138, 221, 255, 0.12);
+  color: rgba(138, 221, 255, 0.96);
+}
+
+.repo-hud-provenance-pill.seeded {
+  border-color: rgba(255, 214, 148, 0.24);
+  background: rgba(255, 214, 148, 0.1);
+  color: rgba(255, 214, 148, 0.96);
+}
+
+.repo-hud-provenance-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.repo-hud-provenance-primary {
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(242, 246, 255, 0.9);
+}
+
+.repo-hud-provenance-detail {
+  font-size: 9px;
+  line-height: 1.35;
+  color: rgba(182, 193, 226, 0.76);
 }
 
 @media (max-width: 900px) {
