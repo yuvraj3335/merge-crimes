@@ -6,27 +6,40 @@ type EncounterCopySource = {
     summary?: string;
     title?: string;
     description?: string;
+    resolutionText?: string;
+    hunks?: Array<{
+        label?: string;
+        side?: string;
+    }>;
 };
 
 function getEncounterCopy(encounter: EncounterCopySource) {
-    const name = [encounter.name, encounter.title]
+    const encounterTitle = [encounter.title, encounter.name]
         .map((value) => value?.trim())
         .find((value): value is string => Boolean(value))
         ?? 'Critical encounter';
-    const summary = [encounter.summary, encounter.description]
+    const encounterSummary = [encounter.summary, encounter.description]
         .map((value) => value?.trim())
         .find((value): value is string => Boolean(value))
         ?? 'A hostile route is destabilizing this district. Choose the safest response before the window closes.';
+    const resolutionText = [
+        encounter.resolutionText,
+        encounter.hunks?.find((hunk) => hunk.side === 'resolved')?.label,
+    ]
+        .map((value) => value?.trim())
+        .find((value): value is string => Boolean(value))
+        ?? 'Lock the curated route before the district destabilizes.';
 
-    return { name, summary };
+    return { encounterTitle, encounterSummary, resolutionText };
 }
 
 export function MergeConflictGame() {
     const { phase, activeConflict, resolveBossFight, missionTimer, setMissionTimer, repoCityMode, districts } = useGameStore();
     if (phase !== 'boss' || !activeConflict) return null;
+    const encounterCopy = getEncounterCopy(activeConflict);
 
     return (
-        <MergeConflictGameInner
+        <BossEncounterOverlay
             key={activeConflict.id}
             activeConflict={activeConflict}
             missionTimer={missionTimer}
@@ -34,27 +47,36 @@ export function MergeConflictGame() {
             setMissionTimer={setMissionTimer}
             repoCityMode={repoCityMode}
             districtName={districts.find((district) => district.id === activeConflict.districtId)?.name ?? activeConflict.districtId}
+            encounterTitle={encounterCopy.encounterTitle}
+            encounterSummary={encounterCopy.encounterSummary}
+            resolutionText={encounterCopy.resolutionText}
         />
     );
 }
 
-interface MergeConflictGameInnerProps {
+interface BossEncounterOverlayProps {
     activeConflict: NonNullable<ReturnType<typeof useGameStore.getState>['activeConflict']>;
     missionTimer: number;
     resolveBossFight: (success: boolean) => void;
     setMissionTimer: (t: number) => void;
     repoCityMode: boolean;
     districtName: string;
+    encounterTitle: string;
+    encounterSummary: string;
+    resolutionText: string;
 }
 
-function MergeConflictGameInner({
+function BossEncounterOverlay({
     activeConflict,
     missionTimer,
     resolveBossFight,
     setMissionTimer,
     repoCityMode,
     districtName,
-}: MergeConflictGameInnerProps) {
+    encounterTitle,
+    encounterSummary,
+    resolutionText,
+}: BossEncounterOverlayProps) {
     const [selectedHunk, setSelectedHunk] = useState<number | null>(null);
     const [result, setResult] = useState<'success' | 'failure' | null>(null);
     const [showResult, setShowResult] = useState(false);
@@ -126,8 +148,6 @@ function MergeConflictGameInner({
         return 'selected';
     };
 
-    const { name: encounterName, summary: encounterSummary } = getEncounterCopy(activeConflict);
-
     if (repoCityMode) {
         return (
             <div className="boss-overlay repo-city">
@@ -136,7 +156,7 @@ function MergeConflictGameInner({
                         <div className="boss-header repo-city">
                             <div className="boss-heading">
                                 <div className="boss-kicker">Boss route</div>
-                                <div className="boss-title repo-city">{encounterName}</div>
+                                <div className="boss-title repo-city">{encounterTitle}</div>
                                 <div className="boss-subtitle repo-city">{encounterSummary}</div>
                             </div>
                             <div className={`boss-timer-block ${getTimerTone()}`}>
@@ -154,7 +174,8 @@ function MergeConflictGameInner({
                         {!showResult ? (
                             <>
                                 <div className="boss-instruction repo-city">
-                                    Choose the safest response from {activeConflict.hunks.length} candidate actions.
+                                    Review {activeConflict.hunks.length} candidate responses and lock the cleanest route.
+                                    <div className="boss-resolution-note repo-city">{`Resolution route: ${resolutionText}`}</div>
                                 </div>
 
                                 <div className="boss-hunks repo-city">
@@ -186,8 +207,8 @@ function MergeConflictGameInner({
                                 </div>
                                 <div className="boss-result-copy">
                                     {result === 'success'
-                                        ? `${encounterName} stabilized in ${districtName}.`
-                                        : `${encounterName} overran ${districtName} before a safe route could hold.`}
+                                        ? `Resolution locked: ${resolutionText}.`
+                                        : `${encounterTitle} overran ${districtName} before the resolution route could lock.`}
                                 </div>
                                 {result === 'success' && (
                                     <div className="boss-reward-chip">+{activeConflict.reward}¢ secured</div>
@@ -205,8 +226,9 @@ function MergeConflictGameInner({
 
     return (
         <div className="boss-overlay">
-            <div className="boss-title">{`⚔ ${encounterName} ⚔`}</div>
+            <div className="boss-title">{`⚔ ${encounterTitle} ⚔`}</div>
             <div className="boss-subtitle">{encounterSummary}</div>
+            <div className="boss-resolution-note">{`Resolution route: ${resolutionText}`}</div>
 
             {!showResult && (
                 <>
@@ -215,7 +237,7 @@ function MergeConflictGameInner({
                     </div>
 
                     <div className="boss-instruction">
-                        Choose the safest response
+                        Review the candidate responses and lock the cleanest route
                     </div>
 
                     <div className="boss-hunks">
@@ -238,6 +260,11 @@ function MergeConflictGameInner({
                 <>
                     <div className={`boss-result ${result}`}>
                         {result === 'success' ? '✓ ENCOUNTER CLEARED' : '✗ ENCOUNTER LOST'}
+                    </div>
+                    <div className="boss-result-copy">
+                        {result === 'success'
+                            ? `Resolution locked: ${resolutionText}.`
+                            : `${encounterTitle} pushed past the safe route.`}
                     </div>
                     {result === 'success' && (
                         <div style={{ color: 'var(--neon-green)', marginTop: 8, fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
