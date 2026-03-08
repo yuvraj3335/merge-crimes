@@ -1,0 +1,855 @@
+{
+  "generated_at": "2026-03-08T13:54:22Z",
+  "file_count": 121,
+  "total_lines": 47662,
+  "total_size_bytes": 1625993,
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "extension": ".md",
+      "lines": 126,
+      "size_bytes": 4351,
+      "last_modified_iso": "2026-03-08T05:19:19Z"
+    },
+    {
+      "path": "README.md",
+      "extension": ".md",
+      "lines": 83,
+      "size_bytes": 1803,
+      "last_modified_iso": "2026-03-08T11:50:07Z"
+    },
+    {
+      "path": "README_AGENT.md",
+      "extension": ".md",
+      "lines": 282,
+      "size_bytes": 7350,
+      "last_modified_iso": "2026-03-08T05:27:00Z"
+    },
+    {
+      "path": "agent/__init__.py",
+      "extension": ".py",
+      "lines": 1,
+      "size_bytes": 55,
+      "last_modified_iso": "2026-03-08T05:19:55Z"
+    },
+    {
+      "path": "agent/codex_runner.py",
+      "extension": ".py",
+      "lines": 174,
+      "size_bytes": 5152,
+      "last_modified_iso": "2026-03-08T10:10:03Z"
+    },
+    {
+      "path": "agent/config.py",
+      "extension": ".py",
+      "lines": 190,
+      "size_bytes": 6122,
+      "last_modified_iso": "2026-03-08T06:08:03Z"
+    },
+    {
+      "path": "agent/git_ops.py",
+      "extension": ".py",
+      "lines": 231,
+      "size_bytes": 7726,
+      "last_modified_iso": "2026-03-08T05:21:47Z"
+    },
+    {
+      "path": "agent/logging_utils.py",
+      "extension": ".py",
+      "lines": 168,
+      "size_bytes": 5734,
+      "last_modified_iso": "2026-03-08T05:20:40Z"
+    },
+    {
+      "path": "agent/openai_client.py",
+      "extension": ".py",
+      "lines": 259,
+      "size_bytes": 8728,
+      "last_modified_iso": "2026-03-08T10:09:58Z"
+    },
+    {
+      "path": "agent/repo_city_cycle.py",
+      "extension": ".py",
+      "lines": 834,
+      "size_bytes": 29725,
+      "last_modified_iso": "2026-03-08T06:08:44Z"
+    },
+    {
+      "path": "agent/repo_city_loop.py",
+      "extension": ".py",
+      "lines": 188,
+      "size_bytes": 6275,
+      "last_modified_iso": "2026-03-08T10:09:30Z"
+    },
+    {
+      "path": "agent/report.py",
+      "extension": ".py",
+      "lines": 171,
+      "size_bytes": 5672,
+      "last_modified_iso": "2026-03-08T05:22:09Z"
+    },
+    {
+      "path": "agent/review_config.py",
+      "extension": ".py",
+      "lines": 278,
+      "size_bytes": 9209,
+      "last_modified_iso": "2026-03-08T11:53:57Z"
+    },
+    {
+      "path": "agent/review_context.py",
+      "extension": ".py",
+      "lines": 415,
+      "size_bytes": 14159,
+      "last_modified_iso": "2026-03-08T11:56:07Z"
+    },
+    {
+      "path": "agent/review_cycle.py",
+      "extension": ".py",
+      "lines": 1044,
+      "size_bytes": 42474,
+      "last_modified_iso": "2026-03-08T13:27:05Z"
+    },
+    {
+      "path": "agent/review_findings.py",
+      "extension": ".py",
+      "lines": 529,
+      "size_bytes": 17608,
+      "last_modified_iso": "2026-03-08T13:24:34Z"
+    },
+    {
+      "path": "agent/review_loop.py",
+      "extension": ".py",
+      "lines": 250,
+      "size_bytes": 8820,
+      "last_modified_iso": "2026-03-08T12:01:26Z"
+    },
+    {
+      "path": "agent/review_openai_client.py",
+      "extension": ".py",
+      "lines": 342,
+      "size_bytes": 11452,
+      "last_modified_iso": "2026-03-08T13:25:17Z"
+    },
+    {
+      "path": "agent/review_report.py",
+      "extension": ".py",
+      "lines": 233,
+      "size_bytes": 7798,
+      "last_modified_iso": "2026-03-08T11:57:48Z"
+    },
+    {
+      "path": "agent/review_tracker.py",
+      "extension": ".py",
+      "lines": 565,
+      "size_bytes": 20050,
+      "last_modified_iso": "2026-03-08T13:34:29Z"
+    },
+    {
+      "path": "agent/tests/__init__.py",
+      "extension": ".py",
+      "lines": 1,
+      "size_bytes": 41,
+      "last_modified_iso": "2026-03-08T12:05:39Z"
+    },
+    {
+      "path": "agent/tests/test_review_findings.py",
+      "extension": ".py",
+      "lines": 262,
+      "size_bytes": 10235,
+      "last_modified_iso": "2026-03-08T12:07:34Z"
+    },
+    {
+      "path": "agent/tests/test_review_report.py",
+      "extension": ".py",
+      "lines": 185,
+      "size_bytes": 6908,
+      "last_modified_iso": "2026-03-08T12:08:03Z"
+    },
+    {
+      "path": "agent/tests/test_review_tracker.py",
+      "extension": ".py",
+      "lines": 374,
+      "size_bytes": 14160,
+      "last_modified_iso": "2026-03-08T12:08:32Z"
+    },
+    {
+      "path": "agent/tracker.py",
+      "extension": ".py",
+      "lines": 307,
+      "size_bytes": 10720,
+      "last_modified_iso": "2026-03-08T05:29:34Z"
+    },
+    {
+      "path": "agent/validator.py",
+      "extension": ".py",
+      "lines": 377,
+      "size_bytes": 12044,
+      "last_modified_iso": "2026-03-08T06:08:22Z"
+    },
+    {
+      "path": "docs/AI_CITY_REBOOT_BRIEF.md",
+      "extension": ".md",
+      "lines": 383,
+      "size_bytes": 10980,
+      "last_modified_iso": "2026-03-07T19:25:19Z"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "extension": ".md",
+      "lines": 142,
+      "size_bytes": 5719,
+      "last_modified_iso": "2026-03-07T18:02:08Z"
+    },
+    {
+      "path": "docs/CHANGELOG.md",
+      "extension": ".md",
+      "lines": 319,
+      "size_bytes": 23050,
+      "last_modified_iso": "2026-03-07T19:17:16Z"
+    },
+    {
+      "path": "docs/DECISIONS.md",
+      "extension": ".md",
+      "lines": 137,
+      "size_bytes": 11291,
+      "last_modified_iso": "2026-03-07T18:49:16Z"
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "extension": ".md",
+      "lines": 126,
+      "size_bytes": 5359,
+      "last_modified_iso": "2026-03-07T19:22:57Z"
+    },
+    {
+      "path": "docs/HANDOFF.md",
+      "extension": ".md",
+      "lines": 81,
+      "size_bytes": 3774,
+      "last_modified_iso": "2026-03-07T19:16:39Z"
+    },
+    {
+      "path": "docs/MINIMAL_CITY_UI_SPEC.md",
+      "extension": ".md",
+      "lines": 472,
+      "size_bytes": 11551,
+      "last_modified_iso": "2026-03-07T19:25:19Z"
+    },
+    {
+      "path": "docs/NEXT_PROMPT.md",
+      "extension": ".md",
+      "lines": 102,
+      "size_bytes": 4026,
+      "last_modified_iso": "2026-03-07T18:51:56Z"
+    },
+    {
+      "path": "docs/OPUS_ONE_SHOT_REBOOT_PROMPT.md",
+      "extension": ".md",
+      "lines": 168,
+      "size_bytes": 7458,
+      "last_modified_iso": "2026-03-07T19:25:19Z"
+    },
+    {
+      "path": "docs/PROJECT_BRIEF.md",
+      "extension": ".md",
+      "lines": 33,
+      "size_bytes": 1269,
+      "last_modified_iso": "2026-03-07T16:29:16Z"
+    },
+    {
+      "path": "docs/REPO_CITY_ITERATION_PROMPT.md",
+      "extension": ".md",
+      "lines": 145,
+      "size_bytes": 4647,
+      "last_modified_iso": "2026-03-08T11:55:21Z"
+    },
+    {
+      "path": "docs/REPO_CITY_ITERATIVE_WORKFLOW.md",
+      "extension": ".md",
+      "lines": 334,
+      "size_bytes": 7294,
+      "last_modified_iso": "2026-03-07T19:46:19Z"
+    },
+    {
+      "path": "docs/REPO_CITY_OPUS_PROMPT.md",
+      "extension": ".md",
+      "lines": 61,
+      "size_bytes": 2540,
+      "last_modified_iso": "2026-03-07T19:42:52Z"
+    },
+    {
+      "path": "docs/REPO_CITY_PHASE_EXECUTION_PLAN.md",
+      "extension": ".md",
+      "lines": 294,
+      "size_bytes": 6048,
+      "last_modified_iso": "2026-03-07T19:46:19Z"
+    },
+    {
+      "path": "docs/REPO_CITY_PRODUCT_VISION.md",
+      "extension": ".md",
+      "lines": 338,
+      "size_bytes": 7145,
+      "last_modified_iso": "2026-03-07T19:42:52Z"
+    },
+    {
+      "path": "docs/REPO_CITY_REVIEW_EXECUTION_PLAN.md",
+      "extension": ".md",
+      "lines": 161,
+      "size_bytes": 5333,
+      "last_modified_iso": "2026-03-08T12:09:58Z"
+    },
+    {
+      "path": "docs/REPO_CITY_REVIEW_PROMPT.md",
+      "extension": ".md",
+      "lines": 143,
+      "size_bytes": 5383,
+      "last_modified_iso": "2026-03-08T12:10:28Z"
+    },
+    {
+      "path": "docs/REPO_CITY_REVIEW_TRACKER.json",
+      "extension": ".json",
+      "lines": 147,
+      "size_bytes": 4559,
+      "last_modified_iso": "2026-03-08T13:52:31Z"
+    },
+    {
+      "path": "docs/REPO_CITY_REVIEW_WORKFLOW.md",
+      "extension": ".md",
+      "lines": 194,
+      "size_bytes": 7423,
+      "last_modified_iso": "2026-03-08T12:09:30Z"
+    },
+    {
+      "path": "docs/REPO_CITY_SYSTEM_DESIGN.md",
+      "extension": ".md",
+      "lines": 571,
+      "size_bytes": 11541,
+      "last_modified_iso": "2026-03-07T19:42:52Z"
+    },
+    {
+      "path": "docs/REPO_CITY_TRACKER.json",
+      "extension": ".json",
+      "lines": 1156,
+      "size_bytes": 77190,
+      "last_modified_iso": "2026-03-08T13:21:05Z"
+    },
+    {
+      "path": "docs/SESSION_STATE.json",
+      "extension": ".json",
+      "lines": 210,
+      "size_bytes": 12113,
+      "last_modified_iso": "2026-03-07T19:23:26Z"
+    },
+    {
+      "path": "docs/TEST_MATRIX.md",
+      "extension": ".md",
+      "lines": 38,
+      "size_bytes": 3162,
+      "last_modified_iso": "2026-03-07T18:04:29Z"
+    },
+    {
+      "path": "docs/TODO.md",
+      "extension": ".md",
+      "lines": 59,
+      "size_bytes": 3150,
+      "last_modified_iso": "2026-03-07T19:23:32Z"
+    },
+    {
+      "path": "docs/review_artifacts/summary.json",
+      "extension": ".json",
+      "lines": 32,
+      "size_bytes": 900,
+      "last_modified_iso": "2026-03-08T13:52:31Z"
+    },
+    {
+      "path": "frontend/README.md",
+      "extension": ".md",
+      "lines": 73,
+      "size_bytes": 2555,
+      "last_modified_iso": "2026-03-07T14:12:53Z"
+    },
+    {
+      "path": "frontend/eslint.config.js",
+      "extension": ".js",
+      "lines": 23,
+      "size_bytes": 616,
+      "last_modified_iso": "2026-03-07T14:12:53Z"
+    },
+    {
+      "path": "frontend/index.html",
+      "extension": ".html",
+      "lines": 14,
+      "size_bytes": 547,
+      "last_modified_iso": "2026-03-07T14:23:08Z"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "extension": ".json",
+      "lines": 3963,
+      "size_bytes": 139206,
+      "last_modified_iso": "2026-03-07T17:41:29Z"
+    },
+    {
+      "path": "frontend/package.json",
+      "extension": ".json",
+      "lines": 37,
+      "size_bytes": 950,
+      "last_modified_iso": "2026-03-08T11:50:09Z"
+    },
+    {
+      "path": "frontend/scripts/browser-smoke-runner.tsx",
+      "extension": ".tsx",
+      "lines": 293,
+      "size_bytes": 12040,
+      "last_modified_iso": "2026-03-08T13:18:58Z"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "extension": ".tsx",
+      "lines": 404,
+      "size_bytes": 13253,
+      "last_modified_iso": "2026-03-08T12:34:53Z"
+    },
+    {
+      "path": "frontend/src/api.ts",
+      "extension": ".ts",
+      "lines": 551,
+      "size_bytes": 17001,
+      "last_modified_iso": "2026-03-08T12:25:45Z"
+    },
+    {
+      "path": "frontend/src/game/Camera.tsx",
+      "extension": ".tsx",
+      "lines": 47,
+      "size_bytes": 1357,
+      "last_modified_iso": "2026-03-08T03:49:23Z"
+    },
+    {
+      "path": "frontend/src/game/CityScene.tsx",
+      "extension": ".tsx",
+      "lines": 460,
+      "size_bytes": 17609,
+      "last_modified_iso": "2026-03-08T04:15:43Z"
+    },
+    {
+      "path": "frontend/src/game/District.tsx",
+      "extension": ".tsx",
+      "lines": 150,
+      "size_bytes": 5496,
+      "last_modified_iso": "2026-03-07T14:20:45Z"
+    },
+    {
+      "path": "frontend/src/game/MissionTrigger.tsx",
+      "extension": ".tsx",
+      "lines": 137,
+      "size_bytes": 4943,
+      "last_modified_iso": "2026-03-08T13:52:31Z"
+    },
+    {
+      "path": "frontend/src/game/Player.tsx",
+      "extension": ".tsx",
+      "lines": 272,
+      "size_bytes": 11142,
+      "last_modified_iso": "2026-03-08T04:10:22Z"
+    },
+    {
+      "path": "frontend/src/game/Waypoint.tsx",
+      "extension": ".tsx",
+      "lines": 180,
+      "size_bytes": 7219,
+      "last_modified_iso": "2026-03-08T02:29:55Z"
+    },
+    {
+      "path": "frontend/src/index.css",
+      "extension": ".css",
+      "lines": 5489,
+      "size_bytes": 114874,
+      "last_modified_iso": "2026-03-08T12:27:40Z"
+    },
+    {
+      "path": "frontend/src/localSmokeBridge.ts",
+      "extension": ".ts",
+      "lines": 397,
+      "size_bytes": 13701,
+      "last_modified_iso": "2026-03-08T13:08:11Z"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "extension": ".tsx",
+      "lines": 9,
+      "size_bytes": 209,
+      "last_modified_iso": "2026-03-07T14:22:45Z"
+    },
+    {
+      "path": "frontend/src/repoCityBootstrap.ts",
+      "extension": ".ts",
+      "lines": 140,
+      "size_bytes": 4830,
+      "last_modified_iso": "2026-03-08T07:52:45Z"
+    },
+    {
+      "path": "frontend/src/repoTranslationEligibility.ts",
+      "extension": ".ts",
+      "lines": 49,
+      "size_bytes": 1742,
+      "last_modified_iso": "2026-03-08T10:58:25Z"
+    },
+    {
+      "path": "frontend/src/runtimeConfig.ts",
+      "extension": ".ts",
+      "lines": 27,
+      "size_bytes": 758,
+      "last_modified_iso": "2026-03-08T13:10:05Z"
+    },
+    {
+      "path": "frontend/src/store/gameStore.ts",
+      "extension": ".ts",
+      "lines": 948,
+      "size_bytes": 35749,
+      "last_modified_iso": "2026-03-08T12:26:05Z"
+    },
+    {
+      "path": "frontend/src/ui/CaptureOverlay.tsx",
+      "extension": ".tsx",
+      "lines": 89,
+      "size_bytes": 3766,
+      "last_modified_iso": "2026-03-08T04:38:48Z"
+    },
+    {
+      "path": "frontend/src/ui/CityBulletin.tsx",
+      "extension": ".tsx",
+      "lines": 53,
+      "size_bytes": 2399,
+      "last_modified_iso": "2026-03-07T21:19:49Z"
+    },
+    {
+      "path": "frontend/src/ui/ConnectionStatusBanner.tsx",
+      "extension": ".tsx",
+      "lines": 128,
+      "size_bytes": 4157,
+      "last_modified_iso": "2026-03-07T21:31:22Z"
+    },
+    {
+      "path": "frontend/src/ui/GitHubRepoPicker.tsx",
+      "extension": ".tsx",
+      "lines": 498,
+      "size_bytes": 21502,
+      "last_modified_iso": "2026-03-08T11:42:49Z"
+    },
+    {
+      "path": "frontend/src/ui/GitHubTrustNotice.tsx",
+      "extension": ".tsx",
+      "lines": 35,
+      "size_bytes": 1483,
+      "last_modified_iso": "2026-03-08T13:05:52Z"
+    },
+    {
+      "path": "frontend/src/ui/HUD.tsx",
+      "extension": ".tsx",
+      "lines": 630,
+      "size_bytes": 28632,
+      "last_modified_iso": "2026-03-08T13:18:26Z"
+    },
+    {
+      "path": "frontend/src/ui/Leaderboard.tsx",
+      "extension": ".tsx",
+      "lines": 73,
+      "size_bytes": 3428,
+      "last_modified_iso": "2026-03-07T21:19:33Z"
+    },
+    {
+      "path": "frontend/src/ui/MainMenu.tsx",
+      "extension": ".tsx",
+      "lines": 743,
+      "size_bytes": 36715,
+      "last_modified_iso": "2026-03-08T13:18:19Z"
+    },
+    {
+      "path": "frontend/src/ui/MergeConflictGame.tsx",
+      "extension": ".tsx",
+      "lines": 281,
+      "size_bytes": 11924,
+      "last_modified_iso": "2026-03-08T09:05:36Z"
+    },
+    {
+      "path": "frontend/src/ui/MissionObjectiveTracker.tsx",
+      "extension": ".tsx",
+      "lines": 117,
+      "size_bytes": 5377,
+      "last_modified_iso": "2026-03-08T04:35:06Z"
+    },
+    {
+      "path": "frontend/src/ui/MissionPanel.tsx",
+      "extension": ".tsx",
+      "lines": 145,
+      "size_bytes": 6803,
+      "last_modified_iso": "2026-03-08T04:23:23Z"
+    },
+    {
+      "path": "frontend/src/ui/RepoCitySurface.tsx",
+      "extension": ".tsx",
+      "lines": 590,
+      "size_bytes": 27386,
+      "last_modified_iso": "2026-03-08T06:39:59Z"
+    },
+    {
+      "path": "frontend/src/ui/RepoPrivacyNotice.tsx",
+      "extension": ".tsx",
+      "lines": 16,
+      "size_bytes": 727,
+      "last_modified_iso": "2026-03-08T09:48:16Z"
+    },
+    {
+      "path": "frontend/src/ui/RewardToast.tsx",
+      "extension": ".tsx",
+      "lines": 46,
+      "size_bytes": 2352,
+      "last_modified_iso": "2026-03-07T21:31:35Z"
+    },
+    {
+      "path": "frontend/src/ui/repoRefreshCopy.ts",
+      "extension": ".ts",
+      "lines": 107,
+      "size_bytes": 3672,
+      "last_modified_iso": "2026-03-08T13:18:03Z"
+    },
+    {
+      "path": "frontend/src/ui/selectedRepoStatusCopy.ts",
+      "extension": ".ts",
+      "lines": 126,
+      "size_bytes": 5322,
+      "last_modified_iso": "2026-03-08T11:14:52Z"
+    },
+    {
+      "path": "frontend/src/ui/snapshotFreshness.ts",
+      "extension": ".ts",
+      "lines": 121,
+      "size_bytes": 3468,
+      "last_modified_iso": "2026-03-08T12:46:49Z"
+    },
+    {
+      "path": "frontend/tsconfig.app.json",
+      "extension": ".json",
+      "lines": 37,
+      "size_bytes": 851,
+      "last_modified_iso": "2026-03-08T07:45:20Z"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "extension": ".json",
+      "lines": 7,
+      "size_bytes": 119,
+      "last_modified_iso": "2026-03-07T14:12:53Z"
+    },
+    {
+      "path": "frontend/tsconfig.node.json",
+      "extension": ".json",
+      "lines": 26,
+      "size_bytes": 653,
+      "last_modified_iso": "2026-03-07T14:12:53Z"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "extension": ".ts",
+      "lines": 7,
+      "size_bytes": 161,
+      "last_modified_iso": "2026-03-07T14:12:53Z"
+    },
+    {
+      "path": "shared/battleTemplates.ts",
+      "extension": ".ts",
+      "lines": 435,
+      "size_bytes": 16196,
+      "last_modified_iso": "2026-03-08T09:23:21Z"
+    },
+    {
+      "path": "shared/repoCityGenerator.ts",
+      "extension": ".ts",
+      "lines": 1389,
+      "size_bytes": 43158,
+      "last_modified_iso": "2026-03-08T09:23:28Z"
+    },
+    {
+      "path": "shared/repoModel.ts",
+      "extension": ".ts",
+      "lines": 198,
+      "size_bytes": 4214,
+      "last_modified_iso": "2026-03-08T08:35:09Z"
+    },
+    {
+      "path": "shared/repoRefresh.ts",
+      "extension": ".ts",
+      "lines": 85,
+      "size_bytes": 2114,
+      "last_modified_iso": "2026-03-08T12:25:35Z"
+    },
+    {
+      "path": "shared/repoSignalMapping.ts",
+      "extension": ".ts",
+      "lines": 134,
+      "size_bytes": 4757,
+      "last_modified_iso": "2026-03-08T08:15:06Z"
+    },
+    {
+      "path": "shared/repoTopLevelModules.ts",
+      "extension": ".ts",
+      "lines": 326,
+      "size_bytes": 8812,
+      "last_modified_iso": "2026-03-08T07:36:03Z"
+    },
+    {
+      "path": "shared/seed/conflicts.ts",
+      "extension": ".ts",
+      "lines": 154,
+      "size_bytes": 5662,
+      "last_modified_iso": "2026-03-07T14:24:27Z"
+    },
+    {
+      "path": "shared/seed/districts.ts",
+      "extension": ".ts",
+      "lines": 124,
+      "size_bytes": 4100,
+      "last_modified_iso": "2026-03-07T14:24:21Z"
+    },
+    {
+      "path": "shared/seed/events.ts",
+      "extension": ".ts",
+      "lines": 87,
+      "size_bytes": 3747,
+      "last_modified_iso": "2026-03-07T14:24:25Z"
+    },
+    {
+      "path": "shared/seed/factions.ts",
+      "extension": ".ts",
+      "lines": 28,
+      "size_bytes": 1634,
+      "last_modified_iso": "2026-03-07T17:51:14Z"
+    },
+    {
+      "path": "shared/seed/missions.ts",
+      "extension": ".ts",
+      "lines": 269,
+      "size_bytes": 10811,
+      "last_modified_iso": "2026-03-08T09:15:08Z"
+    },
+    {
+      "path": "shared/seed/repoFixtures.ts",
+      "extension": ".ts",
+      "lines": 709,
+      "size_bytes": 19889,
+      "last_modified_iso": "2026-03-07T20:46:36Z"
+    },
+    {
+      "path": "shared/snapshots/sample_repo_snapshot.json",
+      "extension": ".json",
+      "lines": 190,
+      "size_bytes": 4540,
+      "last_modified_iso": "2026-03-08T07:45:20Z"
+    },
+    {
+      "path": "shared/types.ts",
+      "extension": ".ts",
+      "lines": 155,
+      "size_bytes": 3612,
+      "last_modified_iso": "2026-03-08T08:04:47Z"
+    },
+    {
+      "path": "worker/.wrangler/tmp/bundle-PmPGsU/middleware-insertion-facade.js",
+      "extension": ".js",
+      "lines": 11,
+      "size_bytes": 784,
+      "last_modified_iso": "2026-03-07T17:43:51Z"
+    },
+    {
+      "path": "worker/.wrangler/tmp/bundle-PmPGsU/middleware-loader.entry.ts",
+      "extension": ".ts",
+      "lines": 134,
+      "size_bytes": 4212,
+      "last_modified_iso": "2026-03-07T17:43:51Z"
+    },
+    {
+      "path": "worker/.wrangler/tmp/dev-LqsLxC/index.js",
+      "extension": ".js",
+      "lines": 8033,
+      "size_bytes": 251291,
+      "last_modified_iso": "2026-03-07T17:43:51Z"
+    },
+    {
+      "path": "worker/package-lock.json",
+      "extension": ".json",
+      "lines": 1549,
+      "size_bytes": 59739,
+      "last_modified_iso": "2026-03-07T15:25:09Z"
+    },
+    {
+      "path": "worker/package.json",
+      "extension": ".json",
+      "lines": 22,
+      "size_bytes": 555,
+      "last_modified_iso": "2026-03-08T08:55:17Z"
+    },
+    {
+      "path": "worker/src/__tests__/battleTemplateMapping.test.ts",
+      "extension": ".ts",
+      "lines": 113,
+      "size_bytes": 4432,
+      "last_modified_iso": "2026-03-08T08:45:02Z"
+    },
+    {
+      "path": "worker/src/__tests__/repoCityMissionGeneration.test.ts",
+      "extension": ".ts",
+      "lines": 272,
+      "size_bytes": 11667,
+      "last_modified_iso": "2026-03-08T09:23:42Z"
+    },
+    {
+      "path": "worker/src/github/checkRepoRefresh.ts",
+      "extension": ".ts",
+      "lines": 110,
+      "size_bytes": 2994,
+      "last_modified_iso": "2026-03-08T12:18:12Z"
+    },
+    {
+      "path": "worker/src/github/fetchRepoSignals.ts",
+      "extension": ".ts",
+      "lines": 148,
+      "size_bytes": 3816,
+      "last_modified_iso": "2026-03-08T08:15:06Z"
+    },
+    {
+      "path": "worker/src/github/normalizeRepoSnapshot.ts",
+      "extension": ".ts",
+      "lines": 130,
+      "size_bytes": 3899,
+      "last_modified_iso": "2026-03-08T08:15:06Z"
+    },
+    {
+      "path": "worker/src/index.ts",
+      "extension": ".ts",
+      "lines": 1444,
+      "size_bytes": 49786,
+      "last_modified_iso": "2026-03-08T12:18:12Z"
+    },
+    {
+      "path": "worker/src/seed.ts",
+      "extension": ".ts",
+      "lines": 92,
+      "size_bytes": 3874,
+      "last_modified_iso": "2026-03-07T17:59:03Z"
+    },
+    {
+      "path": "worker/tsconfig.json",
+      "extension": ".json",
+      "lines": 29,
+      "size_bytes": 617,
+      "last_modified_iso": "2026-03-07T15:27:01Z"
+    },
+    {
+      "path": "worker/wrangler.toml",
+      "extension": ".toml",
+      "lines": 39,
+      "size_bytes": 1111,
+      "last_modified_iso": "2026-03-07T19:06:07Z"
+    }
+  ]
+}
