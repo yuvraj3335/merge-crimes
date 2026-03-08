@@ -2102,6 +2102,26 @@ function isLocalSmokeMode() {
 const API_BASE = getRuntimeApiBaseOverride() ?? void 0 ?? "http://localhost:8787";
 const WRITE_SESSION_REFRESH_BUFFER_MS = 6e4;
 const SESSION_STORAGE_KEY = "merge-crimes-session-id";
+class ApiClientError extends Error {
+  kind;
+  service;
+  path;
+  status;
+  constructor({
+    message,
+    kind,
+    service,
+    path,
+    status = null
+  }) {
+    super(message);
+    this.name = "ApiClientError";
+    this.kind = kind;
+    this.service = service;
+    this.path = path;
+    this.status = status;
+  }
+}
 function getOrCreateSessionId() {
   const fallback = crypto.randomUUID();
   if (typeof window === "undefined") {
@@ -2122,6 +2142,7 @@ const SESSION_ID = getOrCreateSessionId();
 const apiRuntimeListeners = /* @__PURE__ */ new Set();
 let apiRuntimeStatus = {
   connectionState: "unknown",
+  connectionMessage: null,
   writeSessionState: "unknown",
   writeSessionMessage: null
 };
@@ -2131,30 +2152,115 @@ function emitApiRuntimeStatus(partial) {
   apiRuntimeStatus = { ...apiRuntimeStatus, ...partial };
   apiRuntimeListeners.forEach((listener) => listener(apiRuntimeStatus));
 }
-async function request(path, options) {
+function isAbortError(error) {
+  return typeof error === "object" && error !== null && "name" in error && error.name === "AbortError";
+}
+function buildTransportErrorMessage(service, fallback) {
+  if (fallback) {
+    return fallback;
+  }
+  return "Worker API unavailable. Check your network connection and try again.";
+}
+async function readErrorMessage(response, fallback) {
+  const contentType = response.headers.get("content-type") ?? "";
+  try {
+    if (contentType.includes("application/json")) {
+      const payload = await response.json();
+      if (typeof payload.message === "string" && payload.message.trim()) {
+        return payload.message;
+      }
+    } else {
+      const text = await response.text();
+      if (text.trim()) {
+        return text.trim();
+      }
+    }
+  } catch {
+  }
+  return fallback;
+}
+async function readJsonResponse(response, {
+  service,
+  path,
+  invalidMessage
+}) {
+  try {
+    return await response.json();
+  } catch {
+    throw new ApiClientError({
+      message: invalidMessage,
+      kind: "invalid_response",
+      service,
+      path,
+      status: response.status
+    });
+  }
+}
+async function throwHttpError(response, {
+  service,
+  path,
+  fallbackMessage
+}) {
+  throw new ApiClientError({
+    message: await readErrorMessage(response, fallbackMessage),
+    kind: "http",
+    service,
+    path,
+    status: response.status
+  });
+}
+async function requestUrl(url, {
+  service,
+  path,
+  transportMessage
+}, options) {
   try {
     const headers = new Headers(options?.headers);
     if (options?.body && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(url, {
       ...options,
       headers
     });
-    emitApiRuntimeStatus({ connectionState: "online" });
+    emitApiRuntimeStatus({ connectionState: "online", connectionMessage: null });
     return res;
-  } catch {
-    emitApiRuntimeStatus({ connectionState: "offline" });
-    return null;
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+    const message = buildTransportErrorMessage(service, transportMessage);
+    emitApiRuntimeStatus({ connectionState: "offline", connectionMessage: message });
+    throw new ApiClientError({
+      message,
+      kind: "transport",
+      service,
+      path
+    });
   }
 }
-async function apiFetch(path, options) {
+async function request(path, options, transportMessage) {
+  return requestUrl(`${API_BASE}${path}`, { service: "worker", path, transportMessage }, options);
+}
+async function apiFetch(path, options, invalidMessage = "Worker returned an invalid response.") {
   const res = await request(path, options);
-  if (!res?.ok) return null;
-  return await res.json();
+  if (!res.ok) {
+    await throwHttpError(res, {
+      service: "worker",
+      path,
+      fallbackMessage: `API request failed (${res.status}).`
+    });
+  }
+  return readJsonResponse(res, { service: "worker", path, invalidMessage });
 }
 function writeSessionIsFresh(session) {
   return Date.parse(session.expiresAt) - Date.now() > WRITE_SESSION_REFRESH_BUFFER_MS;
+}
+function emitWriteSessionError(message) {
+  emitApiRuntimeStatus({
+    writeSessionState: "error",
+    writeSessionMessage: message
+  });
 }
 async function ensurePublicWriteSession() {
   if (publicWriteSession && writeSessionIsFresh(publicWriteSession)) {
@@ -2163,39 +2269,49 @@ async function ensurePublicWriteSession() {
   }
   if (!publicWriteSessionPromise) {
     emitApiRuntimeStatus({ writeSessionState: "checking", writeSessionMessage: null });
-    publicWriteSessionPromise = request("/api/session", {
-      method: "POST",
-      body: JSON.stringify({ sessionId: SESSION_ID })
-    }).then(async (response) => {
-      if (!response) {
-        emitApiRuntimeStatus({
-          writeSessionState: "error",
-          writeSessionMessage: "Worker API unavailable. Public writes are running in local-only fallback mode."
+    publicWriteSessionPromise = (async () => {
+      try {
+        const response = await request(
+          "/api/session",
+          {
+            method: "POST",
+            body: JSON.stringify({ sessionId: SESSION_ID })
+          },
+          "Worker API unavailable. Public writes are running in local-only fallback mode."
+        );
+        if (!response.ok) {
+          const message = `Write-session mint failed (${response.status}). Check PUBLIC_SESSION_SECRET and PUBLIC_ORIGIN_ALLOWLIST.`;
+          emitWriteSessionError(message);
+          await throwHttpError(response, {
+            service: "worker",
+            path: "/api/session",
+            fallbackMessage: message
+          });
+        }
+        const session = await readJsonResponse(response, {
+          service: "worker",
+          path: "/api/session",
+          invalidMessage: "Worker returned an invalid write-session response."
         });
-        return null;
+        publicWriteSession = session;
+        emitApiRuntimeStatus({ writeSessionState: "ready", writeSessionMessage: null });
+        return session;
+      } catch (error) {
+        if (!isAbortError(error) && apiRuntimeStatus.writeSessionState !== "error") {
+          emitWriteSessionError(
+            error instanceof ApiClientError && error.kind === "transport" ? "Worker API unavailable. Public writes are running in local-only fallback mode." : "Worker write access is unavailable right now."
+          );
+        }
+        throw error;
+      } finally {
+        publicWriteSessionPromise = null;
       }
-      if (!response.ok) {
-        emitApiRuntimeStatus({
-          writeSessionState: "error",
-          writeSessionMessage: `Write-session mint failed (${response.status}). Check PUBLIC_SESSION_SECRET and PUBLIC_ORIGIN_ALLOWLIST.`
-        });
-        return null;
-      }
-      const session = await response.json();
-      publicWriteSession = session;
-      emitApiRuntimeStatus({ writeSessionState: "ready", writeSessionMessage: null });
-      return session;
-    }).finally(() => {
-      publicWriteSessionPromise = null;
-    });
+    })();
   }
   return publicWriteSessionPromise;
 }
 async function writeApiFetch(path, options, allowRetry = true) {
   const session = await ensurePublicWriteSession();
-  if (!session) {
-    return null;
-  }
   const headers = new Headers(options?.headers);
   headers.set("Authorization", `Bearer ${session.token}`);
   headers.set("X-Merge-Session-Id", SESSION_ID);
@@ -2203,34 +2319,42 @@ async function writeApiFetch(path, options, allowRetry = true) {
     ...options,
     headers
   });
-  if (!response) {
-    return null;
-  }
   if (response.status === 401 && allowRetry) {
     publicWriteSession = null;
     emitApiRuntimeStatus({ writeSessionState: "checking", writeSessionMessage: null });
     return writeApiFetch(path, options, false);
   }
   if (!response.ok) {
-    return null;
+    if (response.status === 401) {
+      emitWriteSessionError("Worker write access expired. Retry write access to continue syncing.");
+    }
+    await throwHttpError(response, {
+      service: "worker",
+      path,
+      fallbackMessage: response.status === 401 ? "Worker write access expired. Retry write access to continue syncing." : `Write request failed (${response.status}).`
+    });
   }
-  return await response.json();
+  return readJsonResponse(response, {
+    service: "worker",
+    path,
+    invalidMessage: "Worker returned an invalid write response."
+  });
 }
 async function fetchDistricts() {
-  return apiFetch("/api/districts");
+  return apiFetch("/api/districts", void 0, "Worker returned an invalid districts response.");
 }
 async function fetchMissions(districtId) {
   const params = new URLSearchParams({ sessionId: SESSION_ID });
-  return apiFetch(`/api/missions?${params.toString()}`);
+  return apiFetch(`/api/missions?${params.toString()}`, void 0, "Worker returned an invalid missions response.");
 }
 async function fetchLeaderboard() {
-  return apiFetch("/api/leaderboard");
+  return apiFetch("/api/leaderboard", void 0, "Worker returned an invalid leaderboard response.");
 }
 async function fetchEvents() {
-  return apiFetch("/api/events");
+  return apiFetch("/api/events", void 0, "Worker returned an invalid events response.");
 }
 async function fetchConflicts() {
-  return apiFetch("/api/conflicts");
+  return apiFetch("/api/conflicts", void 0, "Worker returned an invalid conflicts response.");
 }
 async function acceptMission(id) {
   return writeApiFetch(`/api/missions/${encodeURIComponent(id)}/accept`, { method: "POST" });
@@ -2956,19 +3080,24 @@ const useGameStore = create((set, get) => ({
     set((s) => ({
       apiConnectionState: status.connectionState,
       apiAvailable: status.connectionState === "offline" ? false : s.apiAvailable,
-      apiStatusMessage: status.connectionState === "offline" ? getOfflineApiStatusMessage(s.repoCityMode) : s.apiStatusMessage,
+      apiStatusMessage: status.connectionState === "offline" ? status.connectionMessage ?? getOfflineApiStatusMessage(s.repoCityMode) : status.connectionState === "online" ? null : s.apiStatusMessage,
       writeSessionState: status.writeSessionState,
       writeSessionMessage: status.writeSessionMessage
     }));
   },
   loadFromApi: async () => {
-    const [districts, missions, leaderboard, events, conflicts] = await Promise.all([
+    const [districtsResult, missionsResult, leaderboardResult, eventsResult, conflictsResult] = await Promise.allSettled([
       fetchDistricts(),
       fetchMissions(),
       fetchLeaderboard(),
       fetchEvents(),
       fetchConflicts()
     ]);
+    const districts = districtsResult.status === "fulfilled" ? districtsResult.value : null;
+    const missions = missionsResult.status === "fulfilled" ? missionsResult.value : null;
+    const leaderboard = leaderboardResult.status === "fulfilled" ? leaderboardResult.value : null;
+    const events = eventsResult.status === "fulfilled" ? eventsResult.value : null;
+    const conflicts = conflictsResult.status === "fulfilled" ? conflictsResult.value : null;
     if (districts && missions) {
       const preserveRepoCityState = get().repoCityMode && !!get().generatedCity && !!get().connectedRepo;
       if (preserveRepoCityState) {

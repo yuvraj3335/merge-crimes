@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 17,
+    "cycles_run": 18,
     "total_findings": 26,
-    "total_resolved": 11,
-    "last_updated": "2026-03-08T18:18:25Z"
+    "total_resolved": 10,
+    "last_updated": "2026-03-08T18:11:53Z"
   },
   "workstreams": [
     {
@@ -47,10 +47,10 @@
         "worker/src"
       ],
       "description": "Find overly complex functions that should be simplified or split",
-      "last_run_at": "2026-03-08T18:02:19Z",
-      "cycles_assigned": 9,
+      "last_run_at": "2026-03-08T18:11:53Z",
+      "cycles_assigned": 10,
       "open_findings_count": 0,
-      "findings_open": 9
+      "findings_open": 10
     },
     {
       "id": "unused_exports",
@@ -178,7 +178,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T18:02:19Z"
+      "last_scored_at": "2026-03-08T18:11:53Z"
     },
     {
       "id": "q-005",
@@ -189,7 +189,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T18:02:19Z"
+      "last_scored_at": "2026-03-08T18:11:53Z"
     },
     {
       "id": "q-006",
@@ -200,7 +200,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T18:02:19Z"
+      "last_scored_at": "2026-03-08T18:11:53Z"
     },
     {
       "id": "q-007",
@@ -211,7 +211,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T18:02:19Z"
+      "last_scored_at": "2026-03-08T18:11:53Z"
     },
     {
       "id": "q-008",
@@ -222,7 +222,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T18:02:19Z"
+      "last_scored_at": "2026-03-08T18:11:53Z"
     },
     {
       "id": "q-009",
@@ -233,7 +233,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T18:02:19Z"
+      "last_scored_at": "2026-03-08T18:11:53Z"
     },
     {
       "id": "qfix-f-000001",
@@ -541,7 +541,7 @@
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
       "last_scored_at": "2026-03-08T18:02:19Z",
-      "completed_at": "2026-03-08T18:18:25Z"
+      "completed_at": "2026-03-08T18:11:53Z"
     },
     {
       "id": "qfix-f-000025",
@@ -550,11 +550,12 @@
       "workstream_id": "complexity",
       "title": "Fix: `api.ts` mixes multiple transport contracts in one module: some calls return `nu",
       "severity": "medium",
-      "status": "pending",
+      "status": "done",
       "score": 1.74,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T18:02:19Z"
+      "last_scored_at": "2026-03-08T18:11:53Z",
+      "completed_at": "2026-03-08T18:28:38Z"
     },
     {
       "id": "qfix-f-000026",
@@ -1086,7 +1087,7 @@
         "If transit distance semantics change, both `HUD` and `RepoCitySurface` must be updated or the HUD can report a different remaining distance than the map line shows.",
         "If district-focus precedence changes in only one file, the HUD can highlight one district while the surface pins another because each computes queued/current/hovered/mission precedence independently."
       ],
-      "resolved_at": "2026-03-08T18:18:25Z"
+      "resolved_at": "2026-03-08T18:11:53Z"
     },
     {
       "id": "f-000025",
@@ -1101,13 +1102,14 @@
       "description": "`api.ts` mixes multiple transport contracts in one module: some calls return `null`, some throw, some update global runtime status, and some bypass that status entirely. That inconsistency increases cognitive load for every caller and makes error handling easy to get wrong.",
       "evidence": "`request` and `apiFetch` at frontend/src/api.ts:117-140 update `emitApiRuntimeStatus` and return `null` on transport failure. `writeApiFetch` at :187-217 also returns `null` on non-ok responses except for the 401 retry path. By contrast, `fetchGitHubReadableRepos` at :387-430 bypasses `request`, uses raw `fetch`, and throws `Error`, while `refreshGitHubRepo` / `fetchGitHubRepoRefreshStatus` at :456-525 also throw structured errors. `ConnectionStatusBanner` reads store-driven runtime status from frontend/src/ui/ConnectionStatusBanner.tsx:5-14 and :80-127, so raw GitHub fetch failures do not flow through the same status mechanism.",
       "recommended_action": "Standardize the client contract: either return typed `Result` objects everywhere or throw typed errors everywhere. Route GitHub transport through the same status-aware request layer so callers do not need endpoint-specific error semantics.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T17:06:08Z",
       "cycle_number": 9,
       "edge_cases": [
         "`GitHubRepoPicker` must catch thrown errors from `fetchGitHubReadableRepos`, while store code calling `fetchDistricts` or `acceptMission` expects `null`; a new caller can easily implement the wrong failure path.",
         "A GitHub repo-list failure will not update the same runtime-status channel used by `ConnectionStatusBanner`, so transport health and UI health indicators can diverge."
-      ]
+      ],
+      "resolved_at": "2026-03-08T18:28:38Z"
     },
     {
       "id": "f-000026",

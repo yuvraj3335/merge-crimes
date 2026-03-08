@@ -33,9 +33,7 @@ export function useDistrictRoomPolling(): void {
         const syncDistrictRoom = async () => {
             try {
                 const data = await api.districtHeartbeat(districtId);
-                if (data) {
-                    setDistrictRoom(districtId, data);
-                }
+                setDistrictRoom(districtId, data);
             } catch {
                 // Network failures are non-fatal for presence refresh.
             }

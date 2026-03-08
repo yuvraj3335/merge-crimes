@@ -1,32 +1,34 @@
 Campaign:
 ID:      rc-2026-03-08
-Cycle:   17
+Cycle:   18
 Mode:    apply_fix
 Dry run: False
 
 Mode and slice:
 Mode:        apply_fix
 Workstream:  complexity
-Slice:       Fix: `App.tsx` is acting as a root controller instead of a thin composition shell. It
+Slice:       Fix: Transit and district-presentation logic is duplicated between `HUD.tsx` and `Rep
 
 Files involved:
   docs/REPO_CITY_REVIEW_TRACKER.json
   docs/review_artifacts/final_report.txt
   docs/review_artifacts/removal_candidates.json
   docs/review_artifacts/summary.json
-  frontend/src/App.tsx
-  frontend/src/hooks/
+  frontend/src/ui/HUD.tsx
+  frontend/src/ui/RepoCitySurface.tsx
+  shared/repoCityPresenter.ts
 
 Commands run:
   cd frontend && npm run build
   cd frontend && npm run lint
+  cd worker && npm run build
 
 Findings this cycle:
 New findings: 0
 
 Total finding queue:
-Open findings: 4
-Pending queue: 8 total  (6 review, 2 fix)
+Open findings: 3
+Pending queue: 7 total  (6 review, 1 fix)
 
 Artifacts written:
   /Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/REPO_CITY_REVIEW_TRACKER.json
@@ -35,8 +37,8 @@ Artifacts written:
 What is now safer or simpler:
 BUG_VERIFIED: true
 FIX_STATUS: APPLIED
-`App.tsx` no longer contains the polling, OAuth, bootstrap, keyboard, or mission-timer effect bodies.
-Frontend validation passed cleanly.
+VALIDATION_STATUS: PASS
+Shared presenter extraction succeeded. HUD and RepoCitySurface now use the same district focus resolution, transit distance formatting, and guidance-path derivation. There is no standalone shared npm package in this repo, so shared validation was covered by the worker and frontend builds.
 
 Stop policy decision:
 Continuing — next slice available
@@ -48,12 +50,12 @@ Tracker changes:
    "campaign": {
      "id": "rc-2026-03-08",
      "state": "running",
--    "cycles_run": 16,
-+    "cycles_run": 17,
+-    "cycles_run": 17,
++    "cycles_run": 18,
      "total_findings": 26,
      "total_resolved": 10,
--    "last_updated": "2026-03-08T17:50:58Z"
-+    "last_updated": "2026-03-08T18:02:19Z"
+-    "last_updated": "2026-03-08T18:02:19Z"
++    "last_updated": "2026-03-08T18:11:53Z"
    },
    "workstreams": [
      {
@@ -61,10 +63,10 @@ Tracker changes:
          "worker/src"
        ],
        "description": "Find overly complex functions that should be simplified or split",
--      "last_run_at": "2026-03-08T17:50:58Z",
--      "cycles_assigned": 8,
-+      "last_run_at": "2026-03-08T18:02:19Z",
-+      "cycles_assigned": 9,
+-      "last_run_at": "2026-03-08T18:02:19Z",
+-      "cycles_assigned": 9,
++      "last_run_at": "2026-03-08T18:11:53Z",
++      "cycles_assigned": 10,
        "open_findings_count": 0,
        "findings_open": 10
      },
@@ -72,8 +74,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:50:58Z"
-+      "last_scored_at": "2026-03-08T18:02:19Z"
+-      "last_scored_at": "2026-03-08T18:02:19Z"
++      "last_scored_at": "2026-03-08T18:11:53Z"
      },
      {
        "id": "q-005",
@@ -81,8 +83,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:50:58Z"
-+      "last_scored_at": "2026-03-08T18:02:19Z"
+-      "last_scored_at": "2026-03-08T18:02:19Z"
++      "last_scored_at": "2026-03-08T18:11:53Z"
      },
      {
        "id": "q-006",
@@ -90,8 +92,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": "defer",
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:50:58Z"
-+      "last_scored_at": "2026-03-08T18:02:19Z"
+-      "last_scored_at": "2026-03-08T18:02:19Z"
++      "last_scored_at": "2026-03-08T18:11:53Z"
      },
      {
        "id": "q-007",
@@ -99,8 +101,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:50:58Z"
-+      "last_scored_at": "2026-03-08T18:02:19Z"
+-      "last_scored_at": "2026-03-08T18:02:19Z"
++      "last_scored_at": "2026-03-08T18:11:53Z"
      },
      {
        "id": "q-008",
@@ -108,10 +110,10 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:50:58Z"
-+      "last_scored_at": "2026-03-08T18:02:19Z"
+-      "last_scored_at": "2026-03-08T18:02:19Z"
++      "last_scored_at": "2026-03-08T18:11:53Z"
      },
      {
        "id": "q-009",
 @@ -233,7 +233,7 @@
-       "
+       

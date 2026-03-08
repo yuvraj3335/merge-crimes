@@ -679,20 +679,26 @@ export const useGameStore = create<GameState>((set, get) => ({
             apiConnectionState: status.connectionState,
             apiAvailable: status.connectionState === 'offline' ? false : s.apiAvailable,
             apiStatusMessage: status.connectionState === 'offline'
-                ? getOfflineApiStatusMessage(s.repoCityMode)
-                : s.apiStatusMessage,
+                ? (status.connectionMessage ?? getOfflineApiStatusMessage(s.repoCityMode))
+                : (status.connectionState === 'online' ? null : s.apiStatusMessage),
             writeSessionState: status.writeSessionState,
             writeSessionMessage: status.writeSessionMessage,
         }));
     },
     loadFromApi: async () => {
-        const [districts, missions, leaderboard, events, conflicts] = await Promise.all([
+        const [districtsResult, missionsResult, leaderboardResult, eventsResult, conflictsResult] = await Promise.allSettled([
             api.fetchDistricts(),
             api.fetchMissions(),
             api.fetchLeaderboard(),
             api.fetchEvents(),
             api.fetchConflicts(),
         ]);
+
+        const districts = districtsResult.status === 'fulfilled' ? districtsResult.value : null;
+        const missions = missionsResult.status === 'fulfilled' ? missionsResult.value : null;
+        const leaderboard = leaderboardResult.status === 'fulfilled' ? leaderboardResult.value : null;
+        const events = eventsResult.status === 'fulfilled' ? eventsResult.value : null;
+        const conflicts = conflictsResult.status === 'fulfilled' ? conflictsResult.value : null;
 
         // If any core data came back, mark API as available
         if (districts && missions) {

@@ -258,15 +258,6 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                     return;
                 }
 
-                if (!snapshot) {
-                    setSelectedGitHubRepoIngestState({
-                        tone: 'error',
-                        repoId: repo.id,
-                        message: 'GitHub did not return a readable snapshot. The current city is still active.',
-                    });
-                    return;
-                }
-
                 setSelectedGitHubRepoSnapshot(snapshot);
             })
             .catch((error: unknown) => {

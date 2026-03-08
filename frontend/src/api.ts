@@ -14,9 +14,12 @@ export const GITHUB_OAUTH_CALLBACK_PATH = '/auth/github/callback';
 
 export type ApiConnectionState = 'unknown' | 'online' | 'offline';
 export type ApiWriteSessionState = 'unknown' | 'checking' | 'ready' | 'error';
+export type ApiClientErrorKind = 'transport' | 'http' | 'invalid_response';
+type ApiService = 'worker' | 'github';
 
 export interface ApiRuntimeStatus {
     connectionState: ApiConnectionState;
+    connectionMessage: string | null;
     writeSessionState: ApiWriteSessionState;
     writeSessionMessage: string | null;
 }
@@ -58,6 +61,34 @@ interface GitHubRepoApiResponse {
     };
 }
 
+export class ApiClientError extends Error {
+    readonly kind: ApiClientErrorKind;
+    readonly service: ApiService;
+    readonly path: string;
+    readonly status: number | null;
+
+    constructor({
+        message,
+        kind,
+        service,
+        path,
+        status = null,
+    }: {
+        message: string;
+        kind: ApiClientErrorKind;
+        service: ApiService;
+        path: string;
+        status?: number | null;
+    }) {
+        super(message);
+        this.name = 'ApiClientError';
+        this.kind = kind;
+        this.service = service;
+        this.path = path;
+        this.status = status;
+    }
+}
+
 function getOrCreateSessionId(): string {
     const fallback = crypto.randomUUID();
 
@@ -95,11 +126,12 @@ interface PublicWriteSession {
 const apiRuntimeListeners = new Set<(status: ApiRuntimeStatus) => void>();
 let apiRuntimeStatus: ApiRuntimeStatus = {
     connectionState: 'unknown',
+    connectionMessage: null,
     writeSessionState: 'unknown',
     writeSessionMessage: null,
 };
 let publicWriteSession: PublicWriteSession | null = null;
-let publicWriteSessionPromise: Promise<PublicWriteSession | null> | null = null;
+let publicWriteSessionPromise: Promise<PublicWriteSession> | null = null;
 
 function emitApiRuntimeStatus(partial: Partial<ApiRuntimeStatus>): void {
     apiRuntimeStatus = { ...apiRuntimeStatus, ...partial };
@@ -114,37 +146,166 @@ export function subscribeApiRuntimeStatus(listener: (status: ApiRuntimeStatus) =
     };
 }
 
-async function request(path: string, options?: RequestInit): Promise<Response | null> {
+function isAbortError(error: unknown): boolean {
+    return typeof error === 'object'
+        && error !== null
+        && 'name' in error
+        && (error as { name?: string }).name === 'AbortError';
+}
+
+function buildTransportErrorMessage(service: ApiService, fallback?: string): string {
+    if (fallback) {
+        return fallback;
+    }
+
+    return service === 'github'
+        ? 'GitHub API unavailable. Check your network connection and try again.'
+        : 'Worker API unavailable. Check your network connection and try again.';
+}
+
+async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+    const contentType = response.headers.get('content-type') ?? '';
+
+    try {
+        if (contentType.includes('application/json')) {
+            const payload = await response.json() as { message?: unknown };
+            if (typeof payload.message === 'string' && payload.message.trim()) {
+                return payload.message;
+            }
+        } else {
+            const text = await response.text();
+            if (text.trim()) {
+                return text.trim();
+            }
+        }
+    } catch {
+        // Fall back to the caller-supplied message.
+    }
+
+    return fallback;
+}
+
+async function readJsonResponse<T>(
+    response: Response,
+    {
+        service,
+        path,
+        invalidMessage,
+    }: {
+        service: ApiService;
+        path: string;
+        invalidMessage: string;
+    },
+): Promise<T> {
+    try {
+        return (await response.json()) as T;
+    } catch {
+        throw new ApiClientError({
+            message: invalidMessage,
+            kind: 'invalid_response',
+            service,
+            path,
+            status: response.status,
+        });
+    }
+}
+
+async function throwHttpError(
+    response: Response,
+    {
+        service,
+        path,
+        fallbackMessage,
+    }: {
+        service: ApiService;
+        path: string;
+        fallbackMessage: string;
+    },
+): Promise<never> {
+    throw new ApiClientError({
+        message: await readErrorMessage(response, fallbackMessage),
+        kind: 'http',
+        service,
+        path,
+        status: response.status,
+    });
+}
+
+async function requestUrl(
+    url: string,
+    {
+        service,
+        path,
+        transportMessage,
+    }: {
+        service: ApiService;
+        path: string;
+        transportMessage?: string;
+    },
+    options?: RequestInit,
+): Promise<Response> {
     try {
         const headers = new Headers(options?.headers);
         if (options?.body && !headers.has('Content-Type')) {
             headers.set('Content-Type', 'application/json');
         }
 
-        const res = await fetch(`${API_BASE}${path}`, {
+        const res = await fetch(url, {
             ...options,
             headers,
         });
 
-        emitApiRuntimeStatus({ connectionState: 'online' });
+        emitApiRuntimeStatus({ connectionState: 'online', connectionMessage: null });
         return res;
-    } catch {
-        emitApiRuntimeStatus({ connectionState: 'offline' });
-        return null;
+    } catch (error) {
+        if (isAbortError(error)) {
+            throw error;
+        }
+
+        const message = buildTransportErrorMessage(service, transportMessage);
+        emitApiRuntimeStatus({ connectionState: 'offline', connectionMessage: message });
+        throw new ApiClientError({
+            message,
+            kind: 'transport',
+            service,
+            path,
+        });
     }
 }
 
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T | null> {
+async function request(path: string, options?: RequestInit, transportMessage?: string): Promise<Response> {
+    return requestUrl(`${API_BASE}${path}`, { service: 'worker', path, transportMessage }, options);
+}
+
+async function requestGitHub(url: string, options?: RequestInit, transportMessage?: string): Promise<Response> {
+    return requestUrl(url, { service: 'github', path: url, transportMessage }, options);
+}
+
+async function apiFetch<T>(path: string, options?: RequestInit, invalidMessage = 'Worker returned an invalid response.'): Promise<T> {
     const res = await request(path, options);
-    if (!res?.ok) return null;
-    return (await res.json()) as T;
+    if (!res.ok) {
+        await throwHttpError(res, {
+            service: 'worker',
+            path,
+            fallbackMessage: `API request failed (${res.status}).`,
+        });
+    }
+
+    return readJsonResponse<T>(res, { service: 'worker', path, invalidMessage });
 }
 
 function writeSessionIsFresh(session: PublicWriteSession): boolean {
     return Date.parse(session.expiresAt) - Date.now() > WRITE_SESSION_REFRESH_BUFFER_MS;
 }
 
-async function ensurePublicWriteSession(): Promise<PublicWriteSession | null> {
+function emitWriteSessionError(message: string): void {
+    emitApiRuntimeStatus({
+        writeSessionState: 'error',
+        writeSessionMessage: message,
+    });
+}
+
+async function ensurePublicWriteSession(): Promise<PublicWriteSession> {
     if (publicWriteSession && writeSessionIsFresh(publicWriteSession)) {
         emitApiRuntimeStatus({ writeSessionState: 'ready', writeSessionMessage: null });
         return publicWriteSession;
@@ -152,43 +313,56 @@ async function ensurePublicWriteSession(): Promise<PublicWriteSession | null> {
 
     if (!publicWriteSessionPromise) {
         emitApiRuntimeStatus({ writeSessionState: 'checking', writeSessionMessage: null });
-        publicWriteSessionPromise = request('/api/session', {
-            method: 'POST',
-            body: JSON.stringify({ sessionId: SESSION_ID }),
-        }).then(async (response) => {
-            if (!response) {
-                emitApiRuntimeStatus({
-                    writeSessionState: 'error',
-                    writeSessionMessage: 'Worker API unavailable. Public writes are running in local-only fallback mode.',
-                });
-                return null;
-            }
+        publicWriteSessionPromise = (async () => {
+            try {
+                const response = await request(
+                    '/api/session',
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({ sessionId: SESSION_ID }),
+                    },
+                    'Worker API unavailable. Public writes are running in local-only fallback mode.',
+                );
 
-            if (!response.ok) {
-                emitApiRuntimeStatus({
-                    writeSessionState: 'error',
-                    writeSessionMessage: `Write-session mint failed (${response.status}). Check PUBLIC_SESSION_SECRET and PUBLIC_ORIGIN_ALLOWLIST.`,
-                });
-                return null;
-            }
+                if (!response.ok) {
+                    const message = `Write-session mint failed (${response.status}). Check PUBLIC_SESSION_SECRET and PUBLIC_ORIGIN_ALLOWLIST.`;
+                    emitWriteSessionError(message);
+                    await throwHttpError(response, {
+                        service: 'worker',
+                        path: '/api/session',
+                        fallbackMessage: message,
+                    });
+                }
 
-            const session = await response.json() as PublicWriteSession;
-            publicWriteSession = session;
-            emitApiRuntimeStatus({ writeSessionState: 'ready', writeSessionMessage: null });
-            return session;
-        }).finally(() => {
-            publicWriteSessionPromise = null;
-        });
+                const session = await readJsonResponse<PublicWriteSession>(response, {
+                    service: 'worker',
+                    path: '/api/session',
+                    invalidMessage: 'Worker returned an invalid write-session response.',
+                });
+                publicWriteSession = session;
+                emitApiRuntimeStatus({ writeSessionState: 'ready', writeSessionMessage: null });
+                return session;
+            } catch (error) {
+                if (!isAbortError(error) && apiRuntimeStatus.writeSessionState !== 'error') {
+                    emitWriteSessionError(
+                        error instanceof ApiClientError && error.kind === 'transport'
+                            ? 'Worker API unavailable. Public writes are running in local-only fallback mode.'
+                            : 'Worker write access is unavailable right now.',
+                    );
+                }
+
+                throw error;
+            } finally {
+                publicWriteSessionPromise = null;
+            }
+        })();
     }
 
     return publicWriteSessionPromise;
 }
 
-async function writeApiFetch<T>(path: string, options?: RequestInit, allowRetry = true): Promise<T | null> {
+async function writeApiFetch<T>(path: string, options?: RequestInit, allowRetry = true): Promise<T> {
     const session = await ensurePublicWriteSession();
-    if (!session) {
-        return null;
-    }
 
     const headers = new Headers(options?.headers);
     headers.set('Authorization', `Bearer ${session.token}`);
@@ -199,10 +373,6 @@ async function writeApiFetch<T>(path: string, options?: RequestInit, allowRetry 
         headers,
     });
 
-    if (!response) {
-        return null;
-    }
-
     if (response.status === 401 && allowRetry) {
         publicWriteSession = null;
         emitApiRuntimeStatus({ writeSessionState: 'checking', writeSessionMessage: null });
@@ -210,42 +380,56 @@ async function writeApiFetch<T>(path: string, options?: RequestInit, allowRetry 
     }
 
     if (!response.ok) {
-        return null;
+        if (response.status === 401) {
+            emitWriteSessionError('Worker write access expired. Retry write access to continue syncing.');
+        }
+
+        await throwHttpError(response, {
+            service: 'worker',
+            path,
+            fallbackMessage: response.status === 401
+                ? 'Worker write access expired. Retry write access to continue syncing.'
+                : `Write request failed (${response.status}).`,
+        });
     }
 
-    return (await response.json()) as T;
+    return readJsonResponse<T>(response, {
+        service: 'worker',
+        path,
+        invalidMessage: 'Worker returned an invalid write response.',
+    });
 }
 
 // ─── Read Endpoints ───
 
-export async function fetchDistricts(): Promise<District[] | null> {
-    return apiFetch<District[]>('/api/districts');
+export async function fetchDistricts(): Promise<District[]> {
+    return apiFetch<District[]>('/api/districts', undefined, 'Worker returned an invalid districts response.');
 }
 
-export async function fetchMissions(districtId?: string): Promise<Mission[] | null> {
+export async function fetchMissions(districtId?: string): Promise<Mission[]> {
     const params = new URLSearchParams({ sessionId: SESSION_ID });
     if (districtId) {
         params.set('district', districtId);
     }
 
-    return apiFetch<Mission[]>(`/api/missions?${params.toString()}`);
+    return apiFetch<Mission[]>(`/api/missions?${params.toString()}`, undefined, 'Worker returned an invalid missions response.');
 }
 
-export async function fetchLeaderboard(): Promise<LeaderboardEntry[] | null> {
-    return apiFetch<LeaderboardEntry[]>('/api/leaderboard');
+export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
+    return apiFetch<LeaderboardEntry[]>('/api/leaderboard', undefined, 'Worker returned an invalid leaderboard response.');
 }
 
-export async function fetchEvents(): Promise<CityEvent[] | null> {
-    return apiFetch<CityEvent[]>('/api/events');
+export async function fetchEvents(): Promise<CityEvent[]> {
+    return apiFetch<CityEvent[]>('/api/events', undefined, 'Worker returned an invalid events response.');
 }
 
-export async function fetchConflicts(): Promise<MergeConflictEncounter[] | null> {
-    return apiFetch<MergeConflictEncounter[]>('/api/conflicts');
+export async function fetchConflicts(): Promise<MergeConflictEncounter[]> {
+    return apiFetch<MergeConflictEncounter[]>('/api/conflicts', undefined, 'Worker returned an invalid conflicts response.');
 }
 
 // ─── Write Endpoints ───
 
-export async function acceptMission(id: string): Promise<Mission | null> {
+export async function acceptMission(id: string): Promise<Mission> {
     return writeApiFetch<Mission>(`/api/missions/${encodeURIComponent(id)}/accept`, { method: 'POST' });
 }
 
@@ -260,16 +444,20 @@ interface CompleteMissionResult {
     };
 }
 
-export async function completeMission(id: string): Promise<CompleteMissionResult | null> {
+export async function completeMission(id: string): Promise<CompleteMissionResult> {
     return writeApiFetch<CompleteMissionResult>(`/api/missions/${encodeURIComponent(id)}/complete`, { method: 'POST' });
 }
 
-export async function failMission(id: string): Promise<Mission | null> {
+export async function failMission(id: string): Promise<Mission> {
     return writeApiFetch<Mission>(`/api/missions/${encodeURIComponent(id)}/fail`, { method: 'POST' });
 }
 
-export async function seedDatabase(): Promise<{ status: string; inserted: Record<string, number> } | null> {
-    return apiFetch<{ status: string; inserted: Record<string, number> }>('/api/admin/seed', { method: 'POST' });
+export async function seedDatabase(): Promise<{ status: string; inserted: Record<string, number> }> {
+    return apiFetch<{ status: string; inserted: Record<string, number> }>(
+        '/api/admin/seed',
+        { method: 'POST' },
+        'Worker returned an invalid seed response.',
+    );
 }
 
 function getGitHubOAuthRedirectUri(): string {
@@ -369,11 +557,11 @@ export function validateGitHubOAuthState(returnedState: string | null): boolean 
 export async function exchangeGitHubOAuthCode(
     code: string,
     redirectUri: string,
-): Promise<GitHubTokenExchangeResponse | null> {
+): Promise<GitHubTokenExchangeResponse> {
     return apiFetch<GitHubTokenExchangeResponse>('/api/auth/github/token', {
         method: 'POST',
         body: JSON.stringify({ code, redirectUri }),
-    });
+    }, 'Worker returned an invalid GitHub token response.');
 }
 
 function normalizeGitHubRepoVisibility(repo: GitHubRepoApiResponse): GitHubReadableRepo['visibility'] {
@@ -388,7 +576,7 @@ export async function fetchGitHubReadableRepos(
     accessToken: string,
     signal?: AbortSignal,
 ): Promise<GitHubReadableRepoListResponse> {
-    const response = await fetch(
+    const response = await requestGitHub(
         'https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=owner,collaborator,organization_member',
         {
             headers: {
@@ -398,24 +586,22 @@ export async function fetchGitHubReadableRepos(
             },
             signal,
         },
+        'GitHub API unavailable. Could not load the readable repository list.',
     );
 
     if (!response.ok) {
-        let message = `GitHub repo fetch failed (${response.status}).`;
-
-        try {
-            const payload = await response.json() as { message?: string };
-            if (payload.message) {
-                message = payload.message;
-            }
-        } catch {
-            // Keep the status-based fallback message.
-        }
-
-        throw new Error(message);
+        await throwHttpError(response, {
+            service: 'github',
+            path: 'https://api.github.com/user/repos',
+            fallbackMessage: `GitHub repo fetch failed (${response.status}).`,
+        });
     }
 
-    const payload = await response.json() as GitHubRepoApiResponse[];
+    const payload = await readJsonResponse<GitHubRepoApiResponse[]>(response, {
+        service: 'github',
+        path: 'https://api.github.com/user/repos',
+        invalidMessage: 'GitHub returned an invalid repository list response.',
+    });
 
     return {
         repos: payload.map((repo) => ({
@@ -435,7 +621,7 @@ export async function fetchGitHubRepoMetadata(
     name: string,
     signal?: AbortSignal,
     accessToken?: string,
-): Promise<GitHubRepoMetadataSnapshot | null> {
+): Promise<GitHubRepoMetadataSnapshot> {
     const params = new URLSearchParams({
         owner,
         name,
@@ -450,7 +636,7 @@ export async function fetchGitHubRepoMetadata(
     return apiFetch<GitHubRepoMetadataSnapshot>(`/api/github/repo-metadata?${params.toString()}`, {
         signal,
         headers,
-    });
+    }, 'Worker returned an invalid repo metadata response.');
 }
 
 export async function refreshGitHubRepo(
@@ -469,19 +655,29 @@ export async function refreshGitHubRepo(
         signal,
         headers,
         body: JSON.stringify({ owner, name }),
-    });
+    }, 'Worker API unavailable. Repo refresh could not be started.');
 
-    if (!response) {
-        throw new Error('Worker API unavailable. Repo refresh could not be started.');
-    }
-
-    const payload = await response.json().catch(() => null) as Partial<RepoRefreshResponse> & { message?: string } | null;
     if (!response.ok) {
-        throw new Error(payload?.message ?? `Repo refresh failed (${response.status}).`);
+        await throwHttpError(response, {
+            service: 'worker',
+            path: '/api/refresh-repo',
+            fallbackMessage: `Repo refresh failed (${response.status}).`,
+        });
     }
 
+    const payload = await readJsonResponse<Partial<RepoRefreshResponse> & { message?: string }>(response, {
+        service: 'worker',
+        path: '/api/refresh-repo',
+        invalidMessage: 'Worker returned an invalid repo refresh response.',
+    });
     if (!payload?.snapshot || typeof payload.message !== 'string') {
-        throw new Error('Worker returned an invalid repo refresh response.');
+        throw new ApiClientError({
+            message: 'Worker returned an invalid repo refresh response.',
+            kind: 'invalid_response',
+            service: 'worker',
+            path: '/api/refresh-repo',
+            status: response.status,
+        });
     }
 
     return payload as RepoRefreshResponse;
@@ -502,37 +698,47 @@ export async function fetchGitHubRepoRefreshStatus(
         signal,
         headers,
         body: JSON.stringify(refreshCheck),
-    });
+    }, 'Worker API unavailable. Repo update status could not be checked.');
 
-    if (!response) {
-        throw new Error('Worker API unavailable. Repo update status could not be checked.');
-    }
-
-    const payload = await response.json().catch(() => null) as Partial<RepoRefreshCheckResult> & { message?: string } | null;
     if (!response.ok) {
-        throw new Error(payload?.message ?? `Repo update status failed (${response.status}).`);
+        await throwHttpError(response, {
+            service: 'worker',
+            path: '/api/github/repo-refresh-status',
+            fallbackMessage: `Repo update status failed (${response.status}).`,
+        });
     }
 
+    const payload = await readJsonResponse<Partial<RepoRefreshCheckResult> & { message?: string }>(response, {
+        service: 'worker',
+        path: '/api/github/repo-refresh-status',
+        invalidMessage: 'Worker returned an invalid repo refresh status response.',
+    });
     if (
         !payload
         || typeof payload.status !== 'string'
         || typeof payload.hasUpdates !== 'boolean'
         || typeof payload.checkedAt !== 'string'
     ) {
-        throw new Error('Worker returned an invalid repo refresh status response.');
+        throw new ApiClientError({
+            message: 'Worker returned an invalid repo refresh status response.',
+            kind: 'invalid_response',
+            service: 'worker',
+            path: '/api/github/repo-refresh-status',
+            status: response.status,
+        });
     }
 
     return payload as RepoRefreshCheckResult;
 }
 
 export async function primePublicWriteSession(): Promise<boolean> {
-    const session = await ensurePublicWriteSession();
-    return session !== null;
+    await ensurePublicWriteSession();
+    return true;
 }
 
 // ─── District Room (Durable Object) ───
 
-export async function districtHeartbeat(districtId: string): Promise<RoomState | null> {
+export async function districtHeartbeat(districtId: string): Promise<RoomState> {
     return writeApiFetch<RoomState>(`/api/districts/${encodeURIComponent(districtId)}/room/heartbeat`, {
         method: 'POST',
         body: JSON.stringify({ sessionId: SESSION_ID }),

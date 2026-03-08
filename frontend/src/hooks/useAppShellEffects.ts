@@ -35,7 +35,9 @@ export function useAppShellEffects(): void {
 
     useEffect(() => {
         if (phase !== 'menu' && apiAvailable) {
-            void api.primePublicWriteSession();
+            void api.primePublicWriteSession().catch(() => {
+                // Runtime status is already updated inside the API client.
+            });
         }
     }, [apiAvailable, phase]);
 

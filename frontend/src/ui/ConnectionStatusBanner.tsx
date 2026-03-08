@@ -119,7 +119,9 @@ export function ConnectionStatusBanner() {
             pill: 'Blocked',
             actionLabel: 'Retry Write Access',
             onAction: () => {
-                void api.primePublicWriteSession();
+                void api.primePublicWriteSession().catch(() => {
+                    // Runtime status is already updated inside the API client.
+                });
             },
         });
     }
