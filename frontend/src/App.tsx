@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Player } from './game/Player';
 import { Camera } from './game/Camera';
@@ -25,6 +25,32 @@ import {
 } from '../../shared/repoRefresh';
 import * as api from './api';
 import './index.css';
+
+const CONNECTED_REPO_REFRESH_ACTIVE_POLL_MS = 60_000;
+const CONNECTED_REPO_REFRESH_BACKOFF_POLL_MS = 5 * 60_000;
+
+function useDocumentHidden(): boolean {
+    const [isDocumentHidden, setIsDocumentHidden] = useState(() => (
+        typeof document !== 'undefined' ? document.visibilityState === 'hidden' : false
+    ));
+
+    useEffect(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        const syncDocumentVisibility = () => {
+            setIsDocumentHidden(document.visibilityState === 'hidden');
+        };
+
+        document.addEventListener('visibilitychange', syncDocumentVisibility);
+        return () => {
+            document.removeEventListener('visibilitychange', syncDocumentVisibility);
+        };
+    }, []);
+
+    return isDocumentHidden;
+}
 
 // Polls the DistrictRoom DO every 10s while player is in a district.
 // Updates districtRooms in gameStore (presence count + merged capture progress).
@@ -74,6 +100,8 @@ function ConnectedRepoRefreshPoller() {
     const setConnectedRepoRefreshStatus = useGameStore((s) => s.setConnectedRepoRefreshStatus);
     const githubAccessToken = useGameStore((s) => s.githubAccessToken);
     const apiConnectionState = useGameStore((s) => s.apiConnectionState);
+    const isDocumentHidden = useDocumentHidden();
+    const shouldBackOffRefreshChecks = isDocumentHidden || apiConnectionState === 'offline';
 
     useEffect(() => {
         if (
@@ -81,7 +109,6 @@ function ConnectedRepoRefreshPoller() {
             || !connectedRepo
             || connectedRepo.metadata?.provider !== 'github'
             || (connectedRepo.visibility === 'private' && !githubAccessToken)
-            || apiConnectionState === 'offline'
         ) {
             return;
         }
@@ -98,6 +125,18 @@ function ConnectedRepoRefreshPoller() {
 
             return useGameStore.getState().connectedRepoRefreshStatus
                 ?? createInitialConnectedRepoRefreshStatus(currentRepo.signals);
+        };
+
+        const stopCheckingState = () => {
+            const currentStatus = getCurrentRefreshStatus();
+            if (!currentStatus?.isChecking) {
+                return;
+            }
+
+            useGameStore.getState().setConnectedRepoRefreshStatus({
+                ...currentStatus,
+                isChecking: false,
+            });
         };
 
         const checkRefreshStatus = async () => {
@@ -160,21 +199,31 @@ function ConnectedRepoRefreshPoller() {
             }
         };
 
-        void checkRefreshStatus();
+        if (!shouldBackOffRefreshChecks) {
+            void checkRefreshStatus();
+        }
+
+        // Hidden tabs and offline workers keep a slow probe so recovery can be detected
+        // without paying the normal foreground polling cost on every open tab.
         const intervalId = window.setInterval(() => {
             void checkRefreshStatus();
-        }, 60_000);
+        }, shouldBackOffRefreshChecks
+            ? CONNECTED_REPO_REFRESH_BACKOFF_POLL_MS
+            : CONNECTED_REPO_REFRESH_ACTIVE_POLL_MS);
 
         return () => {
             activeController?.abort();
+            stopCheckingState();
             window.clearInterval(intervalId);
         };
     }, [
         apiConnectionState,
         connectedRepo,
         githubAccessToken,
+        isDocumentHidden,
         repoCityMode,
         setConnectedRepoRefreshStatus,
+        shouldBackOffRefreshChecks,
     ]);
 
     return null;
