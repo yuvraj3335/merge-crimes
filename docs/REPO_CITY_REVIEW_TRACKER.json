@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 13,
+    "cycles_run": 14,
     "total_findings": 26,
-    "total_resolved": 11,
-    "last_updated": "2026-03-08T17:44:54Z"
+    "total_resolved": 10,
+    "last_updated": "2026-03-08T17:39:01Z"
   },
   "workstreams": [
     {
@@ -47,8 +47,8 @@
         "worker/src"
       ],
       "description": "Find overly complex functions that should be simplified or split",
-      "last_run_at": "2026-03-08T17:31:35Z",
-      "cycles_assigned": 5,
+      "last_run_at": "2026-03-08T17:39:01Z",
+      "cycles_assigned": 6,
       "open_findings_count": 0,
       "findings_open": 10
     },
@@ -174,11 +174,11 @@
       "mode": "review",
       "workstream_id": "unused_exports",
       "title": "Scan frontend/src and shared for unused module exports",
-      "status": "done",
+      "status": "pending",
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "q-005",
@@ -189,7 +189,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "q-006",
@@ -200,7 +200,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "q-007",
@@ -211,7 +211,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "q-008",
@@ -222,7 +222,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "q-009",
@@ -233,7 +233,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "qfix-f-000001",
@@ -480,12 +480,12 @@
       "workstream_id": "complexity",
       "title": "Fix: Classic mode and repo-city mode are implemented as pervasive inline branches ins",
       "severity": "high",
-      "status": "pending",
+      "status": "done",
       "score": 2.79,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
       "last_scored_at": "2026-03-08T17:31:35Z",
-      "completed_at": "2026-03-08T17:44:54Z"
+      "completed_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "qfix-f-000021",
@@ -512,7 +512,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "qfix-f-000023",
@@ -525,7 +525,7 @@
       "score": 1.82,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "qfix-f-000024",
@@ -538,7 +538,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "qfix-f-000025",
@@ -551,7 +551,7 @@
       "score": 1.74,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "qfix-f-000026",
@@ -560,11 +560,12 @@
       "workstream_id": "complexity",
       "title": "Fix: `generateCityFromRepo` claims to be part of a deterministic translation layer, b",
       "severity": "medium",
-      "status": "pending",
+      "status": "done",
       "score": 1.88,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:31:35Z"
+      "last_scored_at": "2026-03-08T17:39:01Z",
+      "completed_at": "2026-03-08T17:49:07Z"
     }
   ],
   "findings": [
@@ -835,7 +836,7 @@
       "description": "Mission triggers and active waypoints build near-identical repo-city markers: the same `calmColor` tint helper and the same ring/octahedron/beam composition are duplicated with only constant tweaks.",
       "evidence": "frontend/src/game/MissionTrigger.tsx:13-15,69-108\nfunction calmColor(source: string, amount: number) {\n    return `#${new THREE.Color(source).lerp(new THREE.Color('#c5d3e2'), amount).getHexString()}`;\n}\n...\n<mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>\n    <ringGeometry args={[radius - 0.3, radius, 32]} />\n    <meshStandardMaterial color={markerColor} emissive={glowColor} ... />\n</mesh>\n<mesh position={[0, 0.5, 0]}>\n    <octahedronGeometry args={[0.4, 0]} />\n    <meshStandardMaterial color={markerColor} emissive={glowColor} ... />\n</mesh>\n<mesh position={[0, 5, 0]}>\n    <cylinderGeometry args={[0.03, 0.03, 10, 8]} />\n    <meshStandardMaterial color={glowColor} emissive={glowColor} ... />\n</mesh>\n\nfrontend/src/game/Waypoint.tsx:15-17,80-137\nfunction calmColor(source: string, amount: number) {\n    return `#${new THREE.Color(source).lerp(new THREE.Color('#c5d3e2'), amount).getHexString()}`;\n}\n...\n<mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>\n    <ringGeometry args={[waypoint.radius - 0.5, waypoint.radius, 48]} />\n    <meshStandardMaterial color={markerColor} emissive={beamColor} ... />\n</mesh>\n<group ref={markerRef} position={[0, 2.5, 0]}>\n    <mesh>\n        <octahedronGeometry args={[0.6, 0]} />\n        <meshStandardMaterial color={markerColor} emissive={beamColor} ... />\n    </mesh>\n</group>\n<mesh ref={beamRef} position={[0, 8, 0]}>\n    <cylinderGeometry args={[0.06, 0.06, 16, 8]} />\n    <meshStandardMaterial color={beamColor} emissive={beamColor} ... />\n</mesh>",
       "recommended_action": "Extract a shared repo-city marker primitive or a shared tint helper so visual tuning lands in one place.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T15:26:13Z",
       "cycle_number": 4,
       "edge_cases": [
@@ -987,14 +988,14 @@
       "description": "Classic mode and repo-city mode are implemented as pervasive inline branches inside the same components instead of separate compositions. This spreads control flow and styling decisions across the app and makes every feature change a two-mode audit.",
       "evidence": "Search results show the same split across many files: App.tsx:311/372/376; CityScene.tsx:15/43/331/357; Player.tsx:39-48/128/187; Waypoint.tsx:68-172; HUD.tsx:152/214/218/312/388/447/520; MainMenu.tsx:297-651; GitHubRepoPicker.tsx:330-491; ConnectionStatusBanner.tsx:44-50; RewardToast.tsx:9-12; Leaderboard.tsx:19-55. Representative code: `repoCityMode ? (...) : (...)` blocks dominate HUD and MainMenu, while Player, Waypoint, and CityScene branch behavior and visuals on the same flag.",
       "recommended_action": "Move mode-specific behavior behind separate components or mode adapters, e.g. `RepoCityHUD` vs `ClassicHUD`, `RepoCityMenu` vs `ClassicMenu`, and shared presentational primitives. Keep mode-specific copy/style maps centralized rather than branching inline in many files.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T17:06:08Z",
       "cycle_number": 9,
       "edge_cases": [
         "A new repo-city-only change now requires auditing every `repoCityMode` branch site to keep classic mode stable, because the two modes share modules instead of boundaries.",
         "Behavior can drift between surfaces because each file chooses its own repo-city/classic split; for example HUD, MainMenu, Player, and CityScene all branch independently on the same flag."
       ],
-      "resolved_at": "2026-03-08T17:44:54Z"
+      "resolved_at": "2026-03-08T17:39:01Z"
     },
     {
       "id": "f-000021",
@@ -1115,13 +1116,14 @@
       "description": "`generateCityFromRepo` claims to be part of a deterministic translation layer, but it injects wall-clock time directly into the result. That hidden impurity makes caching, memoization, and behavioral reasoning harder because identical repo input does not produce identical city output.",
       "evidence": "The file header at shared/repoCityGenerator.ts:1-3 says `Pure, deterministic translation layer: RepoModel -> GeneratedCity.` But `generateCityFromRepo` returns `generatedAt: new Date().toISOString()` at shared/repoCityGenerator.ts:1255-1265, so repeated calls with the same `RepoModel` produce different `GeneratedCity` objects.",
       "recommended_action": "Make `generatedAt` an explicit input from the caller, or reuse `repo.generatedAt` when appropriate. Keep the generator referentially transparent for the same repo snapshot.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T17:06:08Z",
       "cycle_number": 9,
       "edge_cases": [
         "Calling `generateCityFromRepo` twice for the same snapshot yields different `generatedAt` values, which defeats simple equality checks and can trigger avoidable downstream re-renders.",
         "Any test or cache keyed on `GeneratedCity` shape becomes unstable because the generator's output changes even when repo modules, edges, and signals do not."
-      ]
+      ],
+      "resolved_at": "2026-03-08T17:49:07Z"
     }
   ],
   "stop_policy": {

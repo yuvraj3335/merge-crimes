@@ -25,6 +25,6 @@ export function generateCityFromRepo(repo: RepoModel): GeneratedCity {
     roads,
     missions,
     bots,
-    generatedAt: new Date().toISOString(),
+    generatedAt: repo.generatedAt,
   };
 }
