@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_6_in_progress",
-  "last_updated": "2026-03-08T14:06:53+05:30",
+  "last_updated": "2026-03-08T14:15:40+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 6 - AI Bot Battle Layer",
   "source_of_truth": [
@@ -742,6 +742,18 @@
             "worker_build": "pass",
             "repo_city_generator_test": "pass — compiled worker/shared sources to /tmp and ran repoCityMissionGeneration.test.js"
           }
+        },
+        {
+          "title": "Battle template mapping by threat type — translate repo threats into encounter setup data",
+          "summary": [
+            "Added a shared battle-template contract that resolves sourceSignalType aliases plus bot archetype overlays into abstract encounter flavor, setup, and copy without hard-coding literal code mechanics.",
+            "Security alerts and failing workflow threats now have curated threat-first templates, while unknown or unmapped threat types fall back to an archetype-flavored abstract template so the model stays flexible for future threat groups.",
+            "Worker contract coverage now exercises both live generated bots and direct alias normalization, proving the repo-signal-to-battle-template path without widening into UI or combat implementation."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "battle_template_mapping_test": "pass — compiled worker/shared sources to /tmp and ran battleTemplateMapping.test.js"
+          }
         }
       ]
     },
@@ -757,15 +769,16 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Battle template mapping by threat type — flavor encounters from live repo signals",
-    "why": "Enemy rosters now match the mapped repo threat groups, so the next bounded Phase 6 slice is to route sourceSignalType and bot archetype into curated battle templates. That keeps the battle layer aligned with review spam, dependency poison, workflow sabotage, and merge chaos instead of reusing generic encounter copy.",
+    "title": "Boss encounter escalation from severe repo threats — apply battle templates to merge-conflict and high-severity fights",
+    "why": "Threat-to-template mapping now exists as a shared contract, so the next bounded Phase 6 slice is to feed that data into boss encounter generation for merge conflicts and other severe repo events. That keeps boss copy and setup aligned with the same threat vocabulary without widening into UI or battle-mechanic work yet.",
     "candidate_files": [
       "shared/repoCityGenerator.ts",
-      "shared/seed/conflicts.ts"
+      "shared/battleTemplates.ts",
+      "worker/src/__tests__/repoCityMissionGeneration.test.ts"
     ],
     "acceptance_criteria": [
-      "Generated encounters choose distinct curated battle templates or conflict copy based on sourceSignalType or bot archetype",
-      "Merge conflicts keep boss flow while dependency, workflow, and review threats surface battle text that matches their live repo risk",
+      "Boss encounter generation uses getBattleTemplate or equivalent shared battle-template data for merge conflicts and other severe threat groups",
+      "Merge conflict and severe-threat boss setups produce distinct copy or setup data without adding UI invocation or freeform battle mechanics",
       "cd worker && npm run build passes"
     ]
   },
