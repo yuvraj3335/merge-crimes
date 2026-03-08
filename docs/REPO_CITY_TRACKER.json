@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_5_in_progress",
-  "last_updated": "2026-03-08T13:37:30+05:30",
+  "last_updated": "2026-03-08T13:46:02+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 5 - Signal-Driven Missions",
   "source_of_truth": [
@@ -691,6 +691,19 @@
             "frontend_build": "pass",
             "frontend_lint": "pass"
           }
+        },
+        {
+          "title": "Repo signal district mapping MVP — route normalized GitHub signals into concrete module heat",
+          "summary": [
+            "GitHub issue, PR, and latest-commit signals now enter normalized snapshots as repo-level metadata first, then pass through a deterministic module-kind mapper that resolves each signal onto the most relevant module instead of hard-coding a control-district fallback.",
+            "Normalized RepoModules now carry a signal-adjusted heatScore so backend snapshots persist base module heat plus mapped signal pressure before city generation.",
+            "Repo-city generation now prefers persisted module heat when present, which makes district heat and downstream mission placement follow the mapped module targets without adding frontend work in this slice."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "frontend_build": "pass",
+            "frontend_lint": "not_run — no frontend files changed in this slice"
+          }
         }
       ]
     },
@@ -715,17 +728,17 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Repo signal district mapping MVP — route normalized GitHub signals into concrete module heat",
-    "why": "Phase 5 now has live GitHub repo signals attached to normalized snapshots. The next bounded slice is to map repo-level signal entries onto the most relevant modules or districts so heat and mission placement reflect repo structure instead of relying on a control-district fallback.",
+    "title": "GitHub signal-to-mission generator refinement — turn mapped repo signals into clearer mission mixes",
+    "why": "Phase 5 now normalizes live GitHub signals and maps them onto concrete module heat. The next bounded slice is to make mission generation lean on those mapped signals more deliberately so repo activity changes the mission list, not just district pressure.",
     "candidate_files": [
       "worker/src/github/fetchRepoSignals.ts",
-      "shared/repoTopLevelModules.ts",
-      "shared/repoCityGenerator.ts"
+      "shared/repoCityGenerator.ts",
+      "shared/repoModel.ts"
     ],
     "acceptance_criteria": [
-      "Repo-wide GitHub signals map to stable module or district targets when repo structure provides a clear match",
-      "Generated district heat and mission placement shift predictably for repos with control, app, service, and test modules",
-      "Signal fetch stays metadata-only and read-only with no source content retrieval",
+      "Mapped GitHub signals generate readable mission types without falling back to generic placeholder routing",
+      "Mission district selection follows the resolved module targets from the signal heat mapper",
+      "Zero-severity telemetry signals remain non-actionable",
       "cd worker && npm run build passes",
       "cd frontend && npm run build passes"
     ]

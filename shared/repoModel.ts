@@ -44,6 +44,7 @@ export interface RepoModule {
   importanceScore: number; // 0–100
   activityScore: number;   // 0–100
   riskScore: number;       // 0–100
+  heatScore?: number;      // 0–100 signal-adjusted district heat
 }
 
 export type DependencyReason =

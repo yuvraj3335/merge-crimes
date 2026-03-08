@@ -20,6 +20,7 @@ import type {
   BotArchetype,
   DependencyReason,
 } from './repoModel';
+import { calculateRepoModuleBaseHeat } from './repoSignalMapping';
 
 // ─── Module Kind -> District Category ───
 
@@ -528,12 +529,14 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function deriveHeat(mod: RepoModule, signals: RepoSignal[]): number {
+  if (typeof mod.heatScore === 'number') {
+    return clamp(Math.round(mod.heatScore), 0, 100);
+  }
+
   const signalHeat = signals
     .filter((s) => s.target === mod.id && isActionableSignal(s))
     .reduce((sum, s) => sum + s.severity * 12, 0);
-  const riskHeat = mod.riskScore * 0.35;
-  const activityHeat = mod.activityScore * 0.18;
-  return Math.min(100, Math.round(signalHeat + riskHeat + activityHeat));
+  return clamp(Math.round(calculateRepoModuleBaseHeat(mod) + signalHeat), 0, 100);
 }
 
 function generateBuildings(mod: RepoModule): GeneratedBuilding[] {

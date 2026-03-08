@@ -15,7 +15,7 @@ interface GitHubCommitSummary {
 }
 
 interface FetchRepoSignalsOptions {
-  snapshot: Pick<RepoModel, 'repoId' | 'owner' | 'name' | 'defaultBranch' | 'modules'>;
+  snapshot: Pick<RepoModel, 'repoId' | 'owner' | 'name' | 'defaultBranch'>;
   fetchGitHubJson: GitHubJsonFetcher;
 }
 
@@ -71,21 +71,6 @@ function severityFromOpenPullRequestCount(count: number): RepoSignal['severity']
   return 5;
 }
 
-function resolveRepoSignalTarget(snapshot: FetchRepoSignalsOptions['snapshot']): string {
-  const preferredModule = snapshot.modules.find((module) => {
-    const haystack = `${module.name} ${module.path}`.toLowerCase();
-    return module.kind === 'control'
-      || module.kind === 'infra'
-      || haystack.includes('.github')
-      || haystack.includes('ci')
-      || haystack.includes('infra')
-      || haystack.includes('ops')
-      || haystack.includes('control');
-  }) ?? snapshot.modules[0];
-
-  return preferredModule?.id ?? snapshot.repoId;
-}
-
 function buildRepoCountDetail(
   snapshot: FetchRepoSignalsOptions['snapshot'],
   count: number,
@@ -118,7 +103,7 @@ export async function fetchRepoSignals({
     fetchGitHubJson<GitHubCommitSummary[]>(`https://api.github.com/repos/${repoPath}/commits?${commitQuery.toString()}`),
   ]);
 
-  const target = resolveRepoSignalTarget(snapshot);
+  const target = snapshot.repoId;
   const signals: RepoSignal[] = [];
 
   if (openIssuesResponse.ok) {

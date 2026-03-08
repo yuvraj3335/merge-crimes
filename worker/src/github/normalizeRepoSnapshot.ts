@@ -1,5 +1,6 @@
 import type { GitHubRepoMetadataSnapshot, RepoLanguage } from '../../../shared/repoModel';
 import { attachTopLevelRepoModules, type RepoTopLevelTreeEntry } from '../../../shared/repoTopLevelModules';
+import { applySignalHeatToRepoModel } from '../../../shared/repoSignalMapping';
 import { fetchRepoSignals, type GitHubJsonFetcher } from './fetchRepoSignals';
 
 export interface GitHubRepoResponse {
@@ -122,8 +123,8 @@ export async function normalizeGitHubRepoSnapshot({
     fetchGitHubJson,
   });
 
-  return {
+  return applySignalHeatToRepoModel({
     ...snapshotWithModules,
     signals,
-  };
+  });
 }
