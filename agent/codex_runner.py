@@ -53,10 +53,12 @@ def _build_command(
     codex_bin: str,
     prompt: str,
     extra_args: List[str],
-    approval_mode: str = "full-auto",
 ) -> List[str]:
-    """Build the subprocess command list."""
-    cmd = [codex_bin, f"--approval-mode={approval_mode}"]
+    """Build the subprocess command list.
+
+    Correct invocation: codex exec --full-auto [extra_args...] "<prompt>"
+    """
+    cmd = [codex_bin, "exec", "--full-auto"]
     if extra_args:
         cmd.extend(extra_args)
     cmd.append(prompt)
