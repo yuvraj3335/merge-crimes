@@ -21,6 +21,52 @@ interface RepoRefreshStatus {
     repoId: string | null;
 }
 
+type GitHubAuthCardTone = 'neutral' | 'active' | 'waiting' | 'failed' | 'listed-only';
+type GitHubAuthCardIcon = 'dot' | 'check' | 'spinner' | 'x' | 'list';
+
+interface GitHubAuthCardCopy {
+    title: string;
+    meta: string;
+    tone: GitHubAuthCardTone;
+    icon: GitHubAuthCardIcon;
+}
+
+function renderGitHubAuthCardGlyph(icon: Exclude<GitHubAuthCardIcon, 'spinner'>) {
+    switch (icon) {
+        case 'check':
+            return (
+                <svg viewBox="0 0 16 16" focusable="false" aria-hidden="true">
+                    <path d="M3.5 8.5 6.5 11.5 12.5 5.5" />
+                </svg>
+            );
+        case 'x':
+            return (
+                <svg viewBox="0 0 16 16" focusable="false" aria-hidden="true">
+                    <path d="M5 5 11 11" />
+                    <path d="M11 5 5 11" />
+                </svg>
+            );
+        case 'list':
+            return (
+                <svg viewBox="0 0 16 16" focusable="false" aria-hidden="true">
+                    <path d="M5 5.25h6.5" />
+                    <path d="M5 8h6.5" />
+                    <path d="M5 10.75h6.5" />
+                    <path d="M3 5.25h.01" />
+                    <path d="M3 8h.01" />
+                    <path d="M3 10.75h.01" />
+                </svg>
+            );
+        case 'dot':
+        default:
+            return (
+                <svg viewBox="0 0 16 16" focusable="false" aria-hidden="true">
+                    <circle cx="8" cy="8" r="2.25" fill="currentColor" stroke="none" />
+                </svg>
+            );
+    }
+}
+
 export function MainMenu() {
     const phase = useGameStore((s) => s.phase);
     const setPhase = useGameStore((s) => s.setPhase);
@@ -276,7 +322,7 @@ export function MainMenu() {
                         : `${selectedGitHubRepo.fullName} is eligible for repo-city translation in this flow.`
                     : `${selectedGitHubRepo.fullName} is listed only. ${selectedGitHubRepoEligibility?.menuDetail ?? "This repo can't be translated here yet."}`
         : 'Load the readable repo list without leaving this menu.';
-    const githubAuthCard = githubAccessToken
+    const githubAuthCard: GitHubAuthCardCopy | null = githubAccessToken
         ? {
               title: selectedGitHubRepo
                   ? selectedRepoStillIngesting
@@ -292,11 +338,31 @@ export function MainMenu() {
               meta: selectedGitHubRepo
                   ? githubRepoActionMeta
                   : 'GitHub login is active in this browser session.',
+              tone: selectedGitHubRepo
+                  ? selectedRepoStillIngesting
+                      ? 'waiting'
+                      : selectedRepoIngestFailed
+                          ? 'failed'
+                          : selectedGitHubRepoEligibility?.eligible
+                              ? 'active'
+                              : 'listed-only'
+                  : 'neutral',
+              icon: selectedGitHubRepo
+                  ? selectedRepoStillIngesting
+                      ? 'spinner'
+                      : selectedRepoIngestFailed
+                          ? 'x'
+                          : selectedGitHubRepoEligibility?.eligible
+                              ? 'check'
+                              : 'list'
+                  : 'dot',
           }
         : githubAuthStatus === 'exchanging'
             ? {
                   title: 'Completing GitHub login',
                   meta: 'Finishing the sign-in so the readable repo list can load.',
+                  tone: 'waiting',
+                  icon: 'spinner',
               }
             : null;
 
@@ -478,11 +544,28 @@ export function MainMenu() {
                 {repoCityMode && !githubAuthCard && <GitHubTrustNotice />}
                 {githubAuthCard ? (
                     <div
-                        className={`menu-repo-btn menu-auth-status ${repoCityMode ? 'repo-city' : ''}`.trim()}
+                        className={`menu-repo-btn menu-auth-status ${repoCityMode ? 'repo-city' : ''} ${githubAuthCard.tone}`.trim()}
                         aria-live="polite"
+                        aria-busy={githubAuthCard.icon === 'spinner'}
                     >
-                        <span className="menu-action-label">{githubAuthCard.title}</span>
-                        <span className="menu-action-meta">{githubAuthCard.meta}</span>
+                        {repoCityMode ? (
+                            <span className="menu-auth-status-layout">
+                                <span className={`menu-auth-status-icon ${githubAuthCard.tone}`.trim()} aria-hidden="true">
+                                    {githubAuthCard.icon === 'spinner'
+                                        ? <span className="repo-status-spinner" />
+                                        : renderGitHubAuthCardGlyph(githubAuthCard.icon)}
+                                </span>
+                                <span className="menu-auth-status-copy">
+                                    <span className="menu-action-label">{githubAuthCard.title}</span>
+                                    <span className="menu-action-meta">{githubAuthCard.meta}</span>
+                                </span>
+                            </span>
+                        ) : (
+                            <>
+                                <span className="menu-action-label">{githubAuthCard.title}</span>
+                                <span className="menu-action-meta">{githubAuthCard.meta}</span>
+                            </>
+                        )}
                     </div>
                 ) : (
                     <button

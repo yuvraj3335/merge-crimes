@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T16:57:02+05:30",
+  "last_updated": "2026-03-08T17:05:45+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -1005,20 +1005,33 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "Selected-repo auth card tone styling — align the logged-in GitHub summary card visuals with active, waiting, failed, and listed-only states",
+          "summary": [
+            "The compact logged-in GitHub summary card in the repo-city menu now derives a visible tone class and status icon from the same selected-repo eligibility and ingest-state checks that drive the surrounding trust copy.",
+            "Active, waiting, failed, and listed-only repo states now render with distinct background, border, icon, and text tint treatments so the compact auth summary scans consistently with the larger selected-repo feedback banner.",
+            "The slice stays isolated to MainMenu auth-card presentation and CSS, without changing GitHub auth flow, repo selection, ingest behavior, or backend contracts."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "not_run — explicitly skipped per cycle instruction because browser:smoke was disabled in this environment"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Selected-repo auth card tone styling — align the logged-in GitHub summary card visuals with active, waiting, failed, and listed-only states",
-    "why": "The logged-in GitHub summary card now uses the right trust copy for active, waiting, failed, and listed-only repo states, but it still renders with one generic visual treatment. The next polish slice is to carry those same states into tone cues on the compact auth card so the smaller summary is as scannable as the larger status banner.",
+    "title": "GitHub repo picker selected-row tone styling — carry active, waiting, failed, and listed-only trust cues into the authenticated repo list",
+    "why": "The compact auth card now reflects selected-repo state with distinct tone styling, but the authenticated picker still relies mostly on copy and small badges. The next trust-and-polish slice is to make the selected repo row inside the picker surface the same active, waiting, failed, and listed-only cues at the moment users choose a repo.",
     "candidate_files": [
-      "frontend/src/ui/MainMenu.tsx",
+      "frontend/src/ui/GitHubRepoPicker.tsx",
       "frontend/src/index.css"
     ],
     "acceptance_criteria": [
-      "The compact logged-in GitHub summary card applies distinct visual tone treatment for active, waiting, failed, and listed-only states without changing its behavior.",
-      "The auth summary remains copy-consistent with the selected-repo status banner, launch CTA, and secondary repo action.",
+      "The selected GitHub repo row in the picker applies distinct visual tone treatment for active, waiting, failed, and listed-only states without changing selection or ingest behavior.",
+      "Picker row styling remains copy-consistent with the picker status banner, selected-repo auth summary, and main status banner.",
       "Frontend lint and build pass."
     ]
   },
