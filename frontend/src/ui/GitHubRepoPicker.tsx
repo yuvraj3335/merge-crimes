@@ -26,6 +26,32 @@ interface PickerStatusCopy {
     showSpinner?: boolean;
 }
 
+interface RepoEligibilityCopy {
+    pill: string;
+    detail: string;
+    tone: 'eligible' | 'reference';
+}
+
+function isRepoTranslationEligible(repo: api.GitHubReadableRepo) {
+    return repo.visibility === 'public';
+}
+
+function buildRepoEligibilityCopy(repo: api.GitHubReadableRepo): RepoEligibilityCopy {
+    if (isRepoTranslationEligible(repo)) {
+        return {
+            pill: 'Translate now',
+            detail: 'Eligible for Repo City translation in this read-only flow.',
+            tone: 'eligible',
+        };
+    }
+
+    return {
+        pill: 'Listed only',
+        detail: 'Visible through this GitHub connection, but Repo City needs explicit access before translation.',
+        tone: 'reference',
+    };
+}
+
 export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     const githubAccessToken = useGameStore((s) => s.githubAccessToken);
     const repoCityMode = useGameStore((s) => s.repoCityMode);
@@ -122,10 +148,12 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     }
 
     const visibleRepos = displayStatus === 'ready' ? repos : [];
-    const repoCountCopy = `${visibleRepos.length} readable ${visibleRepos.length === 1 ? 'repository' : 'repositories'} loaded`;
+    const translationEligibleRepos = visibleRepos.filter((repo) => isRepoTranslationEligible(repo));
+    const listedOnlyCount = visibleRepos.length - translationEligibleRepos.length;
+    const repoCountCopy = `${visibleRepos.length} listed ${visibleRepos.length === 1 ? 'repository' : 'repositories'}`;
 
     const pickerHint = githubAccessToken
-        ? 'Load the repositories this GitHub login can read. Repo City only uses read-only metadata at this step.'
+        ? 'You only see repos this GitHub connection can already list. Private repos need explicit permission, and only eligible repos can be translated here.'
         : 'GitHub is not connected in this browser state yet.';
     let pickerStatusCopy: PickerStatusCopy;
     if (!githubAccessToken) {
@@ -170,8 +198,8 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
             title: 'Choose a repository',
             message: hasNextPage
                 ? `${repoCountCopy} from GitHub's first page of results.`
-                : `${repoCountCopy} and ready to connect.`,
-            detail: 'Selecting a public repository refreshes the current repo-city snapshot without leaving this shell.',
+                : `${repoCountCopy} loaded from GitHub.`,
+            detail: 'Listed means this GitHub login can read the repo. Translate now means Merge Crimes can turn that repo into a city in this flow.',
         };
     }
 
@@ -295,31 +323,53 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
             {displayStatus === 'ready' ? (
                 <>
+                    <div className="repo-selector-eligibility-note" role="note" aria-label="Repository eligibility notice">
+                        <div className="repo-selector-eligibility-title">What this list means</div>
+                        <div className="repo-selector-eligibility-copy">
+                            You only see repositories available through this GitHub connection. Private repositories
+                            require explicit permissions. Only eligible repositories can be translated into a Repo
+                            City here; others are listed for reference only.
+                        </div>
+                    </div>
                     <div className="repo-selector-list-meta">
                         <span>{repoCountCopy}</span>
+                        <span>
+                            {translationEligibleRepos.length} ready for translation
+                        </span>
+                        {listedOnlyCount > 0 && <span>{listedOnlyCount} listed for reference</span>}
                         <span>Read-only metadata only</span>
                         {hasNextPage && <span>Showing GitHub's first page of results</span>}
                     </div>
                     <div className="repo-selector-list">
-                        {visibleRepos.map((repo) => (
-                            <button
-                                key={repo.id}
-                                type="button"
-                                data-testid={`github-repo-${repo.id}`}
-                                className={`repo-selector-item ${selectedGitHubRepo?.id === repo.id ? 'selected' : ''} ${repoCityMode ? 'repo-city' : ''}`.trim()}
-                                onClick={() => handleRepoSelection(repo)}
-                            >
-                                <div className="repo-item-topline">
-                                    <div>
-                                        <div className="repo-item-name">{repo.fullName}</div>
-                                        <div className="repo-item-branch">
-                                            {repo.defaultBranch} · {repo.visibility}
+                        {visibleRepos.map((repo) => {
+                            const eligibilityCopy = buildRepoEligibilityCopy(repo);
+
+                            return (
+                                <button
+                                    key={repo.id}
+                                    type="button"
+                                    data-testid={`github-repo-${repo.id}`}
+                                    className={`repo-selector-item ${selectedGitHubRepo?.id === repo.id ? 'selected' : ''} ${repoCityMode ? 'repo-city' : ''}`.trim()}
+                                    onClick={() => handleRepoSelection(repo)}
+                                >
+                                    <div className="repo-item-topline">
+                                        <div>
+                                            <div className="repo-item-name">{repo.fullName}</div>
+                                            <div className="repo-item-branch">
+                                                {repo.defaultBranch} · {repo.visibility}
+                                            </div>
+                                        </div>
+                                        <div className="repo-item-badges">
+                                            <div className="repo-item-archetype">GitHub</div>
+                                            <div className={`repo-item-translation ${eligibilityCopy.tone}`.trim()}>
+                                                {eligibilityCopy.pill}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="repo-item-archetype">GitHub</div>
-                                </div>
-                            </button>
-                        ))}
+                                    <div className="repo-item-eligibility-copy">{eligibilityCopy.detail}</div>
+                                </button>
+                            );
+                        })}
                     </div>
                 </>
             ) : (

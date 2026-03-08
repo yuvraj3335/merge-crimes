@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T16:14:51+05:30",
+  "last_updated": "2026-03-08T16:20:38+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -927,21 +927,34 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "Private-repo picker eligibility copy — clarify what can be listed versus translated",
+          "summary": [
+            "The GitHub repo picker now explains in plain language that the list only includes repositories visible through the current GitHub connection, including private repos only when GitHub has already granted explicit visibility.",
+            "Ready-state picker copy and per-repo badges now distinguish repositories that can be translated into a Repo City in the current flow from repositories that are listed for reference only.",
+            "The slice stays frontend-only and does not change repo selection, OAuth scopes, metadata ingest behavior, or private-repo access rules."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "not_run — copy-only picker UX update with no selector or flow changes"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Private-repo picker eligibility copy — clarify what can be listed versus translated",
-    "why": "Phase 7 is still in progress, and the next trust gap is repo eligibility: the picker can show private repos from the authenticated GitHub session, but the UI does not yet clearly explain which repos are only listed versus which ones can currently be translated into a city.",
+    "title": "Selected private-repo status copy — keep post-picker menu state aligned with translation eligibility",
+    "why": "The picker now explains which repos are listed only, but the main menu still treats any selected GitHub repo as translation-ready. The next trust gap is keeping post-selection status and action copy consistent when a listed-only private repo is chosen.",
     "candidate_files": [
-      "frontend/src/ui/GitHubRepoPicker.tsx",
+      "frontend/src/ui/MainMenu.tsx",
       "frontend/src/index.css"
     ],
     "acceptance_criteria": [
-      "The picker clearly distinguishes repos that can be translated now from repos that are only listed because GitHub made them readable to the current session.",
-      "The new eligibility copy stays visible without changing selection, ingest, or OAuth behavior.",
-      "Frontend lint and build pass, and browser smoke is attempted unless the sandbox blocks Wrangler again."
+      "Selecting a listed-only private repo no longer makes the main menu or selected-repo card imply that translation is already available.",
+      "Menu copy stays consistent with the picker's public-vs-listed-only eligibility language without changing selection, ingest, or OAuth behavior.",
+      "Frontend lint and build pass."
     ]
   },
   "open_questions": [
