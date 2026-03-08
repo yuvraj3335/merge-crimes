@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { REPO_FIXTURES } from '../../../shared/seed/repoFixtures';
 import type { RepoModel } from '../../../shared/repoModel';
@@ -17,10 +17,17 @@ export function MainMenu() {
     const githubAuthStatus = useGameStore((s) => s.githubAuthStatus);
     const githubAuthMessage = useGameStore((s) => s.githubAuthMessage);
     const selectedGitHubRepo = useGameStore((s) => s.selectedGitHubRepo);
+    const setSelectedGitHubRepoSnapshot = useGameStore((s) => s.setSelectedGitHubRepoSnapshot);
     const showGitHubRepoPicker = useGameStore((s) => s.showGitHubRepoPicker);
     const setShowGitHubRepoPicker = useGameStore((s) => s.setShowGitHubRepoPicker);
 
     const [showRepoSelector, setShowRepoSelector] = useState(false);
+    const [isRefreshingRepo, setIsRefreshingRepo] = useState(false);
+    const refreshControllerRef = useRef<AbortController | null>(null);
+
+    useEffect(() => () => {
+        refreshControllerRef.current?.abort();
+    }, []);
 
     if (phase !== 'menu') return null;
 
@@ -34,6 +41,62 @@ export function MainMenu() {
             clearRepoCity();
         }
         setPhase('playing');
+    }
+
+    function handleRefreshRepo() {
+        if (
+            !connectedRepo
+            || connectedRepo.metadata?.provider !== 'github'
+            || isRefreshingRepo
+            || (connectedRepo.visibility === 'private' && !githubAccessToken)
+        ) {
+            return;
+        }
+
+        const controller = new AbortController();
+        const targetRepoId = connectedRepo.repoId;
+
+        refreshControllerRef.current?.abort();
+        refreshControllerRef.current = controller;
+        setIsRefreshingRepo(true);
+
+        void api.fetchGitHubRepoMetadata(
+            connectedRepo.owner,
+            connectedRepo.name,
+            controller.signal,
+            githubAccessToken ?? undefined,
+        )
+            .then((snapshot) => {
+                if (!snapshot || controller.signal.aborted) {
+                    return;
+                }
+
+                const currentConnectedRepo = useGameStore.getState().connectedRepo;
+                if (currentConnectedRepo?.repoId !== targetRepoId) {
+                    return;
+                }
+
+                setSelectedGitHubRepoSnapshot(snapshot);
+            })
+            .catch((error: unknown) => {
+                if (controller.signal.aborted) {
+                    return;
+                }
+
+                console.warn(
+                    '[MergeCrimes] GitHub repo refresh failed',
+                    error instanceof Error ? error.message : error,
+                );
+            })
+            .finally(() => {
+                if (refreshControllerRef.current === controller) {
+                    refreshControllerRef.current = null;
+                }
+
+                if (!controller.signal.aborted) {
+                    setIsRefreshingRepo(false);
+                }
+            });
     }
 
     const selectorHint = repoCityMode
@@ -66,6 +129,12 @@ export function MainMenu() {
               { label: 'Threats', value: generatedCity.bots.length }
           ]
         : [];
+    const canRefreshConnectedRepo = repoCityMode
+        && connectedRepo?.metadata?.provider === 'github'
+        && (connectedRepo.visibility === 'public' || Boolean(githubAccessToken));
+    const refreshStatusMessage = isRefreshingRepo
+        ? 'Refreshing current GitHub snapshot...'
+        : 'Re-ingest the connected GitHub snapshot without changing the current repo selection.';
 
     return (
         <div className={`main-menu ${repoCityMode ? 'repo-city' : ''}`.trim()}>
@@ -89,6 +158,22 @@ export function MainMenu() {
                                 <div className="repo-city-menu-repo-meta">
                                     {connectedRepo.defaultBranch} · {connectedRepo.visibility}
                                 </div>
+                                {canRefreshConnectedRepo && (
+                                    <div className="repo-city-menu-repo-actions">
+                                        <button
+                                            type="button"
+                                            className="repo-city-refresh-btn"
+                                            data-testid="refresh-repo"
+                                            onClick={handleRefreshRepo}
+                                            disabled={isRefreshingRepo}
+                                        >
+                                            {isRefreshingRepo ? 'Refreshing...' : 'Refresh Repo'}
+                                        </button>
+                                        <div className="repo-city-refresh-status" aria-live="polite">
+                                            {refreshStatusMessage}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

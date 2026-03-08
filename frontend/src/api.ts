@@ -428,13 +428,23 @@ export async function fetchGitHubRepoMetadata(
     owner: string,
     name: string,
     signal?: AbortSignal,
+    accessToken?: string,
 ): Promise<GitHubRepoMetadataSnapshot | null> {
     const params = new URLSearchParams({
         owner,
         name,
     });
 
-    return apiFetch<GitHubRepoMetadataSnapshot>(`/api/github/repo-metadata?${params.toString()}`, { signal });
+    const headers = accessToken
+        ? {
+            Authorization: `Bearer ${accessToken}`,
+        }
+        : undefined;
+
+    return apiFetch<GitHubRepoMetadataSnapshot>(`/api/github/repo-metadata?${params.toString()}`, {
+        signal,
+        headers,
+    });
 }
 
 // ─── Health Check ───

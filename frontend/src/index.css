@@ -2549,6 +2549,46 @@ body,
   text-transform: capitalize;
 }
 
+.repo-city-menu-repo-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.repo-city-refresh-btn {
+  justify-self: flex-start;
+  padding: 9px 12px;
+  border: 1px solid rgba(138, 221, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(15, 24, 48, 0.72);
+  color: rgba(242, 246, 255, 0.94);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.repo-city-refresh-btn:hover {
+  border-color: rgba(138, 221, 255, 0.4);
+  background: rgba(20, 34, 68, 0.86);
+  transform: translateY(-1px);
+}
+
+.repo-city-refresh-btn:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+}
+
+.repo-city-refresh-status {
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(214, 224, 255, 0.72);
+}
+
 .menu-title {
   font-family: var(--font-display);
   font-size: 56px;

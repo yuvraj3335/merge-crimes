@@ -104,7 +104,12 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
         const controller = new AbortController();
         ingestControllerRef.current = controller;
 
-        void api.fetchGitHubRepoMetadata(repo.ownerLogin, repo.name, controller.signal)
+        void api.fetchGitHubRepoMetadata(
+            repo.ownerLogin,
+            repo.name,
+            controller.signal,
+            githubAccessToken ?? undefined,
+        )
             .then((snapshot) => {
                 if (!snapshot || controller.signal.aborted) {
                     return;
