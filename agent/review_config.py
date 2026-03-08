@@ -51,7 +51,7 @@ class ReviewConfig:
 
     # -- Stop thresholds --
     stop_on_findings_below: int = 3
-    stop_on_score_below: float = 10.0
+    stop_on_score_below: float = 0.5
     max_consecutive_no_findings: int = 3
 
     # -- Scoring weights --
@@ -214,7 +214,7 @@ def load_review_config() -> ReviewConfig:
         os.environ.get("REPO_CITY_REVIEW_STOP_FINDINGS_BELOW", "3"), default=3
     )
     stop_on_score_below = _parse_float(
-        os.environ.get("REPO_CITY_REVIEW_STOP_SCORE_BELOW", "10.0"), default=10.0
+        os.environ.get("REPO_CITY_REVIEW_STOP_SCORE_BELOW", "0.5"), default=0.5
     )
     max_consecutive_no_findings = _parse_int(
         os.environ.get("REPO_CITY_REVIEW_MAX_NO_FINDINGS", "3"), default=3
