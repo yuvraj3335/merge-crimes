@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T15:18:55+05:30",
+  "last_updated": "2026-03-08T15:40:28+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -836,21 +836,34 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "GitHub loading and error state polish — make repo connection and refresh status clearer in the repo-city shell",
+          "summary": [
+            "The GitHub repo picker now renders explicit loading, error, empty, and ready states with clearer trust-focused copy, visible loading indicators, and retry or refresh actions when the repo list cannot be shown immediately.",
+            "The picker surface now distinguishes an empty GitHub result from a failed fetch so players can tell whether they need to retry the request or inspect GitHub permissions.",
+            "The connected-repo refresh button now shows a disabled in-progress state with an animated indicator, and refresh copy makes it explicit that the app is only fetching a new read-only metadata snapshot."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "GitHub loading and error state polish — make repo connection and refresh status clearer in the repo-city shell",
-    "why": "With the privacy boundary copy now visible, the next bounded Phase 7 slice is to make GitHub login, repo-list loading, empty states, and refresh outcomes clearer so real-repo flows feel trustworthy instead of ambiguous when they succeed, wait, or fail.",
+    "title": "Connected snapshot freshness copy — show when GitHub data was last refreshed in the repo-city shell",
+    "why": "With loading, empty, and refresh states now explicit, the next bounded trust slice is to show how fresh the active GitHub-backed snapshot is so players can tell whether they are viewing a seeded fixture, an older cached repo snapshot, or the latest manual refresh.",
     "candidate_files": [
       "frontend/src/ui/MainMenu.tsx",
-      "frontend/src/ui/GitHubRepoPicker.tsx",
-      "frontend/src/ui/ConnectionStatusBanner.tsx",
+      "frontend/src/ui/HUD.tsx",
       "frontend/src/index.css"
     ],
     "acceptance_criteria": [
-      "GitHub-connected UI surfaces show clear loading, empty, success, and retryable error states for login-adjacent, repo-list, and manual refresh flows",
+      "GitHub-backed repo-city surfaces show a clear last-refreshed or snapshot-generated timestamp without implying live sync",
+      "Seeded fixture state and GitHub-backed state are visually distinguishable so players understand the current trust boundary and data source",
       "The copy stays privacy-safe and avoids implying write access, full source upload, or deep code understanding",
       "cd frontend && npm run lint, cd frontend && npm run build, and cd frontend && npm run browser:smoke pass"
     ]

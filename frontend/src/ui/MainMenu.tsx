@@ -75,7 +75,7 @@ export function MainMenu() {
         setIsRefreshingRepo(true);
         setRepoRefreshStatus({
             tone: 'loading',
-            message: 'Checking the latest GitHub metadata for this repo.',
+            message: 'Refreshing read-only GitHub metadata. Your current city stays active until the new snapshot is ready.',
             repoId: targetRepoId,
         });
 
@@ -98,7 +98,7 @@ export function MainMenu() {
                 setSelectedGitHubRepoSnapshot(response.snapshot);
                 setRepoRefreshStatus({
                     tone: 'success',
-                    message: 'Repo refreshed!',
+                    message: 'A newer read-only GitHub snapshot is now active in this session.',
                     repoId: targetRepoId,
                 });
             })
@@ -109,7 +109,9 @@ export function MainMenu() {
 
                 setRepoRefreshStatus({
                     tone: 'error',
-                    message: error instanceof Error ? error.message : 'Repo refresh failed.',
+                    message: error instanceof Error
+                        ? `${error.message} The current repo-city snapshot is unchanged.`
+                        : 'Repo refresh failed. The current repo-city snapshot is unchanged.',
                     repoId: targetRepoId,
                 });
 
@@ -166,13 +168,13 @@ export function MainMenu() {
     const activeRefreshMessage = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.message : null;
     const refreshStatusCopy = activeRefreshTone === 'loading'
         ? {
-              pill: 'Refreshing',
-              title: 'Refreshing connected repo',
+              pill: 'Refresh in progress',
+              title: 'Refreshing GitHub metadata',
               message: activeRefreshMessage ?? 'Pulling a fresh read-only snapshot without leaving this menu.',
           }
         : activeRefreshTone === 'success'
             ? {
-                  pill: 'Up to date',
+                  pill: 'Snapshot updated',
                   title: 'Connected repo refreshed',
                   message: activeRefreshMessage ?? 'A fresh GitHub snapshot is ready in the current session.',
               }
@@ -216,12 +218,16 @@ export function MainMenu() {
                                     <div className="repo-city-menu-repo-actions">
                                         <button
                                             type="button"
-                                            className="repo-city-refresh-btn"
+                                            className={`repo-city-refresh-btn ${isRefreshingRepo ? 'loading' : ''}`.trim()}
                                             data-testid="refresh-repo"
                                             onClick={handleRefreshRepo}
                                             disabled={isRefreshingRepo}
                                         >
-                                            {isRefreshingRepo ? 'Refreshing...' : 'Refresh Repo'}
+                                            <span
+                                                className={`repo-refresh-indicator ${isRefreshingRepo ? 'spinning' : ''}`.trim()}
+                                                aria-hidden="true"
+                                            />
+                                            <span>{isRefreshingRepo ? 'Refreshing Repo' : 'Refresh Repo'}</span>
                                         </button>
                                         <div
                                             className={`repo-connection-feedback ${activeRefreshTone === 'idle' ? '' : activeRefreshTone}`.trim()}

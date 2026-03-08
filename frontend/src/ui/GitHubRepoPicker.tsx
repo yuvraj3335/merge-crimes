@@ -9,10 +9,21 @@ interface GitHubRepoPickerProps {
 }
 
 type PickerStatus = 'idle' | 'loading' | 'ready' | 'error';
+type PickerTone = 'idle' | 'loading' | 'success' | 'error' | 'empty';
 
 interface TokenScopedError {
     token: string;
     message: string;
+}
+
+interface PickerStatusCopy {
+    tone: PickerTone;
+    pill: string;
+    title: string;
+    message: string;
+    detail: string;
+    actionLabel?: string;
+    showSpinner?: boolean;
 }
 
 export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
@@ -96,62 +107,80 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     }
 
     const activeErrorMessage = errorState?.token === githubAccessToken ? errorState.message : null;
-    const displayStatus: PickerStatus = !githubAccessToken
-        ? 'idle'
-        : loadedToken !== githubAccessToken
-            ? 'loading'
-            : activeErrorMessage
-                ? 'error'
-                : 'ready';
+
+    let displayStatus: PickerStatus | 'empty' = 'idle';
+    if (githubAccessToken) {
+        if (loadedToken !== githubAccessToken) {
+            displayStatus = 'loading';
+        } else if (activeErrorMessage) {
+            displayStatus = 'error';
+        } else if (repos.length === 0) {
+            displayStatus = 'empty';
+        } else {
+            displayStatus = 'ready';
+        }
+    }
+
     const visibleRepos = displayStatus === 'ready' ? repos : [];
+    const repoCountCopy = `${visibleRepos.length} readable ${visibleRepos.length === 1 ? 'repository' : 'repositories'} loaded`;
 
     const pickerHint = githubAccessToken
-        ? 'Load the readable repos this GitHub login can access. Picking one keeps you in the repo-city shell.'
+        ? 'Load the repositories this GitHub login can read. Repo City only uses read-only metadata at this step.'
         : 'GitHub is not connected in this browser state yet.';
-    const pickerStatusCopy = !githubAccessToken
-        ? {
-              tone: 'idle',
-              pill: 'Signed out',
-              title: 'GitHub not connected',
-              message: 'Log in with GitHub to load readable repos here.',
-          }
-        : displayStatus === 'loading'
-            ? {
-                  tone: 'loading',
-                  pill: 'Loading',
-                  title: 'Loading GitHub repos',
-                  message: 'Fetching the readable repo list for this login. No page reload is needed.',
-              }
-            : displayStatus === 'error'
-                ? {
-                      tone: 'error',
-                      pill: 'Load failed',
-                      title: 'Could not load GitHub repos',
-                      message: activeErrorMessage
-                          ? `${activeErrorMessage} Your current repo selection stays unchanged.`
-                          : 'GitHub did not return the repo list. Your current repo selection stays unchanged.',
-                  }
-                : visibleRepos.length === 0
-                    ? {
-                          tone: 'idle',
-                          pill: 'No repos',
-                          title: 'No readable repos returned',
-                          message: 'This GitHub login is connected, but GitHub did not return any readable repos yet.',
-                      }
-                    : {
-                          tone: 'success',
-                          pill: 'Repos ready',
-                          title: 'Choose a repo to connect',
-                          message: hasNextPage
-                              ? `${visibleRepos.length} readable repos loaded from the first GitHub page.`
-                              : `${visibleRepos.length} readable repos loaded and ready to pick.`,
-                      };
+    let pickerStatusCopy: PickerStatusCopy;
+    if (!githubAccessToken) {
+        pickerStatusCopy = {
+            tone: 'idle',
+            pill: 'Signed out',
+            title: 'GitHub not connected',
+            message: 'Log in with GitHub to load repositories here.',
+            detail: 'This step only reads repo metadata that the current GitHub login is already allowed to access.',
+        };
+    } else if (displayStatus === 'loading') {
+        pickerStatusCopy = {
+            tone: 'loading',
+            pill: 'Loading repos',
+            title: 'Loading repositories...',
+            message: 'Checking GitHub for the readable repositories tied to this login.',
+            detail: 'Your current repo-city selection stays unchanged while this read-only request is in progress.',
+            showSpinner: true,
+        };
+    } else if (displayStatus === 'error') {
+        pickerStatusCopy = {
+            tone: 'error',
+            pill: 'Load failed',
+            title: 'Repository list unavailable',
+            message: activeErrorMessage ?? 'GitHub did not return the repository list.',
+            detail: 'Nothing changed in your current repo-city session. Retrying only asks GitHub for the readable repo list again.',
+            actionLabel: 'Retry load',
+        };
+    } else if (displayStatus === 'empty') {
+        pickerStatusCopy = {
+            tone: 'empty',
+            pill: 'No repos',
+            title: 'No repositories found',
+            message: 'GitHub returned no readable repositories for this login.',
+            detail: 'Check your GitHub permissions or try refreshing the list. Repo City only shows repos this token can read.',
+            actionLabel: 'Refresh list',
+        };
+    } else {
+        pickerStatusCopy = {
+            tone: 'success',
+            pill: 'Repos ready',
+            title: 'Choose a repository',
+            message: hasNextPage
+                ? `${repoCountCopy} from GitHub's first page of results.`
+                : `${repoCountCopy} and ready to connect.`,
+            detail: 'Selecting a public repository refreshes the current repo-city snapshot without leaving this shell.',
+        };
+    }
 
-    function handleRetryRepoLoad() {
+    function handleReloadRepoList() {
         if (!githubAccessToken || displayStatus === 'loading') {
             return;
         }
 
+        loadControllerRef.current?.abort();
         setErrorState(null);
         setLoadedToken(null);
     }
@@ -234,45 +263,78 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                 aria-live="polite"
                 aria-busy={displayStatus === 'loading'}
             >
-                <div className="repo-connection-feedback-header">
-                    <span className={`repo-connection-feedback-pill ${pickerStatusCopy.tone}`.trim()}>
-                        {pickerStatusCopy.pill}
-                    </span>
-                    <span className="repo-connection-feedback-title">{pickerStatusCopy.title}</span>
+                <div className="repo-connection-feedback-layout">
+                    <div className={`repo-connection-feedback-icon ${pickerStatusCopy.tone}`.trim()} aria-hidden="true">
+                        {pickerStatusCopy.showSpinner ? (
+                            <span className="repo-status-spinner" />
+                        ) : (
+                            <span className="repo-status-dot" />
+                        )}
+                    </div>
+                    <div className="repo-connection-feedback-body">
+                        <div className="repo-connection-feedback-header">
+                            <span className={`repo-connection-feedback-pill ${pickerStatusCopy.tone}`.trim()}>
+                                {pickerStatusCopy.pill}
+                            </span>
+                            <span className="repo-connection-feedback-title">{pickerStatusCopy.title}</span>
+                        </div>
+                        <div className="repo-connection-feedback-copy">{pickerStatusCopy.message}</div>
+                        <div className="repo-connection-feedback-detail">{pickerStatusCopy.detail}</div>
+                    </div>
                 </div>
-                <div className="repo-connection-feedback-copy">{pickerStatusCopy.message}</div>
-                {displayStatus === 'error' && (
+                {pickerStatusCopy.actionLabel && (
                     <button
                         type="button"
                         className="repo-connection-feedback-action"
-                        onClick={handleRetryRepoLoad}
+                        onClick={handleReloadRepoList}
                     >
-                        Try Again
+                        {pickerStatusCopy.actionLabel}
                     </button>
                 )}
             </div>
 
-            <div className="repo-selector-list">
-                {visibleRepos.map((repo) => (
-                    <button
-                        key={repo.id}
-                        type="button"
-                        data-testid={`github-repo-${repo.id}`}
-                        className={`repo-selector-item ${selectedGitHubRepo?.id === repo.id ? 'selected' : ''} ${repoCityMode ? 'repo-city' : ''}`.trim()}
-                        onClick={() => handleRepoSelection(repo)}
-                    >
-                        <div className="repo-item-topline">
-                            <div>
-                                <div className="repo-item-name">{repo.fullName}</div>
-                                <div className="repo-item-branch">
-                                    {repo.defaultBranch} · {repo.visibility}
+            {displayStatus === 'ready' ? (
+                <>
+                    <div className="repo-selector-list-meta">
+                        <span>{repoCountCopy}</span>
+                        <span>Read-only metadata only</span>
+                        {hasNextPage && <span>Showing GitHub's first page of results</span>}
+                    </div>
+                    <div className="repo-selector-list">
+                        {visibleRepos.map((repo) => (
+                            <button
+                                key={repo.id}
+                                type="button"
+                                data-testid={`github-repo-${repo.id}`}
+                                className={`repo-selector-item ${selectedGitHubRepo?.id === repo.id ? 'selected' : ''} ${repoCityMode ? 'repo-city' : ''}`.trim()}
+                                onClick={() => handleRepoSelection(repo)}
+                            >
+                                <div className="repo-item-topline">
+                                    <div>
+                                        <div className="repo-item-name">{repo.fullName}</div>
+                                        <div className="repo-item-branch">
+                                            {repo.defaultBranch} · {repo.visibility}
+                                        </div>
+                                    </div>
+                                    <div className="repo-item-archetype">GitHub</div>
                                 </div>
-                            </div>
-                            <div className="repo-item-archetype">GitHub</div>
-                        </div>
-                    </button>
-                ))}
-            </div>
+                            </button>
+                        ))}
+                    </div>
+                </>
+            ) : (
+                <div className={`repo-selector-state ${displayStatus}`.trim()}>
+                    <div className={`repo-selector-state-icon ${displayStatus}`.trim()} aria-hidden="true">
+                        {pickerStatusCopy.showSpinner ? (
+                            <span className="repo-status-spinner large" />
+                        ) : (
+                            <span className="repo-status-dot large" />
+                        )}
+                    </div>
+                    <div className="repo-selector-state-title">{pickerStatusCopy.title}</div>
+                    <div className="repo-selector-state-copy">{pickerStatusCopy.detail}</div>
+                </div>
+            )}
 
             <button
                 type="button"
