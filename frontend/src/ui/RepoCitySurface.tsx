@@ -84,6 +84,10 @@ function getMissionCountLabel(count: number): string {
     return `${count} missions ready`;
 }
 
+function getMissionChipWidth(count: number): number {
+    return Math.max(8.8, count.toLocaleString().length * 3.6 + 6.4);
+}
+
 export function RepoCitySurface() {
     const phase = useGameStore((s) => s.phase);
     const repoCityMode = useGameStore((s) => s.repoCityMode);
@@ -388,8 +392,16 @@ export function RepoCitySurface() {
                             const isHovered = hoveredDistrictId === district.id;
                             const isQueued = repoCityTransit?.districtId === district.id;
                             const missionCount = availableMissionCounts.get(district.id) ?? 0;
+                            const missionChipLabel = missionCount > 0 ? missionCount.toLocaleString() : null;
+                            const missionChipHeight = 6.4;
                             const x = mapX(district.position.x - district.footprint.width / 2);
                             const y = mapY(district.position.y + district.footprint.height / 2);
+                            const missionChipWidth = missionChipLabel ? getMissionChipWidth(missionCount) : 0;
+                            const missionChipX = Math.max(
+                                x + 1.8,
+                                x + district.footprint.width - missionChipWidth - 1.8,
+                            );
+                            const missionChipY = y + 1.8;
 
                             return (
                                 <g key={district.id}>
@@ -471,18 +483,21 @@ export function RepoCitySurface() {
 
                                     {missionCount > 0 && !activeMission && (
                                         <>
-                                            <circle
-                                                cx={x + district.footprint.width - 4}
-                                                cy={y + 4}
-                                                r="2.6"
-                                                className="repo-city-surface-mission-badge"
+                                            <title>{getMissionCountLabel(missionCount)}</title>
+                                            <rect
+                                                x={missionChipX}
+                                                y={missionChipY}
+                                                width={missionChipWidth}
+                                                height={missionChipHeight}
+                                                rx={missionChipHeight / 2}
+                                                className="repo-city-surface-mission-chip"
                                             />
                                             <text
-                                                x={x + district.footprint.width - 4}
-                                                y={y + 4}
+                                                x={missionChipX + missionChipWidth / 2}
+                                                y={missionChipY + missionChipHeight / 2}
                                                 className="repo-city-surface-mission-count"
                                             >
-                                                {missionCount}
+                                                {missionChipLabel}
                                             </text>
                                         </>
                                     )}
