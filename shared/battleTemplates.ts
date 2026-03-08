@@ -71,6 +71,12 @@ export interface BattleTemplate {
   tags: string[];
 }
 
+export interface BossMissionRouteCopy {
+  title: string;
+  description: string;
+  objectives: [string, string, string];
+}
+
 interface BattleThreatTemplate {
   id: string;
   encounterName: string;
@@ -343,6 +349,14 @@ function dedupeTags(...groups: ReadonlyArray<readonly string[]>): string[] {
   return [...new Set(groups.flat())];
 }
 
+function buildBossRouteEscalationLine(escalationCount?: number): string {
+  if (typeof escalationCount === 'number' && escalationCount > 1) {
+    return `This boss route condenses ${escalationCount} high-pressure reports into one escalation point.`;
+  }
+
+  return 'This boss route marks the district\'s highest-pressure escalation point.';
+}
+
 export function getBattleTemplate(threatType: string, botArchetype: string): BattleTemplate {
   const normalizedThreatType = normalizeThreatType(threatType);
   const normalizedBotArchetype = normalizeBotArchetype(botArchetype);
@@ -379,5 +393,33 @@ export function getBattleTemplate(threatType: string, botArchetype: string): Bat
       threatTemplate.tags,
       botOverlay.tags,
     ),
+  };
+}
+
+export function buildBossMissionRouteCopy(
+  districtLabel: string,
+  threatType: string,
+  botArchetype: string,
+  escalationCount?: number,
+): BossMissionRouteCopy {
+  const battleTemplate = getBattleTemplate(threatType, botArchetype);
+  const firstPhase = battleTemplate.phases[0];
+  const firstMechanic = battleTemplate.mechanicHints[0];
+
+  return {
+    title: `BOSS: ${battleTemplate.encounterName} at ${districtLabel}`,
+    description: [
+      `${battleTemplate.encounterName} has locked onto ${districtLabel} as the district's active boss route.`,
+      battleTemplate.summary,
+      battleTemplate.copy.intro,
+      buildBossRouteEscalationLine(escalationCount),
+    ].join(' '),
+    objectives: [
+      `Approach ${battleTemplate.encounterName} in ${districtLabel}`,
+      firstPhase?.objective ?? battleTemplate.objective,
+      firstMechanic
+        ? `Use ${firstMechanic.label.toLowerCase()} to keep the route readable`
+        : 'Stabilize the route and lock in the clean lane',
+    ],
   };
 }

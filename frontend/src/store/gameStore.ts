@@ -499,8 +499,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     acceptMission: (missionId) => {
         const mission = get().missions.find((m) => m.id === missionId);
         if (mission) {
-            // Boss missions start in 'mission' phase so the player must walk to the conflict
-            // zone waypoint before the boss fight begins. The conflict is set in reachWaypoint
+            // Boss missions start in 'mission' phase so the player must walk to the boss-route
+            // approach waypoint before the fight begins. The conflict is set in reachWaypoint
             // once all approach waypoints are completed.
             set({
                 activeMission: { ...mission, status: 'active' },
@@ -837,8 +837,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             });
 
             const restoredActiveMission = missions.find((mission) => mission.status === 'active') ?? null;
-            // Boss missions always restore to 'mission' phase so the player must walk to the
-            // conflict zone again. activeConflict is only set once the approach waypoint is reached.
+            // Boss missions always restore to 'mission' phase so the player must walk the
+            // approach route again. activeConflict is only set once the approach waypoint is reached.
             //
             // ADR-017 (Hybrid Policy): restore persisted waypoint index + completedWaypoints so
             // the player doesn't repeat already-cleared objectives after a same-tab reload.

@@ -1,4 +1,41 @@
-import type { Mission } from '../types';
+import { buildBossMissionRouteCopy } from '../battleTemplates';
+import type { BotArchetype } from '../repoModel';
+import type { Mission, RepoSignalType } from '../types';
+
+function buildSeedBossMission(
+    id: string,
+    districtId: string,
+    districtLabel: string,
+    difficulty: 4 | 5,
+    timeLimit: number,
+    reward: number,
+    factionReward: number,
+    threatType: RepoSignalType,
+    botArchetype: BotArchetype,
+    waypoint: Mission['waypoints'][number],
+): Mission {
+    const routeCopy = buildBossMissionRouteCopy(districtLabel, threatType, botArchetype);
+
+    return {
+        id,
+        title: routeCopy.title,
+        description: routeCopy.description,
+        type: 'boss',
+        districtId,
+        difficulty,
+        timeLimit,
+        reward,
+        factionReward,
+        status: 'available',
+        objectives: routeCopy.objectives,
+        waypoints: [
+            {
+                ...waypoint,
+                label: routeCopy.objectives[0],
+            },
+        ],
+    };
+}
 
 export const SEED_MISSIONS: Mission[] = [
     // === DELIVERY MISSIONS ===
@@ -205,36 +242,28 @@ export const SEED_MISSIONS: Mission[] = [
     },
 
     // === BOSS MISSIONS ===
-    {
-        id: 'm-boss-merge-react',
-        title: 'BOSS: The Great React Merge',
-        description: 'A massive merge conflict has erupted in React District. Face the conflict head-on and resolve it before the codebase implodes.',
-        type: 'boss',
-        districtId: 'react-district',
-        difficulty: 4,
-        timeLimit: 60,
-        reward: 500,
-        factionReward: 30,
-        status: 'available',
-        objectives: ['Enter the conflict zone', 'Resolve all conflict hunks', 'Merge successfully'],
-        waypoints: [
-            { id: 'wp-boss-react', label: 'Conflict Zone', position: [-30, 0.5, -30], radius: 5, order: 0 },
-        ],
-    },
-    {
-        id: 'm-boss-merge-ts',
-        title: 'BOSS: TypeScript Type War',
-        description: 'Two massive PRs collided at TypeScript Terminal. The types are fighting each other. Pick the right resolutions or the whole station crashes.',
-        type: 'boss',
-        districtId: 'typescript-terminal',
-        difficulty: 5,
-        timeLimit: 45,
-        reward: 600,
-        factionReward: 35,
-        status: 'available',
-        objectives: ['Enter Terminal conflict zone', 'Resolve type conflicts', 'Prevent station crash'],
-        waypoints: [
-            { id: 'wp-boss-ts', label: 'Terminal Conflict Zone', position: [0, 0.5, -60], radius: 5, order: 0 },
-        ],
-    },
+    buildSeedBossMission(
+        'm-boss-merge-react',
+        'react-district',
+        'React District',
+        4,
+        60,
+        500,
+        30,
+        'merge_conflict',
+        'merge',
+        { id: 'wp-boss-react', label: '', position: [-30, 0.5, -30], radius: 5, order: 0 },
+    ),
+    buildSeedBossMission(
+        'm-boss-merge-ts',
+        'typescript-terminal',
+        'TypeScript Terminal',
+        5,
+        45,
+        600,
+        35,
+        'merge_conflict',
+        'type',
+        { id: 'wp-boss-ts', label: '', position: [0, 0.5, -60], radius: 5, order: 0 },
+    ),
 ];

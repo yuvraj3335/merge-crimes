@@ -20,7 +20,7 @@ import type {
   BotArchetype,
   DependencyReason,
 } from './repoModel';
-import { getBattleTemplate } from './battleTemplates';
+import { buildBossMissionRouteCopy, getBattleTemplate } from './battleTemplates';
 import { calculateRepoModuleBaseHeat } from './repoSignalMapping';
 
 // ─── Module Kind -> District Category ───
@@ -255,10 +255,10 @@ const SIGNAL_MISSION_TEMPLATES: Partial<Record<RepoSignalType, MissionTemplate>>
     baseDifficulty: 2,
   },
   merge_conflict: {
-    titlePrefix: 'BOSS: Resolve',
+    titlePrefix: 'BOSS: Stabilize',
     type: 'boss',
-    descriptionTemplate: 'A massive merge conflict has erupted. Enter the conflict core and resolve it before the codebase fractures.',
-    objectiveTemplates: ['Enter the conflict zone', 'Analyze conflicting changes', 'Choose the correct resolution'],
+    descriptionTemplate: 'A boss route has condensed into crossing lanes. Approach the escalation point and reopen one stable corridor before the district locks down.',
+    objectiveTemplates: ['Approach the locked route', 'Read the crossing lanes', 'Reopen the stable corridor'],
     baseDifficulty: 4,
   },
   open_pr: {
@@ -398,10 +398,10 @@ const SIGNAL_MISSION_COPY: Record<RepoSignalType, {
     objectiveVerb: 'Inspect',
   },
   merge_conflict: {
-    singular: 'merge conflict',
-    plural: 'merge conflicts',
-    missionVerb: 'Resolve',
-    objectiveVerb: 'Enter',
+    singular: 'route deadlock alert',
+    plural: 'route deadlock alerts',
+    missionVerb: 'Stabilize',
+    objectiveVerb: 'Approach',
   },
   security_alert: {
     singular: 'security alert',
@@ -595,10 +595,13 @@ function buildSignalDrivenMissionTitle(
   districtLabel: string,
   isBossEncounter: boolean,
 ): string {
-  const copy = SIGNAL_MISSION_COPY[group.type];
-  const prefix = isBossEncounter ? 'BOSS: ' : '';
+  if (isBossEncounter) {
+    const botProfile = getBotProfile(group.type);
+    return buildBossMissionRouteCopy(districtLabel, group.type, botProfile.archetype, group.signals.length).title;
+  }
 
-  return `${prefix}${copy.missionVerb} ${summarizeSignalGroup(group)} at ${districtLabel}`;
+  const copy = SIGNAL_MISSION_COPY[group.type];
+  return `${copy.missionVerb} ${summarizeSignalGroup(group)} at ${districtLabel}`;
 }
 
 function buildSignalDrivenMissionDescription(
@@ -651,25 +654,7 @@ function buildBossSignalDrivenMissionDescription(
   districtLabel: string,
   botArchetype: BotArchetype,
 ): string {
-  const battleTemplate = getBattleTemplate(group.type, botArchetype);
-  const [primarySignal] = group.signals;
-  const detail = primarySignal.detail?.trim();
-  const descriptionParts = [
-    `${districtLabel} is under boss-level pressure from ${summarizeSignalGroup(group)}.`,
-    `${battleTemplate.encounterName} is the active encounter pattern for this threat.`,
-    battleTemplate.summary,
-    battleTemplate.copy.intro,
-  ];
-
-  if (detail && detail !== battleTemplate.summary) {
-    descriptionParts.push(`Signal report: ${detail}`);
-  }
-
-  if (group.signals.length > 1) {
-    descriptionParts.push(`This boss route condenses ${group.signals.length} mapped threat reports into one escalation point.`);
-  }
-
-  return descriptionParts.join(' ');
+  return buildBossMissionRouteCopy(districtLabel, group.type, botArchetype, group.signals.length).description;
 }
 
 function buildBossSignalDrivenMissionObjectives(
@@ -677,17 +662,7 @@ function buildBossSignalDrivenMissionObjectives(
   districtLabel: string,
   botArchetype: BotArchetype,
 ): string[] {
-  const battleTemplate = getBattleTemplate(group.type, botArchetype);
-  const firstPhase = battleTemplate.phases[0];
-  const firstMechanic = battleTemplate.mechanicHints[0];
-
-  return [
-    `Enter ${battleTemplate.encounterName} in ${districtLabel}.`,
-    firstPhase?.objective ?? battleTemplate.objective,
-    firstMechanic
-      ? `Use ${firstMechanic.label.toLowerCase()} to keep the encounter readable.`
-      : 'Stabilize the encounter and lock in the clean route.',
-  ];
+  return buildBossMissionRouteCopy(districtLabel, group.type, botArchetype, group.signals.length).objectives;
 }
 
 function generateSignalDrivenMissions(
