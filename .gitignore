@@ -18,3 +18,10 @@ worker/.dev.vars
 worker/.wrangler/
 agent/logs/
 agent/review_logs/
+
+# Review artifacts — ephemeral, regenerated each cycle
+docs/review_artifacts/inventory.json
+docs/review_artifacts/architecture_map.json
+docs/review_artifacts/summary.json
+docs/review_artifacts/final_report.txt
+docs/review_artifacts/*.dryrun

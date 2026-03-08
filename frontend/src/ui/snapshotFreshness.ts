@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 export type SnapshotSource = 'github' | 'seeded';
 
-export interface SnapshotFreshnessCopy {
+interface SnapshotFreshnessCopy {
     badge: string;
     detail: string | null;
     primary: string;

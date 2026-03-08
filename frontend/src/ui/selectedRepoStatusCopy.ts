@@ -8,7 +8,7 @@ interface SelectedGitHubRepoIngestStateLike {
     message: string | null;
 }
 
-export interface SelectedRepoStatusCopy {
+interface SelectedRepoStatusCopy {
     tone: 'loading' | 'success' | 'error' | 'empty';
     pill: string;
     title: string;

@@ -21,7 +21,7 @@ export interface ApiRuntimeStatus {
     writeSessionMessage: string | null;
 }
 
-export interface GitHubTokenExchangeResponse {
+interface GitHubTokenExchangeResponse {
     accessToken: string;
     tokenType: string;
     scope: string;
@@ -36,12 +36,12 @@ export interface GitHubReadableRepo {
     visibility: 'public' | 'private' | 'internal' | 'unknown';
 }
 
-export interface GitHubReadableRepoListResponse {
+interface GitHubReadableRepoListResponse {
     repos: GitHubReadableRepo[];
     hasNextPage: boolean;
 }
 
-export interface RepoRefreshResponse {
+interface RepoRefreshResponse {
     message: string;
     snapshot: GitHubRepoMetadataSnapshot;
 }
@@ -525,23 +525,12 @@ export async function fetchGitHubRepoRefreshStatus(
     return payload as RepoRefreshCheckResult;
 }
 
-// ─── Health Check ───
-
-export async function checkApiHealth(): Promise<boolean> {
-    const result = await apiFetch<{ status: string }>('/api/health');
-    return result?.status === 'ok';
-}
-
 export async function primePublicWriteSession(): Promise<boolean> {
     const session = await ensurePublicWriteSession();
     return session !== null;
 }
 
 // ─── District Room (Durable Object) ───
-
-export async function fetchDistrictRoom(districtId: string): Promise<RoomState | null> {
-    return apiFetch<RoomState>(`/api/districts/${encodeURIComponent(districtId)}/room`);
-}
 
 export async function districtHeartbeat(districtId: string): Promise<RoomState | null> {
     return writeApiFetch<RoomState>(`/api/districts/${encodeURIComponent(districtId)}/room/heartbeat`, {

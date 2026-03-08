@@ -9,13 +9,13 @@ export interface RepoRefreshStatusState {
     repoId: string | null;
 }
 
-export interface RepoRefreshStatusCopy {
+interface RepoRefreshStatusCopy {
     pill: string;
     title: string;
     message: string;
 }
 
-export interface RepoRefreshNotice {
+interface RepoRefreshNotice {
     title: string;
     detail: string;
 }

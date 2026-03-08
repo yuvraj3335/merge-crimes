@@ -1,357 +1,6 @@
 {
-  "schema_version": "1.0",
-  "project": "merge-crimes-review-campaign",
-  "campaign": {
-    "id": "rc-2026-03-08",
-    "state": "running",
-    "cycles_run": 4,
-    "total_findings": 16,
-    "total_resolved": 9,
-    "last_updated": "2026-03-08T15:16:00Z"
-  },
-  "workstreams": [
-    {
-      "id": "dead_code",
-      "priority": 1,
-      "scope": [
-        "frontend/src",
-        "shared",
-        "worker/src"
-      ],
-      "description": "Find exports, functions, and variables that are never imported or called",
-      "last_run_at": "2026-03-08T14:16:08Z",
-      "cycles_assigned": 1,
-      "open_findings_count": 0,
-      "findings_open": 9
-    },
-    {
-      "id": "duplication",
-      "priority": 2,
-      "scope": [
-        "frontend/src",
-        "shared",
-        "worker/src"
-      ],
-      "description": "Find duplicated logic that should be extracted into shared utilities",
-      "last_run_at": "2026-03-08T15:16:00Z",
-      "cycles_assigned": 1,
-      "open_findings_count": 0,
-      "findings_open": 7
-    },
-    {
-      "id": "complexity",
-      "priority": 3,
-      "scope": [
-        "frontend/src",
-        "shared",
-        "worker/src"
-      ],
-      "description": "Find overly complex functions that should be simplified or split",
-      "last_run_at": null,
-      "cycles_assigned": 0,
-      "open_findings_count": 0
-    },
-    {
-      "id": "unused_exports",
-      "priority": 4,
-      "scope": [
-        "frontend/src",
-        "shared"
-      ],
-      "description": "Find exports that are never consumed outside their own module",
-      "last_run_at": null,
-      "cycles_assigned": 0,
-      "open_findings_count": 0
-    },
-    {
-      "id": "architecture",
-      "priority": 5,
-      "scope": [
-        "frontend/src",
-        "shared",
-        "worker/src",
-        "agent"
-      ],
-      "description": "Find architectural violations: wrong-direction imports, tight coupling, missing abstractions",
-      "last_run_at": null,
-      "cycles_assigned": 0,
-      "open_findings_count": 0
-    },
-    {
-      "id": "hardening",
-      "priority": 6,
-      "scope": [
-        "frontend/src",
-        "shared",
-        "worker/src",
-        "agent"
-      ],
-      "description": "Find security, correctness, and regression risk issues to harden",
-      "last_run_at": null,
-      "cycles_assigned": 0,
-      "open_findings_count": 0
-    }
-  ],
-  "queue": [
-    {
-      "id": "q-001",
-      "mode": "review",
-      "workstream_id": "dead_code",
-      "title": "Scan frontend/src and shared for dead exports",
-      "status": "done",
-      "score": 0.0,
-      "priority_override": null,
-      "added_at": "2026-03-08T00:00:00Z",
-      "completed_at": "2026-03-08T14:16:08Z"
-    },
-    {
-      "id": "q-002",
-      "mode": "review",
-      "workstream_id": "duplication",
-      "title": "Scan frontend/src and shared for duplicated logic",
-      "status": "done",
-      "score": 4.5,
-      "priority_override": null,
-      "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "q-003",
-      "mode": "review",
-      "workstream_id": "complexity",
-      "title": "Scan frontend/src and worker/src for overly complex functions",
-      "status": "pending",
-      "score": 4.5,
-      "priority_override": null,
-      "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "q-004",
-      "mode": "review",
-      "workstream_id": "unused_exports",
-      "title": "Scan frontend/src and shared for unused module exports",
-      "status": "pending",
-      "score": 4.5,
-      "priority_override": null,
-      "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "q-005",
-      "mode": "review",
-      "workstream_id": "architecture",
-      "title": "Scan full codebase for architectural violations and wrong-direction imports",
-      "status": "pending",
-      "score": 4.5,
-      "priority_override": null,
-      "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "q-006",
-      "mode": "review",
-      "workstream_id": "hardening",
-      "title": "Scan full codebase for security, correctness, and regression risk issues",
-      "status": "pending",
-      "score": 4.5,
-      "priority_override": "defer",
-      "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "qfix-f-000001",
-      "mode": "fix",
-      "finding_id": "f-000001",
-      "workstream_id": "dead_code",
-      "title": "Fix: `checkApiHealth` is an exported runtime helper with no references outside or ins",
-      "severity": "high",
-      "status": "done",
-      "score": 2.97,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T14:41:35Z"
-    },
-    {
-      "id": "qfix-f-000002",
-      "mode": "fix",
-      "finding_id": "f-000002",
-      "workstream_id": "dead_code",
-      "title": "Fix: `fetchDistrictRoom` is an exported runtime helper that is never called anywhere ",
-      "severity": "high",
-      "status": "done",
-      "score": 2.97,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T14:46:05Z"
-    },
-    {
-      "id": "qfix-f-000003",
-      "mode": "fix",
-      "finding_id": "f-000003",
-      "workstream_id": "dead_code",
-      "title": "Fix: `SnapshotFreshnessCopy` is exported but never referenced outside `snapshotFreshn",
-      "severity": "medium",
-      "status": "done",
-      "score": 1.8,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T14:50:01Z"
-    },
-    {
-      "id": "qfix-f-000004",
-      "mode": "fix",
-      "finding_id": "f-000004",
-      "workstream_id": "dead_code",
-      "title": "Fix: `GitHubReadableRepoListResponse` is exported but never crosses a file boundary. ",
-      "severity": "medium",
-      "status": "done",
-      "score": 1.76,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T14:54:20Z"
-    },
-    {
-      "id": "qfix-f-000005",
-      "mode": "fix",
-      "finding_id": "f-000005",
-      "workstream_id": "dead_code",
-      "title": "Fix: `RepoRefreshStatusCopy` is exported but only used within `repoRefreshCopy.ts` to",
-      "severity": "medium",
-      "status": "done",
-      "score": 1.76,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T14:59:25Z"
-    },
-    {
-      "id": "qfix-f-000006",
-      "mode": "fix",
-      "finding_id": "f-000006",
-      "workstream_id": "dead_code",
-      "title": "Fix: `SelectedRepoStatusCopy` is exported but never referenced outside `selectedRepoS",
-      "severity": "medium",
-      "status": "done",
-      "score": 1.76,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T15:01:51Z"
-    },
-    {
-      "id": "qfix-f-000007",
-      "mode": "fix",
-      "finding_id": "f-000007",
-      "workstream_id": "dead_code",
-      "title": "Fix: `GitHubTokenExchangeResponse` is exported but only used inside `api.ts` as the r",
-      "severity": "medium",
-      "status": "done",
-      "score": 1.7,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T15:05:27Z"
-    },
-    {
-      "id": "qfix-f-000008",
-      "mode": "fix",
-      "finding_id": "f-000008",
-      "workstream_id": "dead_code",
-      "title": "Fix: `RepoRefreshResponse` is exported but never referenced outside `api.ts`. It only",
-      "severity": "medium",
-      "status": "done",
-      "score": 1.7,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T15:08:47Z"
-    },
-    {
-      "id": "qfix-f-000009",
-      "mode": "fix",
-      "finding_id": "f-000009",
-      "workstream_id": "dead_code",
-      "title": "Fix: `RepoRefreshNotice` is exported but only referenced inside `repoRefreshCopy.ts` ",
-      "severity": "medium",
-      "status": "done",
-      "score": 1.64,
-      "priority_override": null,
-      "added_at": "2026-03-08T14:24:38Z",
-      "last_scored_at": "2026-03-08T14:16:08Z",
-      "completed_at": "2026-03-08T15:12:46Z"
-    },
-    {
-      "id": "qfix-f-000010",
-      "mode": "fix",
-      "finding_id": "f-000010",
-      "workstream_id": "duplication",
-      "title": "Fix: Heat-status classification is duplicated between the HUD and Repo City surface, ",
-      "severity": "medium",
-      "status": "pending",
-      "score": 1.92,
-      "priority_override": null,
-      "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "qfix-f-000011",
-      "mode": "fix",
-      "finding_id": "f-000011",
-      "workstream_id": "duplication",
-      "title": "Fix: Transit path-length accumulation is implemented three times across HUD, Repo Cit",
-      "severity": "medium",
-      "status": "pending",
-      "score": 1.86,
-      "priority_override": null,
-      "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "qfix-f-000012",
-      "mode": "fix",
-      "finding_id": "f-000012",
-      "workstream_id": "duplication",
-      "title": "Fix: Current-waypoint distance calculation and `m` formatting are duplicated across t",
-      "severity": "medium",
-      "status": "pending",
-      "score": 1.9,
-      "priority_override": null,
-      "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "qfix-f-000015",
-      "mode": "fix",
-      "finding_id": "f-000015",
-      "workstream_id": "duplication",
-      "title": "Fix: Selected GitHub repo status is modeled twice: `selectedRepoStatusCopy.ts` has a ",
-      "severity": "medium",
-      "status": "pending",
-      "score": 1.68,
-      "priority_override": null,
-      "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    },
-    {
-      "id": "qfix-f-000016",
-      "mode": "fix",
-      "finding_id": "f-000016",
-      "workstream_id": "duplication",
-      "title": "Fix: Bootstrap snapshot parsing and smoke-harness snapshot construction both manually",
-      "severity": "medium",
-      "status": "pending",
-      "score": 1.64,
-      "priority_override": null,
-      "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
-    }
-  ],
+  "generated_at": "2026-03-08T15:26:13Z",
+  "total_count": 16,
   "findings": [
     {
       "id": "f-000001",
@@ -366,7 +15,7 @@
       "description": "`checkApiHealth` is an exported runtime helper with no references outside or inside its own declaration site. The repo-wide `rg` search only finds the export line, so this is dead executable code rather than just an unnecessary export.",
       "evidence": "{'code_snippet': \"export async function checkApiHealth(): Promise<boolean> {\\n    const result = await apiFetch<{ status: string }>('/api/health');\\n    return result?.status === 'ok';\\n}\", 'rg_command': \"rg --glob '!node_modules' -n -w 'checkApiHealth' .\", 'rg_output': './frontend/src/api.ts:530:export async function checkApiHealth(): Promise<boolean> {'}",
       "recommended_action": "Delete `checkApiHealth` from `frontend/src/api.ts`; if a health probe is still intended, add a real caller before keeping the helper.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -387,7 +36,7 @@
       "description": "`fetchDistrictRoom` is an exported runtime helper that is never called anywhere in the repo. The only repo-wide hit is its own declaration, which makes it dead executable code.",
       "evidence": "{'code_snippet': 'export async function fetchDistrictRoom(districtId: string): Promise<RoomState | null> {\\n    return apiFetch<RoomState>(`/api/districts/${encodeURIComponent(districtId)}/room`);\\n}', 'rg_command': \"rg --glob '!node_modules' -n -w 'fetchDistrictRoom' .\", 'rg_output': './frontend/src/api.ts:542:export async function fetchDistrictRoom(districtId: string): Promise<RoomState | null> {'}",
       "recommended_action": "Delete `fetchDistrictRoom` from `frontend/src/api.ts`; if an initial room read is still needed, wire it into the presence flow instead of keeping an unused wrapper.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -408,7 +57,7 @@
       "description": "`SnapshotFreshnessCopy` is exported but never referenced outside `snapshotFreshness.ts`. It only names the local return shape for `buildSnapshotFreshnessCopy` and `useSnapshotFreshnessCopy`, so the exported type is dead public surface.",
       "evidence": "{'code_snippet': 'export interface SnapshotFreshnessCopy {\\n    badge: string;\\n    detail: string | null;\\n    primary: string;\\n    source: SnapshotSource;\\n    sourceLabel: string;\\n}', 'rg_command': \"rg --glob '!node_modules' -n -w 'SnapshotFreshnessCopy' .\", 'rg_output': './frontend/src/ui/snapshotFreshness.ts:5:export interface SnapshotFreshnessCopy {\\n./frontend/src/ui/snapshotFreshness.ts:60:): SnapshotFreshnessCopy {\\n./frontend/src/ui/snapshotFreshness.ts:107:): SnapshotFreshnessCopy {'}",
       "recommended_action": "Remove `export` from `SnapshotFreshnessCopy`, or inline the object return type into the two local helpers if you do not want a named local interface.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -429,7 +78,7 @@
       "description": "`GitHubReadableRepoListResponse` is exported but never crosses a file boundary. It only appears in `api.ts` as the return type of `fetchGitHubReadableRepos`, so it is dead API surface rather than a live shared contract.",
       "evidence": "{'code_snippet': 'export interface GitHubReadableRepoListResponse {\\n    repos: GitHubReadableRepo[];\\n    hasNextPage: boolean;\\n}\\n...\\nexport async function fetchGitHubReadableRepos(\\n    accessToken: string,\\n    signal?: AbortSignal,\\n): Promise<GitHubReadableRepoListResponse> {', 'rg_command': \"rg --glob '!node_modules' -n -w 'GitHubReadableRepoListResponse' .\", 'rg_output': './frontend/src/api.ts:39:export interface GitHubReadableRepoListResponse {\\n./frontend/src/api.ts:390:): Promise<GitHubReadableRepoListResponse> {'}",
       "recommended_action": "Remove `export` from `GitHubReadableRepoListResponse` and keep it local to `api.ts`, or inline the response shape into `fetchGitHubReadableRepos`.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -450,7 +99,7 @@
       "description": "`RepoRefreshStatusCopy` is exported but only used within `repoRefreshCopy.ts` to annotate the return type of `buildRepoRefreshStatusCopy`. No external file imports the interface, so the export is dead surface area.",
       "evidence": "{'code_snippet': 'export interface RepoRefreshStatusCopy {\\n    pill: string;\\n    title: string;\\n    message: string;\\n}\\n...\\nexport function buildRepoRefreshStatusCopy(\\n    connectedRepo: RepoModel | null,\\n    connectedRepoRefreshStatus: ConnectedRepoRefreshStatus | null,\\n    repoRefreshStatus: RepoRefreshStatusState,\\n): RepoRefreshStatusCopy {', 'rg_command': \"rg --glob '!node_modules' -n -w 'RepoRefreshStatusCopy' .\", 'rg_output': './frontend/src/ui/repoRefreshCopy.ts:12:export interface RepoRefreshStatusCopy {\\n./frontend/src/ui/repoRefreshCopy.ts:42:): RepoRefreshStatusCopy {'}",
       "recommended_action": "Remove `export` from `RepoRefreshStatusCopy`, or inline the return type of `buildRepoRefreshStatusCopy` if you do not need a named local interface.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -471,7 +120,7 @@
       "description": "`SelectedRepoStatusCopy` is exported but never referenced outside `selectedRepoStatusCopy.ts`. It only names the local return shape of `buildSelectedRepoStatusCopy`, so the export is dead API surface.",
       "evidence": "{'code_snippet': \"export interface SelectedRepoStatusCopy {\\n    tone: 'loading' | 'success' | 'error' | 'empty';\\n    pill: string;\\n    title: string;\\n    message: string;\\n    detail: string;\\n    showSpinner?: boolean;\\n}\", 'rg_command': \"rg --glob '!node_modules' -n -w 'SelectedRepoStatusCopy' .\", 'rg_output': './frontend/src/ui/selectedRepoStatusCopy.ts:11:export interface SelectedRepoStatusCopy {\\n./frontend/src/ui/selectedRepoStatusCopy.ts:56:): SelectedRepoStatusCopy | null {'}",
       "recommended_action": "Remove `export` from `SelectedRepoStatusCopy`, or inline the return type in `buildSelectedRepoStatusCopy` if you want to keep the shape purely local.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -492,7 +141,7 @@
       "description": "`GitHubTokenExchangeResponse` is exported but only used inside `api.ts` as the return and generic type for `exchangeGitHubOAuthCode`. No external file references the interface, so the exported type name is dead contract surface.",
       "evidence": "{'code_snippet': \"export interface GitHubTokenExchangeResponse {\\n    accessToken: string;\\n    tokenType: string;\\n    scope: string;\\n}\\n...\\nexport async function exchangeGitHubOAuthCode(\\n    code: string,\\n    redirectUri: string,\\n): Promise<GitHubTokenExchangeResponse | null> {\\n    return apiFetch<GitHubTokenExchangeResponse>('/api/auth/github/token', {\", 'rg_command': \"rg --glob '!node_modules' -n -w 'GitHubTokenExchangeResponse' .\", 'rg_output': \"./frontend/src/api.ts:24:export interface GitHubTokenExchangeResponse {\\n./frontend/src/api.ts:372:): Promise<GitHubTokenExchangeResponse | null> {\\n./frontend/src/api.ts:373:    return apiFetch<GitHubTokenExchangeResponse>('/api/auth/github/token', {\"}",
       "recommended_action": "Remove `export` from `GitHubTokenExchangeResponse` and keep it local to `api.ts`, or inline the response shape into `exchangeGitHubOAuthCode`.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -513,7 +162,7 @@
       "description": "`RepoRefreshResponse` is exported but never referenced outside `api.ts`. It only annotates the local `refreshGitHubRepo` implementation, so the exported type name is dead public surface.",
       "evidence": "{'code_snippet': 'export interface RepoRefreshResponse {\\n    message: string;\\n    snapshot: GitHubRepoMetadataSnapshot;\\n}\\n...\\nexport async function refreshGitHubRepo(\\n    owner: string,\\n    name: string,\\n    signal?: AbortSignal,\\n    accessToken?: string,\\n): Promise<RepoRefreshResponse> {', 'rg_command': \"rg --glob '!node_modules' -n -w 'RepoRefreshResponse' .\", 'rg_output': './frontend/src/api.ts:44:export interface RepoRefreshResponse {\\n./frontend/src/api.ts:461:): Promise<RepoRefreshResponse> {\\n./frontend/src/api.ts:478:    const payload = await response.json().catch(() => null) as Partial<RepoRefreshResponse> & { message?: string } | null;\\n./frontend/src/api.ts:487:    return payload as RepoRefreshResponse;'}",
       "recommended_action": "Remove `export` from `RepoRefreshResponse` and keep it local to `api.ts`, or inline the response shape inside `refreshGitHubRepo`.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -534,7 +183,7 @@
       "description": "`RepoRefreshNotice` is exported but only referenced inside `repoRefreshCopy.ts` as the return type of `buildRepoHudRefreshNotice`. No other file imports it, so the exported interface is dead surface area.",
       "evidence": "{'code_snippet': 'export interface RepoRefreshNotice {\\n    title: string;\\n    detail: string;\\n}\\n...\\nexport function buildRepoHudRefreshNotice(\\n    connectedRepo: RepoModel | null,\\n    connectedRepoRefreshStatus: ConnectedRepoRefreshStatus | null,\\n): RepoRefreshNotice | null {', 'rg_command': \"rg --glob '!node_modules' -n -w 'RepoRefreshNotice' .\", 'rg_output': './frontend/src/ui/repoRefreshCopy.ts:18:export interface RepoRefreshNotice {\\n./frontend/src/ui/repoRefreshCopy.ts:96:): RepoRefreshNotice | null {'}",
       "recommended_action": "Remove `export` from `RepoRefreshNotice`, or inline the return shape of `buildRepoHudRefreshNotice` if you want to avoid a named local interface.",
-      "status": "resolved",
+      "status": "open",
       "found_at": "2026-03-08T14:24:38Z",
       "cycle_number": 1,
       "edge_cases": [
@@ -689,28 +338,5 @@
         "If `RepoModel` gains another nested array or metadata field, both manual clone paths need updates or one environment will silently retain shared references or omit fields that the other preserves."
       ]
     }
-  ],
-  "stop_policy": {
-    "max_cycles": 80,
-    "stop_on_findings_below": 3,
-    "stop_on_score_below": 10.0,
-    "max_consecutive_no_findings": 3,
-    "consecutive_no_findings": 0,
-    "triggered": false,
-    "trigger_reason": null
-  },
-  "current_slice_recommendation": {
-    "queue_entry_id": "q-003",
-    "title": "Scan frontend/src and worker/src for overly complex functions",
-    "mode": "review",
-    "workstream": "complexity",
-    "score": 4.5,
-    "why": "Highest-scored pending queue entry"
-  },
-  "known_risks": [
-    "Codex may hallucinate evidence — always verify file_path exists before storing finding",
-    "Fix mode is skipped in dry_run mode (no commits) but Codex still runs",
-    "hardening workstream (q-006) is deferred until higher-priority workstreams complete at least one cycle",
-    "decisions.json in docs/review_artifacts/ can be edited manually to mark findings as keep or defer"
   ]
 }

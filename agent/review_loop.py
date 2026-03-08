@@ -113,8 +113,8 @@ def _choose_mode(tracker_path: str, mode_override: str) -> str:
 
 
 def _queue_summary(tracker_path: str) -> Tuple[int, int]:
-    """Return (review_pending, fix_pending) counts."""
-    for candidate in (tracker_path + ".dryrun", tracker_path):
+    """Return (review_pending, fix_pending) counts from the real tracker."""
+    for candidate in (tracker_path, tracker_path + ".dryrun"):
         if os.path.isfile(candidate):
             try:
                 with open(candidate, "r", encoding="utf-8") as fh:
