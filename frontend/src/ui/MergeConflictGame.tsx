@@ -1,6 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 
+type EncounterCopySource = {
+    name?: string;
+    summary?: string;
+    title?: string;
+    description?: string;
+};
+
+function getEncounterCopy(encounter: EncounterCopySource) {
+    const name = [encounter.name, encounter.title]
+        .map((value) => value?.trim())
+        .find((value): value is string => Boolean(value))
+        ?? 'Critical encounter';
+    const summary = [encounter.summary, encounter.description]
+        .map((value) => value?.trim())
+        .find((value): value is string => Boolean(value))
+        ?? 'A hostile route is destabilizing this district. Choose the safest response before the window closes.';
+
+    return { name, summary };
+}
+
 export function MergeConflictGame() {
     const { phase, activeConflict, resolveBossFight, missionTimer, setMissionTimer, repoCityMode, districts } = useGameStore();
     if (phase !== 'boss' || !activeConflict) return null;
@@ -106,6 +126,8 @@ function MergeConflictGameInner({
         return 'selected';
     };
 
+    const { name: encounterName, summary: encounterSummary } = getEncounterCopy(activeConflict);
+
     if (repoCityMode) {
         return (
             <div className="boss-overlay repo-city">
@@ -113,9 +135,9 @@ function MergeConflictGameInner({
                     <div className="boss-panel">
                         <div className="boss-header repo-city">
                             <div className="boss-heading">
-                                <div className="boss-kicker">Conflict route</div>
-                                <div className="boss-title repo-city">{activeConflict.title}</div>
-                                <div className="boss-subtitle repo-city">{activeConflict.description}</div>
+                                <div className="boss-kicker">Boss route</div>
+                                <div className="boss-title repo-city">{encounterName}</div>
+                                <div className="boss-subtitle repo-city">{encounterSummary}</div>
                             </div>
                             <div className={`boss-timer-block ${getTimerTone()}`}>
                                 <div className="boss-timer repo-city">{missionTimer}s</div>
@@ -132,7 +154,7 @@ function MergeConflictGameInner({
                         {!showResult ? (
                             <>
                                 <div className="boss-instruction repo-city">
-                                    Choose the safest merge plan from {activeConflict.hunks.length} candidate resolutions.
+                                    Choose the safest response from {activeConflict.hunks.length} candidate actions.
                                 </div>
 
                                 <div className="boss-hunks repo-city">
@@ -157,21 +179,21 @@ function MergeConflictGameInner({
                         ) : (
                             <div className={`boss-result-panel repo-city ${result ?? ''}`.trim()}>
                                 <div className="boss-result-kicker">
-                                    {result === 'success' ? 'Conflict stabilized' : 'Conflict unresolved'}
+                                    {result === 'success' ? 'Threat stabilized' : 'Threat unresolved'}
                                 </div>
                                 <div className={`boss-result ${result} repo-city`}>
-                                    {result === 'success' ? 'Merge restored' : 'Merge failed'}
+                                    {result === 'success' ? 'Encounter cleared' : 'Encounter lost'}
                                 </div>
                                 <div className="boss-result-copy">
                                     {result === 'success'
-                                        ? `Safe merge applied in ${districtName}.`
-                                        : 'The conflict route collapsed before a safe merge could land.'}
+                                        ? `${encounterName} stabilized in ${districtName}.`
+                                        : `${encounterName} overran ${districtName} before a safe route could hold.`}
                                 </div>
                                 {result === 'success' && (
                                     <div className="boss-reward-chip">+{activeConflict.reward}¢ secured</div>
                                 )}
                                 <button className="boss-continue-btn repo-city" type="button" onClick={handleContinue}>
-                                    {result === 'success' ? 'Return to city' : 'Exit conflict'}
+                                    {result === 'success' ? 'Return to city' : 'Leave encounter'}
                                 </button>
                             </div>
                         )}
@@ -183,8 +205,8 @@ function MergeConflictGameInner({
 
     return (
         <div className="boss-overlay">
-            <div className="boss-title">⚔ MERGE CONFLICT ⚔</div>
-            <div className="boss-subtitle">{activeConflict.description}</div>
+            <div className="boss-title">{`⚔ ${encounterName} ⚔`}</div>
+            <div className="boss-subtitle">{encounterSummary}</div>
 
             {!showResult && (
                 <>
@@ -193,7 +215,7 @@ function MergeConflictGameInner({
                     </div>
 
                     <div className="boss-instruction">
-                        Choose the correct resolution
+                        Choose the safest response
                     </div>
 
                     <div className="boss-hunks">
@@ -215,7 +237,7 @@ function MergeConflictGameInner({
             {showResult && (
                 <>
                     <div className={`boss-result ${result}`}>
-                        {result === 'success' ? '✓ MERGED SUCCESSFULLY' : '✗ MERGE FAILED'}
+                        {result === 'success' ? '✓ ENCOUNTER CLEARED' : '✗ ENCOUNTER LOST'}
                     </div>
                     {result === 'success' && (
                         <div style={{ color: 'var(--neon-green)', marginTop: 8, fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
