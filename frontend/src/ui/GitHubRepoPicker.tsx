@@ -78,6 +78,18 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
         ? 'Fetched from GitHub with the OAuth token currently stored in frontend state.'
         : 'GitHub auth token missing from frontend state.';
 
+    function handleRepoSelection(repo: api.GitHubReadableRepo) {
+        const shouldTriggerIngest = repo.visibility === 'public' && selectedGitHubRepo?.id !== repo.id;
+
+        setSelectedGitHubRepo(repo);
+
+        if (!shouldTriggerIngest) {
+            return;
+        }
+
+        void api.fetchGitHubRepoMetadata(repo.ownerLogin, repo.name);
+    }
+
     return (
         <div className={`repo-selector-panel ${repoCityMode ? 'repo-city' : ''}`.trim()} data-testid="github-repo-picker">
             <div className={`repo-selector-header ${repoCityMode ? 'repo-city' : ''}`.trim()}>
@@ -116,7 +128,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                         type="button"
                         data-testid={`github-repo-${repo.id}`}
                         className={`repo-selector-item ${selectedGitHubRepo?.id === repo.id ? 'selected' : ''} ${repoCityMode ? 'repo-city' : ''}`.trim()}
-                        onClick={() => setSelectedGitHubRepo(repo)}
+                        onClick={() => handleRepoSelection(repo)}
                     >
                         <div className="repo-item-topline">
                             <div>

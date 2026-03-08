@@ -1,6 +1,7 @@
 // ─── Merge Crimes — API Client ───
 // Fetches game data from the Worker API with seed-data fallback
 
+import type { RepoModel } from '../../shared/repoModel';
 import type { District, Mission, LeaderboardEntry, CityEvent, MergeConflictEncounter } from '../../shared/types';
 import { getRuntimeApiBaseOverride } from './runtimeConfig';
 
@@ -421,6 +422,19 @@ export async function fetchGitHubReadableRepos(
         })),
         hasNextPage: response.headers.get('link')?.includes('rel="next"') ?? false,
     };
+}
+
+export async function fetchGitHubRepoMetadata(
+    owner: string,
+    name: string,
+    signal?: AbortSignal,
+): Promise<RepoModel | null> {
+    const params = new URLSearchParams({
+        owner,
+        name,
+    });
+
+    return apiFetch<RepoModel>(`/api/github/repo-metadata?${params.toString()}`, { signal });
 }
 
 // ─── Health Check ───
