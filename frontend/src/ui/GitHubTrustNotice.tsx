@@ -1,9 +1,15 @@
 const REQUESTED_GITHUB_OAUTH_SCOPES = ['read:user'] as const;
 
-export function GitHubTrustNotice() {
+interface GitHubTrustNoticeProps {
+    context?: 'connect' | 'picker';
+}
+
+export function GitHubTrustNotice({ context = 'connect' }: GitHubTrustNoticeProps) {
+    const kicker = context === 'picker' ? 'After GitHub connect' : 'Before GitHub connect';
+
     return (
-        <div className="github-trust-notice" role="note" aria-label="GitHub access notice">
-            <div className="github-trust-notice-kicker">Before GitHub connect</div>
+        <div className={`github-trust-notice ${context}`.trim()} role="note" aria-label="GitHub access notice">
+            <div className="github-trust-notice-kicker">{kicker}</div>
             <div className="github-trust-notice-title">Read-only access only</div>
             <p className="github-trust-notice-copy">
                 Merge Crimes asks GitHub for this OAuth scope before sign-in, then uses the session only to read repo

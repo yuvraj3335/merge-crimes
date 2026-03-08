@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T16:09:26+05:30",
+  "last_updated": "2026-03-08T16:14:51+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -914,21 +914,33 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "Picker trust continuity — repeat OAuth scope and no-write copy inside repo selection",
+          "summary": [
+            "The authenticated GitHub repo picker now repeats the same OAuth scope notice shown before connect, so the requested read:user access stays visible after sign-in.",
+            "The picker banner keeps the same read-only metadata explanation and explicit no-write promise while staying pinned above loading, empty, error, and ready picker states.",
+            "The slice stays frontend-only and does not change repo loading, repo selection, metadata ingest triggering, or OAuth behavior."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Picker trust continuity — repeat OAuth scope and no-write copy inside repo selection",
-    "why": "Phase 7 is still in progress, and the remaining trust gap is after sign-in: the authenticated repo picker should repeat the same hardcoded scope and read-only boundary so users do not lose that context once the repo list opens.",
+    "title": "Private-repo picker eligibility copy — clarify what can be listed versus translated",
+    "why": "Phase 7 is still in progress, and the next trust gap is repo eligibility: the picker can show private repos from the authenticated GitHub session, but the UI does not yet clearly explain which repos are only listed versus which ones can currently be translated into a city.",
     "candidate_files": [
       "frontend/src/ui/GitHubRepoPicker.tsx",
-      "frontend/src/ui/GitHubTrustNotice.tsx",
       "frontend/src/index.css"
     ],
     "acceptance_criteria": [
-      "The authenticated repo picker repeats the same hardcoded OAuth scope and no-write language already shown before connect.",
-      "The picker keeps the trust notice visible above the repo list without changing selection or ingest behavior.",
+      "The picker clearly distinguishes repos that can be translated now from repos that are only listed because GitHub made them readable to the current session.",
+      "The new eligibility copy stays visible without changing selection, ingest, or OAuth behavior.",
       "Frontend lint and build pass, and browser smoke is attempted unless the sandbox blocks Wrangler again."
     ]
   },

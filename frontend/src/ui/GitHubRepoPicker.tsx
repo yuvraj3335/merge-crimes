@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as api from '../api';
 import { useGameStore } from '../store/gameStore';
-import { RepoPrivacyNotice } from './RepoPrivacyNotice';
+import { GitHubTrustNotice } from './GitHubTrustNotice';
 
 interface GitHubRepoPickerProps {
     open: boolean;
@@ -237,7 +237,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
     return (
         <div className={`repo-selector-panel ${repoCityMode ? 'repo-city' : ''}`.trim()} data-testid="github-repo-picker">
-            {repoCityMode && <RepoPrivacyNotice context="picker" />}
+            {repoCityMode && <GitHubTrustNotice context="picker" />}
             <div className={`repo-selector-header ${repoCityMode ? 'repo-city' : ''}`.trim()}>
                 <div className="repo-selector-heading">
                     {repoCityMode && (

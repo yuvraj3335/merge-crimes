@@ -3995,6 +3995,10 @@ body,
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
 }
 
+.github-trust-notice.picker {
+  margin-bottom: 14px;
+}
+
 .github-trust-notice-kicker {
   font-family: var(--font-display);
   font-size: 10px;
