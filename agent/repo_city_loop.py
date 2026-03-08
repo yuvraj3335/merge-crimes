@@ -9,7 +9,7 @@ Loop behaviour:
   - Stops on fatal errors (exit code 2).
 
 Environment variables (all optional):
-  REPO_CITY_MAX_CYCLES            default 60
+  REPO_CITY_MAX_CYCLES            default 160
   REPO_CITY_CYCLE_DELAY_SECONDS   default 10
   REPO_CITY_MAX_STALLED_CYCLES    default 3
 """
@@ -79,7 +79,7 @@ def loop() -> int:
     """Run cycles until completion.  Returns 0 on full completion, 1 on partial."""
     cfg = load_config()
 
-    max_cycles = int(os.environ.get("REPO_CITY_MAX_CYCLES", "60"))
+    max_cycles = int(os.environ.get("REPO_CITY_MAX_CYCLES", "160"))
     delay = float(os.environ.get("REPO_CITY_CYCLE_DELAY_SECONDS", "10"))
     max_stalled = int(os.environ.get("REPO_CITY_MAX_STALLED_CYCLES", "3"))
 
