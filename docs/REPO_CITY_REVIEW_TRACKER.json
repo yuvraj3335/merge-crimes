@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 11,
+    "cycles_run": 12,
     "total_findings": 26,
-    "total_resolved": 10,
-    "last_updated": "2026-03-08T17:11:49Z"
+    "total_resolved": 11,
+    "last_updated": "2026-03-08T17:37:33Z"
   },
   "workstreams": [
     {
@@ -47,8 +47,8 @@
         "worker/src"
       ],
       "description": "Find overly complex functions that should be simplified or split",
-      "last_run_at": "2026-03-08T17:11:49Z",
-      "cycles_assigned": 3,
+      "last_run_at": "2026-03-08T17:24:12Z",
+      "cycles_assigned": 4,
       "open_findings_count": 0,
       "findings_open": 10
     },
@@ -178,7 +178,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "q-005",
@@ -189,7 +189,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "q-006",
@@ -200,7 +200,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "q-007",
@@ -211,7 +211,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "q-008",
@@ -222,7 +222,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "q-009",
@@ -233,7 +233,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "qfix-f-000001",
@@ -466,11 +466,12 @@
       "workstream_id": "complexity",
       "title": "Fix: The selected-GitHub-repo/auth state machine is duplicated across the store, UI c",
       "severity": "high",
-      "status": "pending",
+      "status": "done",
       "score": 2.88,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:11:49Z",
+      "completed_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "qfix-f-000020",
@@ -483,7 +484,7 @@
       "score": 2.79,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "qfix-f-000021",
@@ -492,11 +493,12 @@
       "workstream_id": "complexity",
       "title": "Fix: High-frequency player movement writes are pushed through the global store, while",
       "severity": "high",
-      "status": "pending",
+      "status": "done",
       "score": 2.85,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z",
+      "completed_at": "2026-03-08T17:37:33Z"
     },
     {
       "id": "qfix-f-000022",
@@ -509,7 +511,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "qfix-f-000023",
@@ -522,7 +524,7 @@
       "score": 1.82,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "qfix-f-000024",
@@ -535,7 +537,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "qfix-f-000025",
@@ -548,7 +550,7 @@
       "score": 1.74,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "qfix-f-000026",
@@ -561,7 +563,7 @@
       "score": 1.88,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:11:49Z"
+      "last_scored_at": "2026-03-08T17:24:12Z"
     }
   ],
   "findings": [
@@ -962,13 +964,14 @@
       "description": "The selected-GitHub-repo/auth state machine is duplicated across the store, UI controllers, copy helpers, and smoke harness instead of being owned by one canonical reducer/action set. This creates multiple sources of truth for the same transitions and increases race-condition surface area.",
       "evidence": "Repeated resets and direct mutations appear in multiple places. In frontend/src/store/gameStore.ts:751-803, `selectedGitHubRepo`, `selectedGitHubRepoEligibility`, `selectedGitHubRepoIngestState`, and `selectedGitHubRepoSnapshot` are hand-reset in the initial state, `setGitHubAccessToken`, `setGitHubAuthError`, and `clearGitHubAuth`. In frontend/src/localSmokeBridge.ts:165-205 and :263-310, the smoke harness bypasses store actions with `useGameStore.setState({...})` and rewrites the same fields directly. In frontend/src/ui/GitHubRepoPicker.tsx:215-299, `handleRepoSelection` aborts requests, clears snapshot, resets ingest state, starts fetch, and writes error/success. In frontend/src/ui/selectedRepoStatusCopy.ts:74-215, status is recomputed again from the same inputs through branching helper functions.",
       "recommended_action": "Introduce a single reducer-like module or explicit action helpers for repo selection/auth transitions, e.g. `resetSelectedRepoState`, `beginRepoIngest`, `repoIngestFailed`, `activateRepoSnapshot`. Make the smoke bridge call those actions instead of `useGameStore.setState`, and let UI read derived status from one canonical selector.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T17:06:08Z",
       "cycle_number": 9,
       "edge_cases": [
         "If a new field is added to selected-repo state, it must be updated in every hand-built reset object in `gameStore.ts` and `localSmokeBridge.ts`, or stale state will survive some transitions but not others.",
         "`GitHubRepoPicker` guards in-flight ingest with `useGameStore.getState().selectedGitHubRepo`, but other code paths can change the same selection via direct store writes, so race handling is distributed instead of centralized."
-      ]
+      ],
+      "resolved_at": "2026-03-08T17:24:12Z"
     },
     {
       "id": "f-000020",
@@ -1004,13 +1007,14 @@
       "description": "High-frequency player movement writes are pushed through the global store, while many components subscribe to the entire store with `useGameStore()` and no selector. That combination creates a broad rerender fan-out and makes performance harder to predict as more UI gets added.",
       "evidence": "`commitPosition` at frontend/src/game/Player.tsx:84-111 calls `setPlayerPosition(nextPosition)` and `setCurrentDistrict(nextDistrict)`. `useFrame` at :114-211 invokes `commitPosition` during movement. Full-store subscriptions are widespread: Camera.tsx:22, Waypoint.tsx:24, CaptureOverlay.tsx:4, MissionTrigger.tsx:22/122, App.tsx:59/253, MissionPanel.tsx:18, MergeConflictGame.tsx:37, CityBulletin.tsx:4, ConnectionStatusBanner.tsx:5-14, Leaderboard.tsx:4, MissionObjectiveTracker.tsx:5-13, RewardToast.tsx:4 all call `useGameStore()` without a selector.",
       "recommended_action": "Keep per-frame movement state local to the scene layer or a narrow transient slice, and expose throttled/derived state to the global store. Convert broad `useGameStore()` consumers to selectors so unrelated overlays do not rerender on every position update.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T17:06:08Z",
       "cycle_number": 9,
       "edge_cases": [
         "Holding movement keys causes `setPlayerPosition` to fire every frame, so panels like `ConnectionStatusBanner`, `CityBulletin`, and `RewardToast` can rerender even though they do not need player coordinates.",
         "Crossing district boundaries triggers `setCurrentDistrict` from the same movement loop, so the app pays both per-frame position updates and additional broad store updates during transit."
-      ]
+      ],
+      "resolved_at": "2026-03-08T17:37:33Z"
     },
     {
       "id": "f-000022",

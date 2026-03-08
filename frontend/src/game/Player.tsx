@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '../store/gameStore';
@@ -14,27 +14,46 @@ const REPO_CITY_MIN_MOVEMENT = 0.16;
 const REPO_CITY_TRANSIT_SPEED = 22;
 const REPO_CITY_TRANSIT_ARRIVAL_RADIUS = 1.1;
 const PLAYER_SIZE = 0.8;
+const GLOBAL_POSITION_SYNC_MS = 200;
 
 const keys: Record<string, boolean> = {};
 
+type PlayerPosition = [number, number, number];
+
+function clonePosition([x, y, z]: PlayerPosition): PlayerPosition {
+    return [x, y, z];
+}
+
+function positionsMatch(a: PlayerPosition, b: PlayerPosition) {
+    return (
+        Math.abs(a[0] - b[0]) <= 0.001 &&
+        Math.abs(a[1] - b[1]) <= 0.001 &&
+        Math.abs(a[2] - b[2]) <= 0.001
+    );
+}
+
 export function Player() {
-    const {
-        playerPosition,
-        setPlayerPosition,
-        phase,
-        districts,
-        setCurrentDistrict,
-        isSprinting,
-        setSprinting,
-        repoCityMode,
-        repoCityTransit,
-        advanceRepoCityTransit,
-        clearRepoCityTransit,
-    } = useGameStore();
+    const playerPosition = useGameStore((state) => state.playerPosition);
+    const currentDistrict = useGameStore((state) => state.currentDistrict);
+    const setPlayerPosition = useGameStore((state) => state.setPlayerPosition);
+    const phase = useGameStore((state) => state.phase);
+    const districts = useGameStore((state) => state.districts);
+    const setCurrentDistrict = useGameStore((state) => state.setCurrentDistrict);
+    const isSprinting = useGameStore((state) => state.isSprinting);
+    const setSprinting = useGameStore((state) => state.setSprinting);
+    const repoCityMode = useGameStore((state) => state.repoCityMode);
+    const repoCityTransit = useGameStore((state) => state.repoCityTransit);
+    const advanceRepoCityTransit = useGameStore((state) => state.advanceRepoCityTransit);
+    const clearRepoCityTransit = useGameStore((state) => state.clearRepoCityTransit);
     const meshRef = useRef<THREE.Group>(null);
     const trailRef = useRef<THREE.Mesh>(null);
     const velocityRef = useRef(new THREE.Vector3());
-    const lastCommittedPositionRef = useRef<[number, number, number]>([playerPosition[0], playerPosition[1], playerPosition[2]]);
+    const localPositionRef = useRef<PlayerPosition>(clonePosition(playerPosition));
+    const localDistrictRef = useRef(currentDistrict);
+    const lastStorePositionRef = useRef<PlayerPosition>(clonePosition(playerPosition));
+    const lastFlushedPositionRef = useRef<PlayerPosition>(clonePosition(playerPosition));
+    const lastPositionSyncAtRef = useRef(-GLOBAL_POSITION_SYNC_MS);
+    const positionSyncTimeoutRef = useRef<number | null>(null);
 
     const playerColor = repoCityMode
         ? (isSprinting ? '#9ad7c0' : '#d7e3ef')
@@ -66,20 +85,77 @@ export function Player() {
     }, [setSprinting]);
 
     useEffect(() => {
-        const [lastX, , lastZ] = lastCommittedPositionRef.current;
-        const movedExternally =
-            Math.abs(playerPosition[0] - lastX) > 0.001 ||
-            Math.abs(playerPosition[2] - lastZ) > 0.001;
+        return () => {
+            if (positionSyncTimeoutRef.current !== null) {
+                window.clearTimeout(positionSyncTimeoutRef.current);
+            }
+        };
+    }, []);
 
-        if (movedExternally) {
+    useEffect(() => {
+        localDistrictRef.current = currentDistrict;
+    }, [currentDistrict]);
+
+    useLayoutEffect(() => {
+        if (meshRef.current) {
+            meshRef.current.position.set(localPositionRef.current[0], localPositionRef.current[1], localPositionRef.current[2]);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (positionsMatch(playerPosition, lastStorePositionRef.current)) {
+            return;
+        }
+
+        const nextPosition = clonePosition(playerPosition);
+        lastStorePositionRef.current = nextPosition;
+
+        if (!positionsMatch(playerPosition, localPositionRef.current)) {
             velocityRef.current.set(0, 0, 0);
+            localPositionRef.current = nextPosition;
+            lastFlushedPositionRef.current = nextPosition;
+            lastPositionSyncAtRef.current = performance.now();
+            if (positionSyncTimeoutRef.current !== null) {
+                window.clearTimeout(positionSyncTimeoutRef.current);
+                positionSyncTimeoutRef.current = null;
+            }
             if (meshRef.current) {
                 meshRef.current.position.set(playerPosition[0], playerPosition[1], playerPosition[2]);
             }
+        } else {
+            lastFlushedPositionRef.current = nextPosition;
+        }
+    }, [playerPosition]);
+
+    const flushPlayerPosition = (position: PlayerPosition) => {
+        if (positionSyncTimeoutRef.current !== null) {
+            window.clearTimeout(positionSyncTimeoutRef.current);
+            positionSyncTimeoutRef.current = null;
         }
 
-        lastCommittedPositionRef.current = [playerPosition[0], playerPosition[1], playerPosition[2]];
-    }, [playerPosition]);
+        const syncedPosition = clonePosition(position);
+        lastFlushedPositionRef.current = syncedPosition;
+        lastStorePositionRef.current = syncedPosition;
+        lastPositionSyncAtRef.current = performance.now();
+        setPlayerPosition(syncedPosition);
+    };
+
+    const schedulePlayerPositionSync = () => {
+        if (positionSyncTimeoutRef.current !== null) {
+            return;
+        }
+
+        const elapsed = performance.now() - lastPositionSyncAtRef.current;
+        const delay = Math.max(0, GLOBAL_POSITION_SYNC_MS - elapsed);
+
+        positionSyncTimeoutRef.current = window.setTimeout(() => {
+            positionSyncTimeoutRef.current = null;
+
+            if (!positionsMatch(localPositionRef.current, lastFlushedPositionRef.current)) {
+                flushPlayerPosition(localPositionRef.current);
+            }
+        }, delay);
+    };
 
     const commitPosition = (x: number, z: number) => {
         if (!meshRef.current) {
@@ -92,11 +168,16 @@ export function Player() {
         meshRef.current.position.x = clampedX;
         meshRef.current.position.z = clampedZ;
 
-        const nextPosition: [number, number, number] = [clampedX, playerPosition[1], clampedZ];
-        lastCommittedPositionRef.current = nextPosition;
-        setPlayerPosition(nextPosition);
+        const nextPosition: PlayerPosition = [clampedX, localPositionRef.current[1], clampedZ];
+        localPositionRef.current = nextPosition;
 
-        let nextDistrict = null;
+        if (performance.now() - lastPositionSyncAtRef.current >= GLOBAL_POSITION_SYNC_MS) {
+            flushPlayerPosition(nextPosition);
+        } else {
+            schedulePlayerPositionSync();
+        }
+
+        let nextDistrict: typeof currentDistrict = null;
         for (const d of districts) {
             const [dx, dz] = d.position;
             const [dw, dd] = d.size;
@@ -108,7 +189,11 @@ export function Player() {
                 break;
             }
         }
-        setCurrentDistrict(nextDistrict);
+
+        if (nextDistrict?.id !== localDistrictRef.current?.id || nextDistrict !== localDistrictRef.current) {
+            localDistrictRef.current = nextDistrict;
+            setCurrentDistrict(nextDistrict);
+        }
     };
 
     useFrame((state, delta) => {
@@ -211,7 +296,7 @@ export function Player() {
     });
 
     return (
-        <group ref={meshRef} position={playerPosition as unknown as THREE.Vector3Tuple}>
+        <group ref={meshRef}>
             {/* Body */}
             <mesh position={[0, 0.5, 0]} castShadow>
                 <capsuleGeometry args={[PLAYER_SIZE * 0.35, PLAYER_SIZE * 0.6, 8, 16]} />

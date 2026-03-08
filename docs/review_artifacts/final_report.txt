@@ -1,36 +1,32 @@
 Campaign:
 ID:      rc-2026-03-08
-Cycle:   11
+Cycle:   12
 Mode:    apply_fix
 Dry run: False
 
 Mode and slice:
 Mode:        apply_fix
 Workstream:  complexity
-Slice:       Fix: `shared/repoCityGenerator.ts` is a god module that owns repo classification, sig
+Slice:       Fix: The selected-GitHub-repo/auth state machine is duplicated across the store, UI c
 
 Files involved:
   docs/REPO_CITY_REVIEW_TRACKER.json
   docs/review_artifacts/final_report.txt
   docs/review_artifacts/removal_candidates.json
   docs/review_artifacts/summary.json
-  shared/archetypeClassification.ts
-  shared/districtLabeling.ts
-  shared/gameplayBridge.ts
-  shared/repoCityGenerator.ts
-  shared/repoCityGeneratorUtils.ts
-  shared/roadGeneration.ts
-  shared/signalMissionGeneration.ts
+  frontend/dist-smoke-ssr/browser-smoke-runner.js
+  frontend/src/store/gameStore.ts
 
 Commands run:
-  cd worker && npm run build
+  cd frontend && npm run build
+  cd frontend && npm run lint
 
 Findings this cycle:
 New findings: 0
 
 Total finding queue:
-Open findings: 10
-Pending queue: 14 total  (6 review, 8 fix)
+Open findings: 9
+Pending queue: 13 total  (6 review, 7 fix)
 
 Artifacts written:
   /Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/REPO_CITY_REVIEW_TRACKER.json
@@ -38,9 +34,12 @@ Artifacts written:
 
 What is now safer or simpler:
 BUG_VERIFIED: true
-FIX_STATUS: APPLIED
-`shared/repoCityGenerator.ts` is now a thin orchestrator and the extracted helpers compile successfully.
-The frontend build passed with a non-blocking Vite chunk-size warning.
+FIX_STATUS: applied in `gameStore.ts`
+`frontend/src/store/gameStore.ts` now builds all selected-repo reset state from one helper and reuses it in initial state, auth transitions, and selection changes.
+`npm run build`, `npm run lint`, and `npm run browser:smoke` all passed.
+Vite emitted a chunk-size warning during build, but the build succeeded.
+`browser:smoke` regenerated `frontend/dist-smoke-ssr/browser-smoke-runner.js`.
+No tracker file was edited in this cycle.
 
 Stop policy decision:
 Continuing — next slice available
@@ -52,12 +51,12 @@ Tracker changes:
    "campaign": {
      "id": "rc-2026-03-08",
      "state": "running",
--    "cycles_run": 10,
-+    "cycles_run": 11,
+-    "cycles_run": 11,
++    "cycles_run": 12,
      "total_findings": 26,
      "total_resolved": 10,
--    "last_updated": "2026-03-08T17:06:29Z"
-+    "last_updated": "2026-03-08T17:11:49Z"
+-    "last_updated": "2026-03-08T17:11:49Z"
++    "last_updated": "2026-03-08T17:24:12Z"
    },
    "workstreams": [
      {
@@ -65,10 +64,10 @@ Tracker changes:
          "worker/src"
        ],
        "description": "Find overly complex functions that should be simplified or split",
--      "last_run_at": "2026-03-08T17:06:29Z",
--      "cycles_assigned": 2,
-+      "last_run_at": "2026-03-08T17:11:49Z",
-+      "cycles_assigned": 3,
+-      "last_run_at": "2026-03-08T17:11:49Z",
+-      "cycles_assigned": 3,
++      "last_run_at": "2026-03-08T17:24:12Z",
++      "cycles_assigned": 4,
        "open_findings_count": 0,
        "findings_open": 10
      },
@@ -76,8 +75,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:06:29Z"
-+      "last_scored_at": "2026-03-08T17:11:49Z"
+-      "last_scored_at": "2026-03-08T17:11:49Z"
++      "last_scored_at": "2026-03-08T17:24:12Z"
      },
      {
        "id": "q-005",
@@ -85,8 +84,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:06:29Z"
-+      "last_scored_at": "2026-03-08T17:11:49Z"
+-      "last_scored_at": "2026-03-08T17:11:49Z"
++      "last_scored_at": "2026-03-08T17:24:12Z"
      },
      {
        "id": "q-006",
@@ -94,8 +93,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": "defer",
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:06:29Z"
-+      "last_scored_at": "2026-03-08T17:11:49Z"
+-      "last_scored_at": "2026-03-08T17:11:49Z"
++      "last_scored_at": "2026-03-08T17:24:12Z"
      },
      {
        "id": "q-007",
@@ -103,8 +102,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:06:29Z"
-+      "last_scored_at": "2026-03-08T17:11:49Z"
+-      "last_scored_at": "2026-03-08T17:11:49Z"
++      "last_scored_at": "2026-03-08T17:24:12Z"
      },
      {
        "id": "q-008",
@@ -112,8 +111,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:06:29Z"
-+      "last_scored_at": "2026-03-08T17:11:49Z"
+-      "last_scored_at": "2026-03-08T17:11:49Z"
++      "last_scored_at": "2026-03-08T17:24:12Z"
      },
      {
        "id": "q-009",
