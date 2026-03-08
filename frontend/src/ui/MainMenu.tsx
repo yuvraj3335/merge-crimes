@@ -275,11 +275,19 @@ export function MainMenu() {
         selectedGitHubRepoIngestState,
     );
     const githubRepoActionMeta = selectedGitHubRepo
-        ? selectedGitHubRepoEligibility?.eligible
-            ? selectedGitHubRepoIsActive
-                ? `${selectedGitHubRepo.fullName} is the active translated repo.`
-                : `${selectedGitHubRepo.fullName} is eligible for repo-city translation in this flow.`
-            : `${selectedGitHubRepo.fullName} is listed only. ${selectedGitHubRepoEligibility?.menuDetail ?? "This repo can't be translated here yet."}`
+        ? selectedRepoStillIngesting
+            ? connectedRepo
+                ? `Waiting for GitHub ingest... ${selectedGitHubRepo.fullName} is still loading, so ${connectedRepo.owner}/${connectedRepo.name} stays active for now.`
+                : `Waiting for GitHub ingest... ${selectedGitHubRepo.fullName} is still loading before it can become the active city.`
+            : selectedRepoIngestFailed
+                ? connectedRepo
+                    ? `Snapshot failed—retry or reconnect. ${connectedRepo.owner}/${connectedRepo.name} stays active until ${selectedGitHubRepo.fullName} loads successfully.`
+                    : `Snapshot failed—retry or reconnect. ${selectedGitHubRepo.fullName} is not ready to become the active city yet.`
+                : selectedGitHubRepoEligibility?.eligible
+                    ? selectedGitHubRepoIsActive
+                        ? `${selectedGitHubRepo.fullName} is the active translated repo.`
+                        : `${selectedGitHubRepo.fullName} is eligible for repo-city translation in this flow.`
+                    : `${selectedGitHubRepo.fullName} is listed only. ${selectedGitHubRepoEligibility?.menuDetail ?? "This repo can't be translated here yet."}`
         : 'Load the readable repo list without leaving this menu.';
 
     return (

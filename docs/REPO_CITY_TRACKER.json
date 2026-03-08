@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T16:46:04+05:30",
+  "last_updated": "2026-03-08T16:51:09+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -979,21 +979,33 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "Pending-ingest repo action meta — align secondary GitHub repo copy with waiting and failed snapshot states",
+          "summary": [
+            "The repo-city main menu secondary Change GitHub Repo action now checks the selected public repo ingest state before falling back to generic translation-eligibility copy.",
+            "When a selected public repo is still ingesting, the secondary action meta now says 'Waiting for GitHub ingest...' and keeps the current active snapshot context visible instead of implying the pending repo is ready.",
+            "When ingest fails, the same action now shows 'Snapshot failed—retry or reconnect' guidance while leaving repo selection and read-only ingest behavior unchanged."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "not_run — copy-only secondary action meta update with no selector or flow changes"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Pending-ingest repo action meta — align secondary GitHub repo copy with waiting and failed snapshot states",
-    "why": "The primary Enter Repo City CTA now reflects whether the current active snapshot or a pending GitHub snapshot will launch, but the secondary Change GitHub Repo action still describes pending public repos as generically eligible. The next trust slice is to keep that action meta aligned with the same ingesting or failed state already shown elsewhere in the menu.",
+    "title": "Selected-repo auth card status copy — align logged-in GitHub repo summary with active, waiting, and failed snapshot states",
+    "why": "The selected-repo status banner, Enter Repo City CTA, and secondary Change GitHub Repo action now reflect pending-ingest and failed snapshot states, but the smaller logged-in GitHub summary card still falls back to generic selected-repo metadata. The next trust slice is to keep that remaining menu summary aligned with the same active-versus-pending snapshot state.",
     "candidate_files": [
-      "frontend/src/ui/MainMenu.tsx",
-      "frontend/src/ui/selectedRepoStatusCopy.ts"
+      "frontend/src/ui/MainMenu.tsx"
     ],
     "acceptance_criteria": [
-      "When a selected public repo is still ingesting or has failed ingest, the secondary GitHub repo action meta uses waiting or failure copy instead of generic eligibility copy.",
-      "The repo-selection secondary action stays consistent with the selected-repo status banner and the launch CTA about which snapshot is active versus pending.",
-      "Frontend lint and build pass, and browser smoke is run unless the sandbox blocks Wrangler again."
+      "When a selected public repo is still ingesting or has failed ingest, the logged-in GitHub summary card avoids generic selected or eligible wording and instead reflects the actual snapshot state.",
+      "The GitHub auth summary stays consistent with the selected-repo status banner, the launch CTA, and the secondary repo action about which snapshot is active versus pending.",
+      "Frontend lint and build pass."
     ]
   },
   "open_questions": [
