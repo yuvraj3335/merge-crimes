@@ -331,7 +331,7 @@ class RepoCityCycle:
         log = self.log
         log.info("Step 5: Running validation commands")
 
-        cmds = required_validation_commands(self._change_flags)
+        cmds = required_validation_commands(self._change_flags, skip_smoke=self.cfg.skip_smoke)
         self.report.commands_run = list(cmds)
 
         if not cmds:
@@ -452,7 +452,7 @@ class RepoCityCycle:
             self._change_flags = classify_changes(self._changed_files)
             self.report.files_changed = list(self._changed_files)
 
-            cmds = required_validation_commands(self._change_flags)
+            cmds = required_validation_commands(self._change_flags, skip_smoke=self.cfg.skip_smoke)
             self.report.commands_run = list(cmds)
 
             self._validation_results = run_validation_commands(cmds, cfg.repo_root)

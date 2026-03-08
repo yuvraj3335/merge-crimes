@@ -129,8 +129,13 @@ def classify_changes(files: List[str]) -> ChangeFlags:
 # ---------------------------------------------------------------------------
 
 
-def required_validation_commands(flags: ChangeFlags) -> List[str]:
-    """Return ordered list of validation shell commands given *flags*."""
+def required_validation_commands(flags: ChangeFlags, skip_smoke: bool = True) -> List[str]:
+    """Return ordered list of validation shell commands given *flags*.
+
+    skip_smoke=True (default) skips browser:smoke entirely — it requires a
+    running Playwright setup and is very slow.  Set to False only when you
+    have Playwright configured and want to run E2E checks.
+    """
     cmds: List[str] = []
 
     if flags.frontend_changed:
@@ -139,7 +144,7 @@ def required_validation_commands(flags: ChangeFlags) -> List[str]:
     if flags.frontend_materially_changed:
         cmds.append("cd frontend && npm run lint")
 
-    if flags.ui_flow_or_selectors_changed:
+    if flags.ui_flow_or_selectors_changed and not skip_smoke:
         cmds.append("cd frontend && npm run browser:smoke")
 
     if flags.worker_or_shared_contracts_changed:

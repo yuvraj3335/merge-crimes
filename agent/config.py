@@ -36,6 +36,7 @@ class Config:
     codex_extra_args: List[str] = field(default_factory=list)
     skip_git_pull: bool = False
     json_only_report: bool = False
+    skip_smoke: bool = True  # skip browser:smoke by default (slow/requires Playwright)
 
     # -- Derived paths (not settable by env) --
 
@@ -153,6 +154,9 @@ def load_config() -> Config:
     json_only_report = _parse_bool(
         os.environ.get("REPO_CITY_JSON_ONLY_REPORT", "false"), default=False
     )
+    skip_smoke = _parse_bool(
+        os.environ.get("REPO_CITY_SKIP_SMOKE", "true"), default=True
+    )
 
     raw_extra = os.environ.get("REPO_CITY_CODEX_EXTRA_ARGS", "").strip()
     codex_extra_args = raw_extra.split() if raw_extra else []
@@ -172,6 +176,7 @@ def load_config() -> Config:
         codex_extra_args=codex_extra_args,
         skip_git_pull=skip_git_pull,
         json_only_report=json_only_report,
+        skip_smoke=skip_smoke,
     )
 
     if allow_push_main and not dry_run:
