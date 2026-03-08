@@ -81,7 +81,3 @@ npm run seed
 4. Make changes in `frontend/`, `worker/`, or `shared/`.
 5. Run the required validation commands.
 6. Update the tracker with the completed slice and validation results.
-
-## Codex Notes
-
-This repo includes a root `AGENTS.md` so future Codex runs can follow the tracker-first workflow automatically.
