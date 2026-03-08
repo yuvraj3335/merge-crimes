@@ -8,7 +8,12 @@ export function GitHubTrustNotice({ context = 'connect' }: GitHubTrustNoticeProp
     const kicker = context === 'picker' ? 'After GitHub connect' : 'Before GitHub connect';
 
     return (
-        <div className={`github-trust-notice ${context}`.trim()} role="note" aria-label="GitHub access notice">
+        <div
+            className={`github-trust-notice ${context}`.trim()}
+            role="note"
+            aria-label="GitHub access notice"
+            data-testid={`github-trust-notice-${context}`}
+        >
             <div className="github-trust-notice-kicker">{kicker}</div>
             <div className="github-trust-notice-title">Read-only access only</div>
             <p className="github-trust-notice-copy">

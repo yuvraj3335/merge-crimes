@@ -1,9 +1,9 @@
 {
   "project": "merge-crimes-repo-city-pivot",
-  "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T18:25:40+05:30",
+  "status": "phase_7_done",
+  "last_updated": "2026-03-08T18:50:05+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
-  "current_goal": "Phase 7 - Trust, refresh, and polish",
+  "current_goal": "Repo-city pivot complete",
   "source_of_truth": [
     "docs/REPO_CITY_TRACKER.json",
     "docs/REPO_CITY_PRODUCT_VISION.md",
@@ -802,7 +802,8 @@
     },
     {
       "name": "Phase 7 - Trust, refresh, and polish",
-      "status": "in_progress",
+      "status": "done",
+      "completed_at": "2026-03-08T18:50:05+05:30",
       "deliverables": [
         "Refresh/update cycle",
         "Privacy-safe copy",
@@ -1095,27 +1096,25 @@
             "frontend_build": "pass",
             "browser_smoke": "not_run — permanently skipped in this sandbox; no UI flow or selector changes"
           }
+        },
+        {
+          "title": "Frontend-only repo-city smoke harness for trust and refresh states",
+          "summary": [
+            "Local smoke mode now injects a deterministic GitHub-backed repo-city snapshot plus explicit trust and refresh state toggles, so the frontend can programmatically exercise anonymous, listed-only, ingest-error, freshness, and refresh-available paths without a worker.",
+            "Repo-city trust and refresh surfaces now expose stable test selectors and shared refresh-copy helpers, keeping the menu and HUD feedback logic reusable for both runtime UI and harness validation.",
+            "browser:smoke now runs an SSR-backed frontend-only validation flow that checks the trust notice, selected-repo error and eligibility states, snapshot freshness copy, and refresh-available messaging inside this sandbox without Wrangler, browser ports, or a launchable browser binary."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
         }
       ]
     }
   ],
-  "smoke_blocker_status": "PERMANENTLY_SKIPPED — Wrangler cannot write logs outside /Users/yuvrajmuley/Library/Preferences/.wrangler/logs and cannot bind 127.0.0.1 in this sandbox. This has blocked browser:smoke for 8+ consecutive cycles. All future cycles must skip browser:smoke and note this permanently instead of reporting it as 'blocked' each time.",
-  "current_slice_recommendation": {
-    "title": "Frontend-only repo-city smoke harness for trust and refresh states",
-    "why": "Phase 7 still has an unfinished stability and testing deliverable. Browser smoke is permanently skipped in this sandbox, so the trust and refresh surfaces need a deterministic frontend-only harness that can actually run here.",
-    "validity_gate": "This recommendation is functional, not cosmetic. It changes the validation harness so repo-city trust and refresh behavior can be exercised automatically without relying on the blocked worker startup path.",
-    "candidate_files": [
-      "frontend/package.json",
-      "frontend/scripts/browser-smoke.mjs",
-      "frontend/src/localSmokeBridge.ts",
-      "frontend/src/store/gameStore.ts"
-    ],
-    "acceptance_criteria": [
-      "A runnable frontend-only smoke path covers repo-city trust and refresh states without requiring Wrangler, worker bindings, or the blocked browser:smoke environment.",
-      "The harness verifies at least snapshot freshness or provenance and refresh-available UI states using deterministic injected or seeded data.",
-      "The cycle adds executable validation coverage rather than only documenting manual QA steps or changing copy or CSS."
-    ]
-  },
+  "smoke_blocker_status": "RESOLVED — browser:smoke now runs a frontend-only SSR harness that validates trust and refresh states in this sandbox without Wrangler, local ports, or a launchable browser process.",
+  "current_slice_recommendation": null,
   "open_questions": [
     "Should GitHub integration use OAuth first or a GitHub App first?",
     "How much private repo content should ever be inspected?",
@@ -1132,7 +1131,7 @@
     "global_cycle_rule": [
       "Every post-Phase-0 cycle must change at least one non-doc file.",
       "Every post-Phase-0 cycle must run at least one validation command.",
-      "browser:smoke is PERMANENTLY SKIPPED in this environment — do not attempt it, do not report it as blocked. See smoke_blocker_status."
+      "browser:smoke now uses the frontend-only SSR harness in this environment and should run for UI flow or selector changes."
     ],
     "slice_validity_rule": [
       "A slice is INVALID if it ONLY changes UI copy, CSS, or tracker metadata. Invalid slices do not count as progress.",

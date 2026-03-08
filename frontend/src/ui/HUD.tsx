@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import type { GameState } from '../store/gameStore';
 import { SEED_FACTION_BY_ID } from '../../../shared/seed/factions';
 import type { District } from '../../../shared/types';
+import { buildRepoHudRefreshNotice } from './repoRefreshCopy';
 import { type SnapshotSource, useSnapshotFreshnessCopy } from './snapshotFreshness';
 
 const MISSION_TYPE_COLORS: Record<string, string> = {
@@ -95,7 +96,7 @@ const HudSnapshotProvenance = memo(function HudSnapshotProvenance({
     const snapshotFreshness = useSnapshotFreshnessCopy(generatedAt, source);
 
     return (
-        <div className="repo-hud-provenance">
+        <div className="repo-hud-provenance" data-testid="repo-hud-provenance">
             <span className={`repo-hud-provenance-pill ${snapshotFreshness.source}`.trim()}>
                 {snapshotFreshness.sourceLabel}
             </span>
@@ -219,14 +220,7 @@ export const HUD = memo(function HUD() {
     ] as const;
     const snapshotSource: SnapshotSource = connectedRepo?.metadata?.provider === 'github' ? 'github' : 'seeded';
     const repoRefreshNotice = repoCityMode
-        && connectedRepo
-        && connectedRepoRefreshStatus?.hasNewerRemote
-        ? {
-            title: 'Newer snapshot available',
-            detail: connectedRepoRefreshStatus.latestRemoteCommitSha
-                ? `New commits landed on ${connectedRepo.defaultBranch}. Open the menu to refresh this repo snapshot.`
-                : `New commits landed on ${connectedRepo.defaultBranch}. Open the menu to refresh this repo snapshot.`,
-        }
+        ? buildRepoHudRefreshNotice(connectedRepo, connectedRepoRefreshStatus)
         : null;
 
     return (
@@ -276,7 +270,12 @@ export const HUD = memo(function HUD() {
                                     source={snapshotSource}
                                 />
                                 {repoRefreshNotice && (
-                                    <div className="repo-hud-refresh-available" role="status" aria-live="polite">
+                                    <div
+                                        className="repo-hud-refresh-available"
+                                        role="status"
+                                        aria-live="polite"
+                                        data-testid="repo-hud-refresh-available"
+                                    >
                                         <span className="repo-hud-refresh-pill">Refresh available</span>
                                         <span className="repo-hud-refresh-copy">
                                             <strong>{repoRefreshNotice.title}.</strong> {repoRefreshNotice.detail}

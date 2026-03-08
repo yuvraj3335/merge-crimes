@@ -5,6 +5,10 @@ function getLocalSearchParams(): URLSearchParams | null {
         return null;
     }
 
+    if (window.location.protocol === 'file:') {
+        return new URLSearchParams(window.location.search);
+    }
+
     if (!LOCAL_RUNTIME_HOSTS.has(window.location.hostname)) {
         return null;
     }

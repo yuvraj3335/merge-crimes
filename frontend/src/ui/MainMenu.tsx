@@ -16,14 +16,11 @@ import {
     didSelectedGitHubRepoSnapshotIngestFail,
     isSelectedGitHubRepoSnapshotIngesting,
 } from './selectedRepoStatusCopy';
-
-type RepoRefreshTone = 'idle' | 'loading' | 'success' | 'error';
-
-interface RepoRefreshStatus {
-    tone: RepoRefreshTone;
-    message: string | null;
-    repoId: string | null;
-}
+import {
+    buildRepoRefreshIndicatorTone,
+    buildRepoRefreshStatusCopy,
+    type RepoRefreshStatusState,
+} from './repoRefreshCopy';
 
 type GitHubAuthCardTone = 'neutral' | 'active' | 'waiting' | 'failed' | 'listed-only';
 type GitHubAuthCardIcon = 'dot' | 'check' | 'spinner' | 'x' | 'list';
@@ -83,7 +80,10 @@ const MenuSnapshotFreshness = memo(function MenuSnapshotFreshness({
     const snapshotFreshness = useSnapshotFreshnessCopy(generatedAt, source);
 
     return (
-        <div className={`repo-city-menu-freshness ${snapshotFreshness.source}`.trim()}>
+        <div
+            className={`repo-city-menu-freshness ${snapshotFreshness.source}`.trim()}
+            data-testid="menu-snapshot-freshness"
+        >
             <span className={`repo-city-menu-freshness-pill ${snapshotFreshness.source}`.trim()}>
                 {snapshotFreshness.sourceLabel}
             </span>
@@ -125,7 +125,7 @@ export function MainMenu() {
 
     const [showRepoSelector, setShowRepoSelector] = useState(false);
     const [isRefreshingRepo, setIsRefreshingRepo] = useState(false);
-    const [repoRefreshStatus, setRepoRefreshStatus] = useState<RepoRefreshStatus>({
+    const [repoRefreshStatus, setRepoRefreshStatus] = useState<RepoRefreshStatusState>({
         tone: 'idle',
         message: null,
         repoId: null,
@@ -298,40 +298,16 @@ export function MainMenu() {
     const canRefreshConnectedRepo = repoCityMode
         && connectedRepo?.metadata?.provider === 'github'
         && (connectedRepo.visibility === 'public' || Boolean(githubAccessToken));
-    const hasConnectedRepoUpdate = Boolean(connectedRepoRefreshStatus?.hasNewerRemote);
-    const activeRefreshTone = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.tone : 'idle';
-    const activeRefreshMessage = repoRefreshStatus.repoId === connectedRepo?.repoId ? repoRefreshStatus.message : null;
-    const refreshStatusCopy = activeRefreshTone === 'loading'
-        ? {
-              pill: 'Refresh in progress',
-              title: 'Refreshing GitHub metadata',
-              message: activeRefreshMessage ?? 'Pulling a fresh read-only snapshot without leaving this menu.',
-          }
-        : activeRefreshTone === 'success'
-            ? {
-                  pill: 'Snapshot updated',
-                  title: 'Connected repo refreshed',
-                  message: activeRefreshMessage ?? 'A fresh GitHub snapshot is ready in the current session.',
-              }
-            : activeRefreshTone === 'error'
-                ? {
-                      pill: 'Refresh failed',
-                      title: 'Could not refresh this repo',
-                      message: activeRefreshMessage
-                          ?? 'GitHub did not return a fresh snapshot. Try the refresh action again.',
-                  }
-                : {
-                      pill: hasConnectedRepoUpdate ? 'Update detected' : 'Manual refresh',
-                      title: hasConnectedRepoUpdate ? 'Newer snapshot available' : 'Refresh the connected snapshot',
-                      message: hasConnectedRepoUpdate && connectedRepo
-                          ? `GitHub reports newer commits on ${connectedRepo.defaultBranch}. Refresh when you want to load the latest read-only snapshot.`
-                          : 'Pull the latest read-only repo metadata here without changing the current repo.',
-                  };
-    const refreshIndicatorTone = activeRefreshTone !== 'idle'
-        ? activeRefreshTone
-        : hasConnectedRepoUpdate
-            ? 'success'
-            : 'idle';
+    const refreshStatusCopy = buildRepoRefreshStatusCopy(
+        connectedRepo,
+        connectedRepoRefreshStatus,
+        repoRefreshStatus,
+    );
+    const refreshIndicatorTone = buildRepoRefreshIndicatorTone(
+        connectedRepo,
+        connectedRepoRefreshStatus,
+        repoRefreshStatus,
+    );
     const selectedRepoStatusCopy = buildSelectedRepoStatusCopy(
         selectedGitHubRepo,
         selectedGitHubRepoEligibility,
@@ -446,6 +422,7 @@ export function MainMenu() {
                                             className={`repo-connection-feedback ${refreshIndicatorTone === 'idle' ? '' : refreshIndicatorTone}`.trim()}
                                             aria-live="polite"
                                             aria-busy={isRefreshingRepo}
+                                            data-testid="repo-refresh-feedback"
                                         >
                                             <div className="repo-connection-feedback-header">
                                                 <span
@@ -469,6 +446,7 @@ export function MainMenu() {
                             <div
                                 className={`repo-connection-feedback ${selectedRepoStatusCopy.tone}`.trim()}
                                 aria-live="polite"
+                                data-testid="selected-github-repo-status"
                             >
                                 <div className="repo-connection-feedback-layout">
                                     <div
