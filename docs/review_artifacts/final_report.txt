@@ -1,21 +1,21 @@
 Campaign:
 ID:      rc-2026-03-08
-Cycle:   16
+Cycle:   17
 Mode:    apply_fix
 Dry run: False
 
 Mode and slice:
 Mode:        apply_fix
 Workstream:  complexity
-Slice:       Fix: `MainMenu` is an oversized controller component that owns refresh orchestration,
+Slice:       Fix: `App.tsx` is acting as a root controller instead of a thin composition shell. It
 
 Files involved:
   docs/REPO_CITY_REVIEW_TRACKER.json
   docs/review_artifacts/final_report.txt
   docs/review_artifacts/removal_candidates.json
   docs/review_artifacts/summary.json
-  frontend/dist-smoke-ssr/browser-smoke-runner.js
-  frontend/src/ui/MainMenu.tsx
+  frontend/src/App.tsx
+  frontend/src/hooks/
 
 Commands run:
   cd frontend && npm run build
@@ -25,18 +25,18 @@ Findings this cycle:
 New findings: 0
 
 Total finding queue:
-Open findings: 5
-Pending queue: 9 total  (6 review, 3 fix)
+Open findings: 4
+Pending queue: 8 total  (6 review, 2 fix)
 
 Artifacts written:
   /Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/REPO_CITY_REVIEW_TRACKER.json
   /Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/review_artifacts/removal_candidates.json
 
 What is now safer or simpler:
-`BUG_VERIFIED: true`
-`FIX_STATUS: APPLIED`
-`VALIDATION: lint/build/browser:smoke passed`
-`BUILD_NOTE: vite reported the existing large-chunk warning, but the build succeeded.`
+BUG_VERIFIED: true
+FIX_STATUS: APPLIED
+`App.tsx` no longer contains the polling, OAuth, bootstrap, keyboard, or mission-timer effect bodies.
+Frontend validation passed cleanly.
 
 Stop policy decision:
 Continuing — next slice available
@@ -48,12 +48,12 @@ Tracker changes:
    "campaign": {
      "id": "rc-2026-03-08",
      "state": "running",
--    "cycles_run": 15,
-+    "cycles_run": 16,
+-    "cycles_run": 16,
++    "cycles_run": 17,
      "total_findings": 26,
      "total_resolved": 10,
--    "last_updated": "2026-03-08T17:46:54Z"
-+    "last_updated": "2026-03-08T17:50:58Z"
+-    "last_updated": "2026-03-08T17:50:58Z"
++    "last_updated": "2026-03-08T18:02:19Z"
    },
    "workstreams": [
      {
@@ -61,10 +61,10 @@ Tracker changes:
          "worker/src"
        ],
        "description": "Find overly complex functions that should be simplified or split",
--      "last_run_at": "2026-03-08T17:46:54Z",
--      "cycles_assigned": 7,
-+      "last_run_at": "2026-03-08T17:50:58Z",
-+      "cycles_assigned": 8,
+-      "last_run_at": "2026-03-08T17:50:58Z",
+-      "cycles_assigned": 8,
++      "last_run_at": "2026-03-08T18:02:19Z",
++      "cycles_assigned": 9,
        "open_findings_count": 0,
        "findings_open": 10
      },
@@ -72,8 +72,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:46:54Z"
-+      "last_scored_at": "2026-03-08T17:50:58Z"
+-      "last_scored_at": "2026-03-08T17:50:58Z"
++      "last_scored_at": "2026-03-08T18:02:19Z"
      },
      {
        "id": "q-005",
@@ -81,8 +81,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:46:54Z"
-+      "last_scored_at": "2026-03-08T17:50:58Z"
+-      "last_scored_at": "2026-03-08T17:50:58Z"
++      "last_scored_at": "2026-03-08T18:02:19Z"
      },
      {
        "id": "q-006",
@@ -90,8 +90,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": "defer",
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:46:54Z"
-+      "last_scored_at": "2026-03-08T17:50:58Z"
+-      "last_scored_at": "2026-03-08T17:50:58Z"
++      "last_scored_at": "2026-03-08T18:02:19Z"
      },
      {
        "id": "q-007",
@@ -99,8 +99,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:46:54Z"
-+      "last_scored_at": "2026-03-08T17:50:58Z"
+-      "last_scored_at": "2026-03-08T17:50:58Z"
++      "last_scored_at": "2026-03-08T18:02:19Z"
      },
      {
        "id": "q-008",
@@ -108,8 +108,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:46:54Z"
-+      "last_scored_at": "2026-03-08T17:50:58Z"
+-      "last_scored_at": "2026-03-08T17:50:58Z"
++      "last_scored_at": "2026-03-08T18:02:19Z"
      },
      {
        "id": "q-009",

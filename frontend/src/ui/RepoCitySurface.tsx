@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
+import {
+    deriveGuidancePresentation,
+    deriveTransitPresentation,
+    resolveFocusedDistrict,
+} from '../../../shared/repoCityPresenter';
 import { useGameStore } from '../store/gameStore';
-import { measure2DPathDistance } from '../utils/pathDistance';
 import { getHeatLabel } from './heatLabel';
 
 interface SurfaceBounds {
@@ -44,11 +48,6 @@ function computeSurfaceBounds(city: NonNullable<ReturnType<typeof useGameStore.g
         width: Math.max(1, maxX - minX + padding * 2),
         height: Math.max(1, maxY - minY + padding * 2),
     };
-}
-
-function formatDistance(distance: number): string {
-    if (distance < 10) return `${distance.toFixed(1)}m`;
-    return `${Math.round(distance)}m`;
 }
 
 function getMissionCountLabel(count: number): string {
@@ -106,82 +105,39 @@ export function RepoCitySurface() {
     const mapX = (x: number) => x - bounds.minX;
     const mapY = (y: number) => bounds.maxY - y;
     const canSelectDistricts = phase === 'playing' && !activeMission;
-    const currentSurfaceDistrict = currentDistrict
-        ? generatedCity.districts.find((district) => district.id === currentDistrict.id) ?? null
-        : null;
-    const currentMissionDistrict = activeMission
-        ? generatedCity.districts.find((district) => district.id === activeMission.districtId) ?? null
-        : null;
-    const transitDistrict = repoCityTransit
-        ? generatedCity.districts.find((district) => district.id === repoCityTransit.districtId) ?? null
-        : null;
-    const hoveredDistrict = hoveredDistrictId
-        ? generatedCity.districts.find((district) => district.id === hoveredDistrictId) ?? null
-        : null;
-    const focusedDistrict = transitDistrict ?? hoveredDistrict ?? currentSurfaceDistrict ?? currentMissionDistrict;
-    const statusDistrict = transitDistrict ?? currentSurfaceDistrict ?? null;
+    const {
+        currentMissionDistrict,
+        currentSurfaceDistrict,
+        focusedDistrict,
+        hoveredDistrict,
+        statusDistrict,
+        transitGeneratedDistrict: transitDistrict,
+    } = resolveFocusedDistrict({
+        generatedDistricts: generatedCity.districts,
+        currentDistrict,
+        missionDistrictId: activeMission?.districtId ?? null,
+        hoveredDistrictId,
+        transit: repoCityTransit,
+    });
     const focusedDistrictMissionCount = focusedDistrict
         ? availableMissionCounts.get(focusedDistrict.id) ?? 0
         : 0;
-    const playerPathStart = { x: playerPosition[0], y: playerPosition[2] };
-    const transitPathPoints = repoCityTransit
-        ? repoCityTransit.pathPoints.slice(repoCityTransit.pathIndex).map((point) => ({ x: point[0], y: point[2] }))
-        : [];
-    const guidanceTarget = activeWaypoint
-        ? {
-            pathPoints: [{
-                x: activeWaypoint.position[0],
-                y: activeWaypoint.position[2],
-            }],
-            color: '#ffd95f',
-            label: activeWaypoint.label,
-            distance: measure2DPathDistance([
-                playerPathStart,
-                {
-                    x: activeWaypoint.position[0],
-                    y: activeWaypoint.position[2],
-                },
-            ]),
-        }
-        : transitDistrict
-            ? {
-                pathPoints: transitPathPoints.length > 0
-                    ? transitPathPoints
-                    : [{
-                        x: transitDistrict.position.x,
-                        y: transitDistrict.position.y,
-                    }],
-                color: transitDistrict.emissive,
-                label: transitDistrict.name,
-                distance: measure2DPathDistance([
-                    playerPathStart,
-                    ...(transitPathPoints.length > 0
-                        ? transitPathPoints
-                        : [{
-                            x: transitDistrict.position.x,
-                            y: transitDistrict.position.y,
-                        }]),
-                ]),
-            }
-            : canSelectDistricts && hoveredDistrict
-            ? {
-                pathPoints: [{
-                    x: hoveredDistrict.position.x,
-                    y: hoveredDistrict.position.y,
-                }],
-                color: hoveredDistrict.emissive,
-                label: hoveredDistrict.name,
-                distance: measure2DPathDistance([
-                    playerPathStart,
-                    {
-                        x: hoveredDistrict.position.x,
-                        y: hoveredDistrict.position.y,
-                    },
-                ]),
-            }
-            : null;
+    const transitPresentation = deriveTransitPresentation({
+        playerPosition,
+        currentDistrict,
+        transit: repoCityTransit,
+        transitGeneratedDistrict: transitDistrict,
+    });
+    const guidanceTarget = deriveGuidancePresentation({
+        playerPosition,
+        activeWaypoint,
+        canSelectDistricts,
+        hoveredDistrict,
+        transitDistrict,
+        transitPresentation,
+    });
     const focusLabel = transitDistrict
-        ? `${transitDistrict.name} · ${repoCityTransit?.mode === 'roads' ? 'road-guided transit' : 'transit queued'}`
+        ? `${transitDistrict.name} · ${transitPresentation?.routeMode === 'roads' ? 'road-guided transit' : 'transit queued'}`
         : focusedDistrict
             ? `${focusedDistrict.name} · ${focusedDistrictMissionCount > 0
             ? getMissionCountLabel(focusedDistrictMissionCount)
@@ -191,8 +147,8 @@ export function RepoCitySurface() {
                 : 'Transit lanes';
     const guidanceLabel = guidanceTarget
         ? transitDistrict && !activeWaypoint
-            ? `${repoCityTransit?.mode === 'roads' ? 'Road transit to' : 'Transit to'} ${guidanceTarget.label} · ${formatDistance(guidanceTarget.distance)}`
-            : `${guidanceTarget.label} · ${formatDistance(guidanceTarget.distance)}`
+            ? `${transitPresentation?.routeMode === 'roads' ? 'Road transit to' : 'Transit to'} ${guidanceTarget.label} · ${guidanceTarget.distanceLabel}`
+            : `${guidanceTarget.label} · ${guidanceTarget.distanceLabel}`
         : activeMission
             ? currentMissionDistrict?.name ?? 'No active mission'
             : 'Hover or click a district to enter';

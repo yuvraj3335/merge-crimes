@@ -2,10 +2,13 @@ import { memo, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 import type { GameState } from '../store/gameStore';
+import {
+    deriveTransitPresentation,
+    resolveFocusedDistrict,
+} from '../../../shared/repoCityPresenter';
 import { SEED_FACTION_BY_ID } from '../../../shared/seed/factions';
 import type { District } from '../../../shared/types';
 import { getWaypointDistanceAndText } from '../game/waypointUtils';
-import { measure2DPathDistance } from '../utils/pathDistance';
 import { getHeatLabel } from './heatLabel';
 import { buildRepoHudRefreshNotice } from './repoRefreshCopy';
 import { type SnapshotSource, useSnapshotFreshnessCopy } from './snapshotFreshness';
@@ -23,11 +26,6 @@ function getHeatColor(heat: number): string {
     if (heat < 60) return '#ffff00';
     if (heat < 80) return '#ff6b35';
     return '#ff0044';
-}
-
-function formatTransitDistance(distance: number): string {
-    if (distance < 10) return `${distance.toFixed(1)}m`;
-    return `${Math.round(distance)}m`;
 }
 
 const selectHudState = (state: GameState) => ({
@@ -161,45 +159,45 @@ function RepoCityHUD({ hudState }: HudModeProps) {
         ? `${currentWp ? currentWaypointIndex + 1 : totalWaypoints}/${totalWaypoints}`
         : null;
     const missionCueLabel = currentWp?.label ?? 'All route steps complete';
-    const transitGeneratedDistrict = repoCityTransit && generatedCity
-        ? generatedCity.districts.find((district) => district.id === repoCityTransit.districtId) ?? null
-        : null;
-    const transitDistrict = repoCityTransit
-        ? districts.find((district) => district.id === repoCityTransit.districtId) ?? currentDistrict
-        : null;
-    const scopedDistrict = transitDistrict ?? currentDistrict;
+    const {
+        scopedGameplayDistrict: scopedDistrict,
+        transitGeneratedDistrict,
+        transitGameplayDistrict,
+    } = resolveFocusedDistrict({
+        generatedDistricts: generatedCity?.districts ?? [],
+        gameplayDistricts: districts,
+        currentDistrict,
+        missionDistrictId: activeMission?.districtId ?? null,
+        transit: repoCityTransit,
+    });
+    const transitPresentation = deriveTransitPresentation({
+        playerPosition,
+        currentDistrict,
+        transit: repoCityTransit,
+        transitGeneratedDistrict,
+        transitGameplayDistrict,
+    });
     const currentRoom = scopedDistrict ? districtRooms[scopedDistrict.id] : undefined;
     const currentCapture = scopedDistrict ? captureProgress[scopedDistrict.id] : undefined;
     const districtStatusLabel = scopedDistrict ? getHeatLabel(scopedDistrict.heatLevel) : 'idle';
     const districtShellTitle = scopedDistrict?.name ?? 'No district selected';
-    const districtShellSubtitle = repoCityTransit
+    const districtShellSubtitle = transitPresentation
         ? 'Queued destination status preview'
         : activeMission
             ? 'Mission routing active on the surface'
             : scopedDistrict
                 ? 'Current district status'
                 : 'Select a district on the map';
-    const remainingTransitPath = repoCityTransit
-        ? [
-            ...repoCityTransit.pathPoints.slice(repoCityTransit.pathIndex),
-            repoCityTransit.targetPosition,
-        ].map((point) => ({ x: point[0], y: point[2] }))
-        : [];
-    const transitStatus = repoCityTransit
+    const transitStatus = transitPresentation
         ? {
-            destination: transitDistrict?.name ?? currentDistrict?.name ?? 'Selected district',
-            routeLabel: repoCityTransit.mode === 'roads' ? 'Road-guided transit' : 'Direct transit',
-            routeDetail: repoCityTransit.mode === 'roads'
+            destination: transitPresentation.destination,
+            routeLabel: transitPresentation.routeMode === 'roads' ? 'Road-guided transit' : 'Direct transit',
+            routeDetail: transitPresentation.routeMode === 'roads'
                 ? 'Following generated routes to the district edge'
                 : 'Cross-city approach with a straight entry line',
-            distanceLabel: formatTransitDistance(measure2DPathDistance([
-                { x: playerPosition[0], y: playerPosition[2] },
-                ...remainingTransitPath,
-            ])),
-            arrivalLabel: transitGeneratedDistrict
-                ? `Approaching ${transitGeneratedDistrict.category} district`
-                : 'Arrival will update district context',
-            routeClassName: repoCityTransit.mode === 'roads' ? 'roads' : 'direct',
+            distanceLabel: transitPresentation.distanceLabel,
+            arrivalLabel: transitPresentation.arrivalLabel,
+            routeClassName: transitPresentation.routeMode === 'roads' ? 'roads' : 'direct',
         }
         : null;
     const repoCityStats = [
