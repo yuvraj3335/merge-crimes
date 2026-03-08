@@ -9,6 +9,7 @@ import { SEED_DISTRICTS } from '../../shared/seed/districts';
 import { REPO_FIXTURES } from '../../shared/seed/repoFixtures';
 import { generateCityFromRepo, generatedCityToDistricts, generatedCityToMissions, generatedCityToConflicts } from '../../shared/repoCityGenerator';
 import type { GitHubRepoMetadataSnapshot, RepoLanguage } from '../../shared/repoModel';
+import { attachTopLevelRepoModules, type RepoTopLevelTreeEntry } from '../../shared/repoTopLevelModules';
 
 // ─── Types ───
 type Bindings = {
@@ -86,6 +87,15 @@ interface GitHubRepoResponse {
 }
 
 type GitHubRepoLanguagesResponse = Record<string, number>;
+
+interface GitHubRepoContentEntry {
+    name: string;
+    path: string;
+    type: 'file' | 'dir' | 'symlink' | 'submodule';
+    size?: number;
+}
+
+type GitHubRepoContentsResponse = GitHubRepoContentEntry | GitHubRepoContentEntry[];
 
 interface GitHubApiErrorResponse {
     message?: string;
@@ -257,6 +267,23 @@ function normalizeGitHubLanguages(payload: GitHubRepoLanguagesResponse): RepoLan
             bytes,
             share: totalBytes > 0 ? bytes / totalBytes : 0,
         }));
+}
+
+function normalizeGitHubTopLevelEntries(payload: GitHubRepoContentsResponse): RepoTopLevelTreeEntry[] {
+    const entries = Array.isArray(payload) ? payload : [payload];
+
+    return entries.flatMap((entry) => {
+        if (entry.type !== 'dir' && entry.type !== 'file') {
+            return [];
+        }
+
+        return [{
+            name: entry.name,
+            path: entry.path,
+            type: entry.type === 'dir' ? 'directory' : 'file',
+            size: entry.size ?? 0,
+        }];
+    });
 }
 
 function normalizeGitHubRepoSnapshot(
@@ -870,7 +897,11 @@ app.get('/api/github/repo-metadata', async (c) => {
         }, repoResponse.status === 404 ? 404 : 502);
     }
 
-    const languagesResponse = await fetchGitHubJson<GitHubRepoLanguagesResponse>(`https://api.github.com/repos/${repoPath}/languages`);
+    const [languagesResponse, contentsResponse] = await Promise.all([
+        fetchGitHubJson<GitHubRepoLanguagesResponse>(`https://api.github.com/repos/${repoPath}/languages`),
+        fetchGitHubJson<GitHubRepoContentsResponse>(`https://api.github.com/repos/${repoPath}/contents`),
+    ]);
+
     if (!languagesResponse.ok) {
         return c.json({
             error: 'github_repo_languages_fetch_failed',
@@ -880,7 +911,10 @@ app.get('/api/github/repo-metadata', async (c) => {
         }, 502);
     }
 
-    return c.json(normalizeGitHubRepoSnapshot(repoResponse.data, languagesResponse.data));
+    const snapshot = normalizeGitHubRepoSnapshot(repoResponse.data, languagesResponse.data);
+    const topLevelEntries = contentsResponse.ok ? normalizeGitHubTopLevelEntries(contentsResponse.data) : [];
+
+    return c.json(attachTopLevelRepoModules(snapshot, topLevelEntries));
 });
 
 // ─── Anonymous Write Session ───

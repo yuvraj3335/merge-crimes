@@ -27,10 +27,13 @@ export type RepoModuleKind =
   | 'docs'
   | 'control';
 
+export type RepoModuleType = 'directory' | 'file';
+
 export interface RepoModule {
   id: string;
   name: string;
   path: string;
+  type?: RepoModuleType;
   kind: RepoModuleKind;
   language: string | null;
   fileCount: number;
