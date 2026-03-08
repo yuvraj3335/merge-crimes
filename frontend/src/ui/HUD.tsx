@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
+import type { GameState } from '../store/gameStore';
 import { SEED_FACTION_BY_ID } from '../../../shared/seed/factions';
 import type { District } from '../../../shared/types';
 import { buildSnapshotFreshnessCopy } from './snapshotFreshness';
@@ -43,6 +45,30 @@ function formatTransitDistance(distance: number): string {
     return `${Math.round(distance)}m`;
 }
 
+const selectHudState = (state: GameState) => ({
+    phase: state.phase,
+    credits: state.credits,
+    reputation: state.reputation,
+    currentDistrict: state.currentDistrict,
+    activeMission: state.activeMission,
+    missionTimer: state.missionTimer,
+    showMissionPanel: state.showMissionPanel,
+    setShowMissionPanel: state.setShowMissionPanel,
+    showLeaderboard: state.showLeaderboard,
+    setShowLeaderboard: state.setShowLeaderboard,
+    showBulletin: state.showBulletin,
+    setShowBulletin: state.setShowBulletin,
+    playerPosition: state.playerPosition,
+    districts: state.districts,
+    currentWaypointIndex: state.currentWaypointIndex,
+    captureProgress: state.captureProgress,
+    districtRooms: state.districtRooms,
+    repoCityMode: state.repoCityMode,
+    connectedRepo: state.connectedRepo,
+    generatedCity: state.generatedCity,
+    repoCityTransit: state.repoCityTransit,
+});
+
 export function HUD() {
     const {
         phase,
@@ -66,7 +92,7 @@ export function HUD() {
         connectedRepo,
         generatedCity,
         repoCityTransit,
-    } = useGameStore();
+    } = useGameStore(useShallow(selectHudState));
     const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
     const hideHud = phase === 'menu' || phase === 'boss';
 

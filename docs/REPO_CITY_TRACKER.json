@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T15:53:52+05:30",
+  "last_updated": "2026-03-08T15:58:44+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -875,22 +875,28 @@
             "frontend_build": "pass",
             "browser_smoke": "not_run — explicitly skipped per cycle instruction; browser:smoke was forbidden and this slice only changed HUD copy"
           }
+        },
+        {
+          "title": "Repo-city HUD selector narrowing — reduce play-screen rerenders from broad store subscriptions",
+          "summary": [
+            "The city play-screen HUD now reads only the store fields it actually renders instead of subscribing to the entire game store object on every update.",
+            "The narrowed selector is wrapped with Zustand shallow comparison so unrelated store updates no longer force HUD rerenders while movement, mission, district, and transit state stay live.",
+            "The slice stays isolated to the HUD subscription path and does not change store logic, map behavior, mission flow, or HUD presentation."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Repo-city HUD selector narrowing — reduce play-screen rerenders from broad store subscriptions",
-    "why": "Phase 7 still needs a bounded performance pass, and the HUD currently subscribes to a wide slice of store state while the city is running. The next smallest meaningful polish slice is to narrow those subscriptions so movement-heavy play does less unnecessary HUD rerender work without changing visible behavior.",
-    "candidate_files": [
-      "frontend/src/ui/HUD.tsx"
-    ],
-    "acceptance_criteria": [
-      "Repo-city HUD no longer relies on one broad store subscription for unrelated play state",
-      "Credits, reputation, repo identity, transit status, district status, and mission HUD content remain visually unchanged",
-      "The slice does not add new UI or alter mission, movement, or refresh flows",
-      "cd frontend && npm run lint and cd frontend && npm run build pass"
-    ]
+    "title": "tbd",
+    "why": "Phase 7 remains in progress, but the next bounded polish slice should be chosen from a concrete measured hotspot instead of guessing after this HUD-only performance pass.",
+    "candidate_files": [],
+    "acceptance_criteria": []
   },
   "open_questions": [
     "Should GitHub integration use OAuth first or a GitHub App first?",
