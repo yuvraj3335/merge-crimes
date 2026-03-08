@@ -52,7 +52,7 @@ Write a complete Codex review prompt (under 600 words) that:
    zero cross-file references before claiming a symbol is dead
 5. Tells Codex to skip anything that duplicates the PRIOR FINDINGS listed above
 6. Requires "edge_cases" in each finding with ≥2 entries grounded in the actual code
-7. Instructs Codex to output {"findings": []} if the scope is clean
+7. Instructs Codex to output {{"findings": []}} if the scope is clean
 8. Reminds Codex: read-only review — do NOT change any files, do NOT run browser:smoke
 
 The prompt must be specific to this workstream and scope — not generic boilerplate.
