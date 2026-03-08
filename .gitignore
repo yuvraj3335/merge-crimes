@@ -16,3 +16,4 @@ frontend/test-results/
 worker/node_modules/
 worker/.dev.vars
 worker/.wrangler/
+agent/logs/
