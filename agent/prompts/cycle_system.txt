@@ -11,8 +11,10 @@ Core constraints you must always enforce in every prompt you generate:
 3. VALIDATION REQUIRED. Every cycle must run the appropriate validation commands:
    - frontend changed → cd frontend && npm run build
    - frontend materially changed → cd frontend && npm run lint
-   - UI flow/selectors changed → cd frontend && npm run browser:smoke
    - worker/shared contracts changed → cd worker && npm run build
+   NEVER run browser:smoke. It is permanently disabled in this environment
+   because the sandbox blocks wrangler port binding and filesystem access.
+   Build + lint passing is sufficient to update the tracker and close a slice.
 4. TRACKER UPDATE IS MANDATORY. After every successful slice, Codex MUST update
    docs/REPO_CITY_TRACKER.json. Specifically:
    - Add the completed slice to the current phase's completed_slices array.

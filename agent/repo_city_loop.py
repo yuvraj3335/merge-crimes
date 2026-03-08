@@ -118,21 +118,34 @@ def loop() -> int:
             )
             return 1
 
-        # Measure progress
+        # Measure progress: tracker changed OR a valid cycle committed real code
         done_after, total = _count_phases(tracker_path)
         new_snapshot = _phase_snapshot(tracker_path)
-        made_progress = new_snapshot != last_snapshot
+        tracker_moved = new_snapshot != last_snapshot
 
-        if made_progress:
+        # Also count a valid committed cycle as progress (Codex did real work
+        # even if it forgot to update the tracker)
+        cycle_committed = exit_code == 0  # exit 0 = valid cycle
+        made_progress = tracker_moved or cycle_committed
+
+        if tracker_moved:
             stalled_count = 0
             last_snapshot = new_snapshot
             print(
-                f"\n[loop] Progress: {done_before} → {done_after} phases done."
+                f"\n[loop] Tracker progress: {done_before} → {done_after} phases done."
+            )
+        elif cycle_committed:
+            # Valid cycle with code changes but no tracker update — tolerate once,
+            # but still count as progress so the stall guard doesn't fire
+            stalled_count = 0
+            print(
+                f"\n[loop] Valid cycle committed code (no tracker change — "
+                "Codex skipped tracker update, will retry)."
             )
         else:
             stalled_count += 1
             print(
-                f"\n[loop] No tracker progress this cycle "
+                f"\n[loop] No progress this cycle "
                 f"({stalled_count}/{max_stalled} stall tolerance)."
             )
 

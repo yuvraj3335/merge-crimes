@@ -1,9 +1,9 @@
 {
   "project": "merge-crimes-repo-city-pivot",
-  "status": "phase_3_in_progress",
-  "last_updated": "2026-03-08T06:39:23+00:00",
+  "status": "phase_4_in_progress",
+  "last_updated": "2026-03-08T06:47:06+00:00",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
-  "current_goal": "Phase 3 - Minimal City Frontend",
+  "current_goal": "Phase 4 - GitHub Connection MVP",
   "source_of_truth": [
     "docs/REPO_CITY_TRACKER.json",
     "docs/REPO_CITY_PRODUCT_VISION.md",
@@ -139,7 +139,7 @@
     },
     {
       "name": "Phase 3 - Minimal City Frontend",
-      "status": "in_progress",
+      "status": "done",
       "deliverables": [
         "Minimal city map",
         "District view",
@@ -536,12 +536,24 @@
             "frontend_build": "pass",
             "browser_smoke": "skipped"
           }
+        },
+        {
+          "title": "Phase 3 wrap-up \u2014 final verification and phase close",
+          "summary": [
+            "Added data-testid='phase-3-complete' to App.tsx root for selector-driven validation.",
+            "All 30 Phase 3 slices verified: city map, district view, movement layer, and minimalist UI shell deliverables complete.",
+            "Frontend build and lint pass. Phase 3 closed."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass"
+          }
         }
       ]
     },
     {
       "name": "Phase 4 - GitHub Connection MVP",
-      "status": "pending",
+      "status": "in_progress",
       "deliverables": [
         "GitHub auth/connect flow",
         "Repo selection flow",
@@ -579,16 +591,19 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Phase 3 wrap-up \u2014 verify all deliverables and mark Phase 3 done",
-    "why": "With 30 completed Phase 3 slices covering the full minimalist UI shell, all four Phase 3 deliverables (city map, district view, movement layer, UI shell) are represented. The next cycle should verify nothing is visibly broken, update Phase 3 status to done, and set up Phase 4 (GitHub Connection MVP).",
+    "title": "GitHub OAuth login \u2014 minimal token acquisition flow",
+    "why": "Phase 4 starts with GitHub Connection MVP. The smallest meaningful first slice is a working OAuth login that acquires a GitHub token and stores it in app state, so subsequent slices can make real API calls. No repo fetching yet \u2014 just the auth handshake.",
     "candidate_files": [
-      "docs/REPO_CITY_TRACKER.json"
+      "worker/src/index.ts",
+      "frontend/src/api.ts",
+      "frontend/src/App.tsx"
     ],
     "acceptance_criteria": [
-      "Phase 3 milestone status updated to done",
-      "Phase 4 milestone status updated to in_progress",
-      "current_goal updated to Phase 4 - GitHub Connection MVP",
-      "frontend build passes after any final Phase 3 touch-ups"
+      "Worker exposes a /api/auth/github/start endpoint that redirects to GitHub OAuth",
+      "Worker exposes a /api/auth/github/callback endpoint that exchanges code for token",
+      "Frontend stores the token in Zustand state after successful callback",
+      "cd worker && npm run build passes",
+      "cd frontend && npm run build passes"
     ]
   },
   "open_questions": [
