@@ -155,7 +155,7 @@ function App() {
   }, [phase, activeMission, missionTimer, setMissionTimer, failMission]);
 
   return (
-    <div className="game-container">
+    <div className="game-container" data-testid="phase-3-complete">
       {/* 3D Canvas */}
       <div className="canvas-wrapper">
         <Canvas
