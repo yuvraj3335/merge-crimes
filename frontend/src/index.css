@@ -2595,6 +2595,58 @@ body,
   text-transform: capitalize;
 }
 
+.repo-city-menu-freshness {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.repo-city-menu-freshness-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(214, 224, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 246, 255, 0.88);
+}
+
+.repo-city-menu-freshness-pill.github {
+  border-color: rgba(138, 221, 255, 0.24);
+  background: rgba(138, 221, 255, 0.12);
+  color: rgba(138, 221, 255, 0.96);
+}
+
+.repo-city-menu-freshness-pill.seeded {
+  border-color: rgba(255, 214, 148, 0.24);
+  background: rgba(255, 214, 148, 0.1);
+  color: rgba(255, 214, 148, 0.96);
+}
+
+.repo-city-menu-freshness-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.repo-city-menu-freshness-primary {
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(242, 246, 255, 0.9);
+}
+
+.repo-city-menu-freshness-detail {
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(182, 193, 226, 0.76);
+}
+
 .repo-city-menu-repo-actions {
   display: grid;
   gap: 8px;
@@ -3845,6 +3897,14 @@ body,
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: rgba(149, 234, 180, 0.88);
+}
+
+.repo-city-badge.github {
+  color: rgba(138, 221, 255, 0.92);
+}
+
+.repo-city-badge.seeded {
+  color: rgba(255, 214, 148, 0.92);
 }
 
 .repo-city-summary-title {

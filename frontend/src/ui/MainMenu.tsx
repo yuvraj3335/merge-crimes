@@ -7,11 +7,98 @@ import { GitHubRepoPicker } from './GitHubRepoPicker';
 import { RepoPrivacyNotice } from './RepoPrivacyNotice';
 
 type RepoRefreshTone = 'idle' | 'loading' | 'success' | 'error';
+type SnapshotSource = 'github' | 'seeded';
 
 interface RepoRefreshStatus {
     tone: RepoRefreshTone;
     message: string | null;
     repoId: string | null;
+}
+
+interface SnapshotFreshnessCopy {
+    badge: string;
+    detail: string | null;
+    primary: string;
+    source: SnapshotSource;
+    sourceLabel: string;
+}
+
+const SNAPSHOT_DETAIL_FORMATTER = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+});
+const SNAPSHOT_RELATIVE_FORMATTER = new Intl.RelativeTimeFormat(undefined, {
+    numeric: 'auto',
+});
+
+function formatSnapshotAge(timestampMs: number, nowMs: number): string {
+    const diffMs = nowMs - timestampMs;
+    const absoluteDiffMs = Math.abs(diffMs);
+    const minuteMs = 60_000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+
+    if (absoluteDiffMs < 45_000) {
+        return 'just now';
+    }
+
+    if (diffMs < 0) {
+        return absoluteDiffMs < 5 * minuteMs ? 'just now' : 'recently';
+    }
+
+    if (absoluteDiffMs < hourMs) {
+        return SNAPSHOT_RELATIVE_FORMATTER.format(-Math.round(diffMs / minuteMs), 'minute');
+    }
+
+    if (absoluteDiffMs < dayMs) {
+        return SNAPSHOT_RELATIVE_FORMATTER.format(-Math.round(diffMs / hourMs), 'hour');
+    }
+
+    return SNAPSHOT_RELATIVE_FORMATTER.format(-Math.round(diffMs / dayMs), 'day');
+}
+
+function buildSnapshotFreshnessCopy(
+    generatedAt: string | null | undefined,
+    source: SnapshotSource,
+    nowMs: number,
+): SnapshotFreshnessCopy {
+    const sourceLabel = source === 'github' ? 'GitHub snapshot' : 'Seeded fixture';
+    const fallbackPrimary = source === 'github'
+        ? 'GitHub snapshot time unavailable'
+        : 'Seeded fixture time unavailable';
+
+    if (!generatedAt) {
+        return {
+            badge: source === 'github' ? 'GitHub snapshot ready' : 'Seeded fixture ready',
+            detail: null,
+            primary: fallbackPrimary,
+            source,
+            sourceLabel,
+        };
+    }
+
+    const timestamp = new Date(generatedAt);
+    if (Number.isNaN(timestamp.getTime())) {
+        return {
+            badge: source === 'github' ? 'GitHub snapshot ready' : 'Seeded fixture ready',
+            detail: null,
+            primary: fallbackPrimary,
+            source,
+            sourceLabel,
+        };
+    }
+
+    const ageCopy = formatSnapshotAge(timestamp.getTime(), nowMs);
+
+    return {
+        badge: source === 'github' ? 'GitHub snapshot ready' : 'Seeded fixture ready',
+        detail: SNAPSHOT_DETAIL_FORMATTER.format(timestamp),
+        primary: source === 'github'
+            ? `GitHub data refreshed ${ageCopy}`
+            : `Seeded fixture snapshot dated ${ageCopy}`,
+        source,
+        sourceLabel,
+    };
 }
 
 export function MainMenu() {
@@ -32,6 +119,7 @@ export function MainMenu() {
 
     const [showRepoSelector, setShowRepoSelector] = useState(false);
     const [isRefreshingRepo, setIsRefreshingRepo] = useState(false);
+    const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
     const [repoRefreshStatus, setRepoRefreshStatus] = useState<RepoRefreshStatus>({
         tone: 'idle',
         message: null,
@@ -42,6 +130,20 @@ export function MainMenu() {
     useEffect(() => () => {
         refreshControllerRef.current?.abort();
     }, []);
+
+    useEffect(() => {
+        if (phase !== 'menu' || !repoCityMode || !connectedRepo) {
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            setFreshnessNow(Date.now());
+        }, 30_000);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [connectedRepo, phase, repoCityMode]);
 
     if (phase !== 'menu') return null;
 
@@ -134,6 +236,13 @@ export function MainMenu() {
     const selectorHint = repoCityMode
         ? 'Choose a repo snapshot to translate into districts, routes, and threat signals.'
         : 'The repo inspires the city — districts, missions, and threats are generated from its structure.';
+    const snapshotFreshness = connectedRepo
+        ? buildSnapshotFreshnessCopy(
+            connectedRepo.generatedAt,
+            connectedRepo.metadata?.provider === 'github' ? 'github' : 'seeded',
+            freshnessNow,
+        )
+        : null;
     const startMeta = generatedCity
         ? `${generatedCity.districts.length} districts · ${generatedCity.missions.length} routes ready`
         : 'Repo city translation ready';
@@ -214,6 +323,28 @@ export function MainMenu() {
                                 <div className="repo-city-menu-repo-meta">
                                     {connectedRepo.defaultBranch} · {connectedRepo.visibility}
                                 </div>
+                                {snapshotFreshness && (
+                                    <div className={`repo-city-menu-freshness ${snapshotFreshness.source}`.trim()}>
+                                        <span
+                                            className={`repo-city-menu-freshness-pill ${snapshotFreshness.source}`.trim()}
+                                        >
+                                            {snapshotFreshness.sourceLabel}
+                                        </span>
+                                        <div className="repo-city-menu-freshness-copy">
+                                            <span className="repo-city-menu-freshness-primary">
+                                                {snapshotFreshness.primary}
+                                            </span>
+                                            {snapshotFreshness.detail && (
+                                                <time
+                                                    className="repo-city-menu-freshness-detail"
+                                                    dateTime={connectedRepo.generatedAt}
+                                                >
+                                                    {snapshotFreshness.detail}
+                                                </time>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                                 {canRefreshConnectedRepo && (
                                     <div className="repo-city-menu-repo-actions">
                                         <button
@@ -258,7 +389,9 @@ export function MainMenu() {
                         <div className="repo-city-summary repo-city">
                             <div className="repo-city-summary-header">
                                 <div className="repo-city-summary-copy">
-                                    <div className="repo-city-badge">City snapshot ready</div>
+                                    <div className={`repo-city-badge ${snapshotFreshness?.source ?? ''}`.trim()}>
+                                        {snapshotFreshness?.badge ?? 'City snapshot ready'}
+                                    </div>
                                     <div className="repo-city-summary-title">
                                         {generatedCity.repoOwner}/{generatedCity.repoName}
                                     </div>
