@@ -82,6 +82,285 @@ function getGitHubRepoTranslationEligibility(visibility2) {
     menuDetail: "This repo can't be translated in the current read-only flow."
   };
 }
+const DEFAULT_HUB_PRIORITY = {
+  package: 0,
+  infra: 1,
+  control: 1,
+  folder: 2,
+  tests: 2,
+  service: 4,
+  app: 4,
+  docs: 5
+};
+const HUB_PRIORITY_BY_ARCHETYPE = {
+  frontend: {
+    package: 0,
+    tests: 1,
+    folder: 2,
+    app: 3,
+    infra: 4,
+    control: 4,
+    docs: 5,
+    service: 5
+  },
+  backend: {
+    package: 0,
+    folder: 1,
+    tests: 2,
+    infra: 2,
+    control: 2,
+    service: 4,
+    app: 5,
+    docs: 5
+  },
+  library: {
+    package: 0,
+    tests: 1,
+    infra: 2,
+    control: 2,
+    docs: 3,
+    folder: 3,
+    service: 4,
+    app: 4
+  },
+  fullstack: {
+    package: 0,
+    infra: 1,
+    control: 1,
+    folder: 2,
+    tests: 2,
+    service: 4,
+    app: 4,
+    docs: 5
+  },
+  monorepo: {
+    package: -1,
+    infra: 0,
+    control: 0,
+    folder: 2,
+    tests: 1,
+    service: 5,
+    app: 6,
+    docs: 7
+  },
+  unknown: {}
+};
+const ARCHETYPE_LAYOUT_SLOTS = {
+  frontend: [
+    { x: 0, y: 0 },
+    { x: -34, y: -24 },
+    { x: 34, y: -24 },
+    { x: 0, y: -62 },
+    { x: -66, y: 0 },
+    { x: 66, y: 0 },
+    { x: 0, y: 60 },
+    { x: -66, y: 48 },
+    { x: 66, y: 48 },
+    { x: 0, y: 96 }
+  ],
+  backend: [
+    { x: 0, y: 0 },
+    { x: 0, y: -34 },
+    { x: -42, y: -18 },
+    { x: 42, y: -18 },
+    { x: 0, y: -68 },
+    { x: -68, y: 8 },
+    { x: 68, y: 8 },
+    { x: -42, y: 52 },
+    { x: 42, y: 52 },
+    { x: 0, y: 96 }
+  ],
+  library: [
+    { x: 0, y: 0 },
+    { x: 44, y: -18 },
+    { x: 44, y: 18 },
+    { x: -50, y: 0 },
+    { x: 0, y: 52 },
+    { x: -18, y: -48 },
+    { x: 72, y: 0 },
+    { x: -52, y: 48 },
+    { x: 52, y: 54 },
+    { x: 0, y: 88 }
+  ],
+  fullstack: [
+    { x: 0, y: 0 },
+    { x: -36, y: -24 },
+    { x: 36, y: -24 },
+    { x: 0, y: -64 },
+    { x: 68, y: 0 },
+    { x: -68, y: 0 },
+    { x: 0, y: 64 },
+    { x: 68, y: 50 },
+    { x: -68, y: 50 },
+    { x: 0, y: 100 }
+  ],
+  monorepo: [
+    { x: 0, y: 0 },
+    { x: -32, y: -22 },
+    { x: 32, y: -22 },
+    { x: 0, y: 34 },
+    { x: -72, y: -10 },
+    { x: 72, y: -10 },
+    { x: -72, y: 42 },
+    { x: 72, y: 42 },
+    { x: 0, y: 78 },
+    { x: 0, y: -74 }
+  ],
+  unknown: []
+};
+function getLanguageShare(repo, names) {
+  const languageNames = new Set(names.map((name2) => name2.toLowerCase()));
+  return repo.languages.reduce((sum, language) => languageNames.has(language.name.toLowerCase()) ? sum + language.share : sum, 0);
+}
+function classifyRepoArchetype(repo) {
+  const modulesText = repo.modules.map((mod) => `${mod.name} ${mod.path}`.toLowerCase()).join(" ");
+  const hasTextHint = (...hints) => hints.some((hint) => modulesText.includes(hint));
+  const hasAppsRoot = hasTextHint("apps/");
+  const hasPackagesRoot = hasTextHint("packages/");
+  const hasServicesRoot = hasTextHint("services/");
+  const hasWorkspaceConfig = hasTextHint("pnpm-workspace", "turbo.json", "nx.json", "workspace");
+  const hasBackendHints = hasTextHint("api/", "server/", "routes/", "controllers/", "db/", "migrations/");
+  const hasFrontendRoots = hasTextHint("frontend/", "public/", "components/", "pages/", "web/", "client/");
+  const hasFrontendSurfaceHints = hasTextHint("ui/", "stories/", "storybook", "styles/", "assets/", "icons/");
+  const appCount = repo.modules.filter((mod) => mod.kind === "app").length;
+  const serviceCount = repo.modules.filter((mod) => mod.kind === "service").length;
+  const packageCount = repo.modules.filter((mod) => mod.kind === "package").length;
+  const testsCount = repo.modules.filter((mod) => mod.kind === "tests").length;
+  const frontendLanguageShare = getLanguageShare(
+    repo,
+    ["TypeScript", "JavaScript", "TSX", "JSX", "CSS", "HTML", "SCSS", "Sass", "Less", "MDX", "Vue", "Svelte"]
+  );
+  const frontendMarkupShare = getLanguageShare(
+    repo,
+    ["CSS", "HTML", "SCSS", "Sass", "Less", "MDX", "Vue", "Svelte"]
+  );
+  const looksFrontendByLanguage = frontendLanguageShare >= 0.68 && frontendMarkupShare >= 0.18 && (hasFrontendRoots || hasFrontendSurfaceHints);
+  const workspaceRootCount = [hasAppsRoot, hasPackagesRoot, hasServicesRoot].filter(Boolean).length;
+  if (workspaceRootCount >= 2 || hasWorkspaceConfig || packageCount >= 3 && repo.modules.length >= 5) {
+    return "monorepo";
+  }
+  if (appCount > 0 && serviceCount > 0) {
+    return "fullstack";
+  }
+  if (serviceCount > 0 || hasBackendHints) {
+    return "backend";
+  }
+  if (appCount > 0 || hasFrontendRoots || looksFrontendByLanguage) {
+    return "frontend";
+  }
+  if (packageCount > 0 && testsCount > 0 && repo.modules.length <= 4 && frontendMarkupShare < 0.18) {
+    return "library";
+  }
+  return repo.archetype;
+}
+function computeConnectivityScores(repo) {
+  const scores = new Map(repo.modules.map((mod) => [mod.id, 0]));
+  repo.dependencyEdges.forEach((edge) => {
+    scores.set(edge.fromModuleId, (scores.get(edge.fromModuleId) ?? 0) + edge.weight);
+    scores.set(edge.toModuleId, (scores.get(edge.toModuleId) ?? 0) + edge.weight * 0.85);
+  });
+  return scores;
+}
+function getHubPriority(mod, archetype2) {
+  const override = HUB_PRIORITY_BY_ARCHETYPE[archetype2][mod.kind];
+  return override ?? DEFAULT_HUB_PRIORITY[mod.kind];
+}
+function orderModulesForLayout(modules2, archetype2, connectivityScores) {
+  return [...modules2].sort((a, b) => {
+    const aScore = getHubPriority(a, archetype2) - (connectivityScores.get(a.id) ?? 0) * 1.1 - a.importanceScore / 140 + (a.kind === "app" || a.kind === "service" ? a.riskScore / 180 : 0);
+    const bScore = getHubPriority(b, archetype2) - (connectivityScores.get(b.id) ?? 0) * 1.1 - b.importanceScore / 140 + (b.kind === "app" || b.kind === "service" ? b.riskScore / 180 : 0);
+    return aScore - bScore || b.importanceScore - a.importanceScore || a.name.localeCompare(b.name);
+  });
+}
+function computeLayoutPositions(archetype2, count) {
+  if (count <= 1) {
+    return [{ x: 0, y: 0 }];
+  }
+  const template = ARCHETYPE_LAYOUT_SLOTS[archetype2];
+  if (template.length >= count) {
+    return template.slice(0, count);
+  }
+  const positions = [];
+  const spacing = 55;
+  if (count <= 4) {
+    const cols = 2;
+    for (let index = 0; index < count; index += 1) {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      positions.push({
+        x: (col - (cols - 1) / 2) * spacing,
+        y: (row - Math.floor((count - 1) / cols / 2)) * spacing
+      });
+    }
+    return positions;
+  }
+  positions.push({ x: 0, y: 0 });
+  const outerCount = count - 1;
+  const angleStep = 2 * Math.PI / outerCount;
+  const radius = spacing * 1.1;
+  for (let index = 0; index < outerCount; index += 1) {
+    const angle = angleStep * index - Math.PI / 2;
+    positions.push({
+      x: Math.round(Math.cos(angle) * radius),
+      y: Math.round(Math.sin(angle) * radius)
+    });
+  }
+  return positions;
+}
+function planDistrictLayout(modules2, archetype2, connectivityScores) {
+  const sortedModules = [...modules2].sort((a, b) => b.importanceScore - a.importanceScore);
+  const activeModules = orderModulesForLayout(
+    sortedModules.slice(0, 10),
+    archetype2,
+    connectivityScores
+  );
+  return {
+    activeModules,
+    positions: computeLayoutPositions(archetype2, activeModules.length)
+  };
+}
+function clamp$1(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+function calculateRepoModuleBaseHeat(module) {
+  return clamp$1(Math.round(module.riskScore * 0.35 + module.activityScore * 0.18), 0, 100);
+}
+const MODULE_NAME_ALIASES = {
+  src: "Source",
+  ui: "UI",
+  "ui-kit": "UI Kit",
+  api: "API",
+  db: "Data",
+  ci: "CI",
+  docs: "Docs",
+  e2e: "E2E",
+  infra: "Infra",
+  frontend: "Frontend",
+  worker: "Worker",
+  shared: "Shared",
+  tests: "Tests",
+  examples: "Examples",
+  migrations: "Migrations",
+  web: "Web",
+  auth: "Auth",
+  admin: "Admin",
+  workspace: "Workspace"
+};
+function humanizeModuleName(name2) {
+  const key = name2.toLowerCase();
+  const alias = MODULE_NAME_ALIASES[key];
+  if (alias) {
+    return alias;
+  }
+  return key.split(/[^a-z0-9]+/g).filter(Boolean).map((part) => part.length <= 2 ? part.toUpperCase() : `${part.charAt(0).toUpperCase()}${part.slice(1)}`).join(" ");
+}
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+function makeId(prefix, ...parts) {
+  const slug = parts.map((part) => part.toLowerCase().replace(/[^a-z0-9]+/g, "-")).join("-");
+  return `${prefix}-${slug}`;
+}
 const REPO_SIGNAL_TYPES = [
   "failing_workflow",
   "open_issue",
@@ -411,197 +690,6 @@ function buildBossMissionRouteCopy(districtLabel, threatType, botArchetype, esca
     ]
   };
 }
-function clamp$1(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-function calculateRepoModuleBaseHeat(module) {
-  return clamp$1(Math.round(module.riskScore * 0.35 + module.activityScore * 0.18), 0, 100);
-}
-const KIND_TO_CATEGORY = {
-  app: "interface",
-  package: "shared",
-  service: "service",
-  folder: "data",
-  infra: "ops",
-  tests: "validation",
-  docs: "archive",
-  control: "control"
-};
-const KIND_TO_LABEL_PREFIX = {
-  app: "Interface Quarter",
-  package: "Shared Core",
-  service: "Service Hub",
-  folder: "Data Sector",
-  infra: "Control Tower",
-  tests: "Validation Ring",
-  docs: "Archive Sector",
-  control: "Command Center"
-};
-const MODULE_NAME_ALIASES = {
-  src: "Source",
-  ui: "UI",
-  "ui-kit": "UI Kit",
-  api: "API",
-  db: "Data",
-  ci: "CI",
-  docs: "Docs",
-  e2e: "E2E",
-  infra: "Infra",
-  frontend: "Frontend",
-  worker: "Worker",
-  shared: "Shared",
-  tests: "Tests",
-  examples: "Examples",
-  migrations: "Migrations",
-  web: "Web",
-  auth: "Auth",
-  admin: "Admin",
-  workspace: "Workspace"
-};
-const DEFAULT_HUB_PRIORITY = {
-  package: 0,
-  infra: 1,
-  control: 1,
-  folder: 2,
-  tests: 2,
-  service: 4,
-  app: 4,
-  docs: 5
-};
-const HUB_PRIORITY_BY_ARCHETYPE = {
-  frontend: {
-    package: 0,
-    tests: 1,
-    folder: 2,
-    app: 3,
-    infra: 4,
-    control: 4,
-    docs: 5,
-    service: 5
-  },
-  backend: {
-    package: 0,
-    folder: 1,
-    tests: 2,
-    infra: 2,
-    control: 2,
-    service: 4,
-    app: 5,
-    docs: 5
-  },
-  library: {
-    package: 0,
-    tests: 1,
-    infra: 2,
-    control: 2,
-    docs: 3,
-    folder: 3,
-    service: 4,
-    app: 4
-  },
-  fullstack: {
-    package: 0,
-    infra: 1,
-    control: 1,
-    folder: 2,
-    tests: 2,
-    service: 4,
-    app: 4,
-    docs: 5
-  },
-  monorepo: {
-    package: -1,
-    infra: 0,
-    control: 0,
-    folder: 2,
-    tests: 1,
-    service: 5,
-    app: 6,
-    docs: 7
-  },
-  unknown: {}
-};
-const ARCHETYPE_LAYOUT_SLOTS = {
-  frontend: [
-    { x: 0, y: 0 },
-    { x: -34, y: -24 },
-    { x: 34, y: -24 },
-    { x: 0, y: -62 },
-    { x: -66, y: 0 },
-    { x: 66, y: 0 },
-    { x: 0, y: 60 },
-    { x: -66, y: 48 },
-    { x: 66, y: 48 },
-    { x: 0, y: 96 }
-  ],
-  backend: [
-    { x: 0, y: 0 },
-    { x: 0, y: -34 },
-    { x: -42, y: -18 },
-    { x: 42, y: -18 },
-    { x: 0, y: -68 },
-    { x: -68, y: 8 },
-    { x: 68, y: 8 },
-    { x: -42, y: 52 },
-    { x: 42, y: 52 },
-    { x: 0, y: 96 }
-  ],
-  library: [
-    { x: 0, y: 0 },
-    { x: 44, y: -18 },
-    { x: 44, y: 18 },
-    { x: -50, y: 0 },
-    { x: 0, y: 52 },
-    { x: -18, y: -48 },
-    { x: 72, y: 0 },
-    { x: -52, y: 48 },
-    { x: 52, y: 54 },
-    { x: 0, y: 88 }
-  ],
-  fullstack: [
-    { x: 0, y: 0 },
-    { x: -36, y: -24 },
-    { x: 36, y: -24 },
-    { x: 0, y: -64 },
-    { x: 68, y: 0 },
-    { x: -68, y: 0 },
-    { x: 0, y: 64 },
-    { x: 68, y: 50 },
-    { x: -68, y: 50 },
-    { x: 0, y: 100 }
-  ],
-  monorepo: [
-    { x: 0, y: 0 },
-    { x: -32, y: -22 },
-    { x: 32, y: -22 },
-    { x: 0, y: 34 },
-    { x: -72, y: -10 },
-    { x: 72, y: -10 },
-    { x: -72, y: 42 },
-    { x: 72, y: 42 },
-    { x: 0, y: 78 },
-    { x: 0, y: -74 }
-  ],
-  unknown: []
-};
-const DISTRICT_COLORS = [
-  { color: "#61DAFB", emissive: "#00BFFF" },
-  { color: "#FF6B35", emissive: "#FF4500" },
-  { color: "#FFD43B", emissive: "#FFD700" },
-  { color: "#00ADD8", emissive: "#00CED1" },
-  { color: "#3178C6", emissive: "#4169E1" },
-  { color: "#A855F7", emissive: "#9333EA" },
-  { color: "#10B981", emissive: "#059669" },
-  { color: "#F43F5E", emissive: "#E11D48" },
-  { color: "#8B5CF6", emissive: "#7C3AED" },
-  { color: "#F59E0B", emissive: "#D97706" }
-];
-const ROAD_STYLE_BY_REASON = {
-  import: { color: "#0f172a", emissive: "#38bdf8", baseWidth: 2.6 },
-  package_dependency: { color: "#111827", emissive: "#f59e0b", baseWidth: 3.2 },
-  service_link: { color: "#1f2937", emissive: "#f97316", baseWidth: 3.8 },
-  folder_reference: { color: "#0b1120", emissive: "#8b5cf6", baseWidth: 2.2 }
-};
 const SIGNAL_MISSION_TEMPLATES = {
   failing_workflow: {
     titlePrefix: "Defend",
@@ -709,15 +797,6 @@ const SIGNAL_TO_BOT_PROFILE = {
     names: ["Dependency Drifter", "Version Leech", "Outdated Package Phantom"]
   }
 };
-function getMissionTemplate(signalType) {
-  return SIGNAL_MISSION_TEMPLATES[signalType] ?? null;
-}
-function getBotProfile(signalType) {
-  return SIGNAL_TO_BOT_PROFILE[signalType] ?? DEFAULT_BOT_PROFILE;
-}
-function isActionableSignal(signal) {
-  return signal.severity > 0 && getMissionTemplate(signal.type) !== null;
-}
 const HIGH_SEVERITY_BOSS_THRESHOLD = 4;
 const SIGNAL_MISSION_COPY = {
   failing_workflow: {
@@ -781,6 +860,15 @@ const SIGNAL_MISSION_COPY = {
     objectiveVerb: "Trace"
   }
 };
+function getMissionTemplate(signalType) {
+  return SIGNAL_MISSION_TEMPLATES[signalType] ?? null;
+}
+function getBotProfile(signalType) {
+  return SIGNAL_TO_BOT_PROFILE[signalType] ?? DEFAULT_BOT_PROFILE;
+}
+function isActionableSignal(signal) {
+  return signal.severity > 0 && getMissionTemplate(signal.type) !== null;
+}
 function pluralizeLabel(count, singular, plural) {
   return count === 1 ? singular : plural;
 }
@@ -968,114 +1056,41 @@ function generateSignalDrivenBots(repo, districts, signals2) {
     };
   });
 }
-function humanizeModuleName(name2) {
-  const key = name2.toLowerCase();
-  const alias = MODULE_NAME_ALIASES[key];
-  if (alias) {
-    return alias;
-  }
-  return key.split(/[^a-z0-9]+/g).filter(Boolean).map((part) => part.length <= 2 ? part.toUpperCase() : `${part.charAt(0).toUpperCase()}${part.slice(1)}`).join(" ");
-}
+const KIND_TO_CATEGORY = {
+  app: "interface",
+  package: "shared",
+  service: "service",
+  folder: "data",
+  infra: "ops",
+  tests: "validation",
+  docs: "archive",
+  control: "control"
+};
+const KIND_TO_LABEL_PREFIX = {
+  app: "Interface Quarter",
+  package: "Shared Core",
+  service: "Service Hub",
+  folder: "Data Sector",
+  infra: "Control Tower",
+  tests: "Validation Ring",
+  docs: "Archive Sector",
+  control: "Command Center"
+};
+const DISTRICT_COLORS = [
+  { color: "#61DAFB", emissive: "#00BFFF" },
+  { color: "#FF6B35", emissive: "#FF4500" },
+  { color: "#FFD43B", emissive: "#FFD700" },
+  { color: "#00ADD8", emissive: "#00CED1" },
+  { color: "#3178C6", emissive: "#4169E1" },
+  { color: "#A855F7", emissive: "#9333EA" },
+  { color: "#10B981", emissive: "#059669" },
+  { color: "#F43F5E", emissive: "#E11D48" },
+  { color: "#8B5CF6", emissive: "#7C3AED" },
+  { color: "#F59E0B", emissive: "#D97706" }
+];
 function moduleMatchesHints(mod, hints) {
   const haystack = `${mod.name} ${mod.path}`.toLowerCase();
   return hints.some((hint) => haystack.includes(hint));
-}
-function getLanguageShare(repo, names) {
-  const languageNames = new Set(names.map((name2) => name2.toLowerCase()));
-  return repo.languages.reduce((sum, language) => languageNames.has(language.name.toLowerCase()) ? sum + language.share : sum, 0);
-}
-function classifyRepoArchetype(repo) {
-  const modulesText = repo.modules.map((mod) => `${mod.name} ${mod.path}`.toLowerCase()).join(" ");
-  const hasTextHint = (...hints) => hints.some((hint) => modulesText.includes(hint));
-  const hasAppsRoot = hasTextHint("apps/");
-  const hasPackagesRoot = hasTextHint("packages/");
-  const hasServicesRoot = hasTextHint("services/");
-  const hasWorkspaceConfig = hasTextHint("pnpm-workspace", "turbo.json", "nx.json", "workspace");
-  const hasBackendHints = hasTextHint("api/", "server/", "routes/", "controllers/", "db/", "migrations/");
-  const hasFrontendRoots = hasTextHint("frontend/", "public/", "components/", "pages/", "web/", "client/");
-  const hasFrontendSurfaceHints = hasTextHint("ui/", "stories/", "storybook", "styles/", "assets/", "icons/");
-  const appCount = repo.modules.filter((mod) => mod.kind === "app").length;
-  const serviceCount = repo.modules.filter((mod) => mod.kind === "service").length;
-  const packageCount = repo.modules.filter((mod) => mod.kind === "package").length;
-  const testsCount = repo.modules.filter((mod) => mod.kind === "tests").length;
-  const frontendLanguageShare = getLanguageShare(
-    repo,
-    ["TypeScript", "JavaScript", "TSX", "JSX", "CSS", "HTML", "SCSS", "Sass", "Less", "MDX", "Vue", "Svelte"]
-  );
-  const frontendMarkupShare = getLanguageShare(
-    repo,
-    ["CSS", "HTML", "SCSS", "Sass", "Less", "MDX", "Vue", "Svelte"]
-  );
-  const looksFrontendByLanguage = frontendLanguageShare >= 0.68 && frontendMarkupShare >= 0.18 && (hasFrontendRoots || hasFrontendSurfaceHints);
-  const workspaceRootCount = [hasAppsRoot, hasPackagesRoot, hasServicesRoot].filter(Boolean).length;
-  if (workspaceRootCount >= 2 || hasWorkspaceConfig || packageCount >= 3 && repo.modules.length >= 5) {
-    return "monorepo";
-  }
-  if (appCount > 0 && serviceCount > 0) {
-    return "fullstack";
-  }
-  if (serviceCount > 0 || hasBackendHints) {
-    return "backend";
-  }
-  if (appCount > 0 || hasFrontendRoots || looksFrontendByLanguage) {
-    return "frontend";
-  }
-  if (packageCount > 0 && testsCount > 0 && repo.modules.length <= 4 && frontendMarkupShare < 0.18) {
-    return "library";
-  }
-  return repo.archetype;
-}
-function computeConnectivityScores(repo) {
-  const scores = new Map(repo.modules.map((mod) => [mod.id, 0]));
-  repo.dependencyEdges.forEach((edge) => {
-    scores.set(edge.fromModuleId, (scores.get(edge.fromModuleId) ?? 0) + edge.weight);
-    scores.set(edge.toModuleId, (scores.get(edge.toModuleId) ?? 0) + edge.weight * 0.85);
-  });
-  return scores;
-}
-function getHubPriority(mod, archetype2) {
-  const override = HUB_PRIORITY_BY_ARCHETYPE[archetype2][mod.kind];
-  return override ?? DEFAULT_HUB_PRIORITY[mod.kind];
-}
-function orderModulesForLayout(modules2, archetype2, connectivityScores) {
-  return [...modules2].sort((a, b) => {
-    const aScore = getHubPriority(a, archetype2) - (connectivityScores.get(a.id) ?? 0) * 1.1 - a.importanceScore / 140 + (a.kind === "app" || a.kind === "service" ? a.riskScore / 180 : 0);
-    const bScore = getHubPriority(b, archetype2) - (connectivityScores.get(b.id) ?? 0) * 1.1 - b.importanceScore / 140 + (b.kind === "app" || b.kind === "service" ? b.riskScore / 180 : 0);
-    return aScore - bScore || b.importanceScore - a.importanceScore || a.name.localeCompare(b.name);
-  });
-}
-function computeLayoutPositions(archetype2, count) {
-  if (count <= 1) return [{ x: 0, y: 0 }];
-  const template = ARCHETYPE_LAYOUT_SLOTS[archetype2];
-  if (template.length >= count) {
-    return template.slice(0, count);
-  }
-  const positions = [];
-  const spacing = 55;
-  if (count <= 4) {
-    const cols = 2;
-    for (let i = 0; i < count; i++) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      positions.push({
-        x: (col - (cols - 1) / 2) * spacing,
-        y: (row - Math.floor((count - 1) / cols / 2)) * spacing
-      });
-    }
-    return positions;
-  }
-  positions.push({ x: 0, y: 0 });
-  const outerCount = count - 1;
-  const angleStep = 2 * Math.PI / outerCount;
-  const radius = spacing * 1.1;
-  for (let i = 0; i < outerCount; i++) {
-    const angle = angleStep * i - Math.PI / 2;
-    positions.push({
-      x: Math.round(Math.cos(angle) * radius),
-      y: Math.round(Math.sin(angle) * radius)
-    });
-  }
-  return positions;
 }
 function computeFootprint(mod, connectivityScore, archetype2) {
   const base = archetype2 === "library" ? 24 : archetype2 === "monorepo" ? 30 : 28;
@@ -1091,14 +1106,11 @@ function computeFootprint(mod, connectivityScore, archetype2) {
     height: Math.round(width * heightScale)
   };
 }
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
 function deriveHeat(mod, signals2) {
   if (typeof mod.heatScore === "number") {
     return clamp(Math.round(mod.heatScore), 0, 100);
   }
-  const signalHeat = signals2.filter((s) => s.target === mod.id && isActionableSignal(s)).reduce((sum, s) => sum + s.severity * 12, 0);
+  const signalHeat = signals2.filter((signal) => signal.target === mod.id && isActionableSignal(signal)).reduce((sum, signal) => sum + signal.severity * 12, 0);
   return clamp(Math.round(calculateRepoModuleBaseHeat(mod) + signalHeat), 0, 100);
 }
 function generateBuildings(mod) {
@@ -1187,6 +1199,35 @@ function buildDistrictDescription(repo, mod, archetype2, connectivityScore) {
   const districtRole = connectivityScore >= 1.5 ? "core junction" : mod.kind === "app" || mod.kind === "service" ? "frontline district" : "support district";
   return `${humanizeModuleName(mod.name)} is the ${districtRole} for ${repo.owner}/${repo.name} (${archetype2}) — ${mod.path}`;
 }
+function buildGeneratedDistricts(repo, activeModules, archetype2, positions, connectivityScores) {
+  const maxFileCount = Math.max(1, ...activeModules.map((mod) => mod.fileCount));
+  return activeModules.map((mod, index) => {
+    const connectivityScore = connectivityScores.get(mod.id) ?? 0;
+    const palette = DISTRICT_COLORS[index % DISTRICT_COLORS.length];
+    return {
+      id: makeId("dist", repo.repoId, mod.id),
+      moduleId: mod.id,
+      name: humanizeModuleName(mod.name),
+      label: buildDistrictLabel(mod, archetype2),
+      description: buildDistrictDescription(repo, mod, archetype2, connectivityScore),
+      category: KIND_TO_CATEGORY[mod.kind] ?? "shared",
+      color: palette.color,
+      emissive: palette.emissive,
+      sizeScore: Math.round(mod.fileCount / maxFileCount * 100),
+      heatLevel: deriveHeat(mod, repo.signals),
+      riskLevel: mod.riskScore,
+      position: positions[index] ?? { x: 0, y: 0 },
+      footprint: computeFootprint(mod, connectivityScore, archetype2),
+      buildings: generateBuildings(mod)
+    };
+  });
+}
+const ROAD_STYLE_BY_REASON = {
+  import: { color: "#0f172a", emissive: "#38bdf8", baseWidth: 2.6 },
+  package_dependency: { color: "#111827", emissive: "#f59e0b", baseWidth: 3.2 },
+  service_link: { color: "#1f2937", emissive: "#f97316", baseWidth: 3.8 },
+  folder_reference: { color: "#0b1120", emissive: "#8b5cf6", baseWidth: 2.2 }
+};
 function projectRoadAnchor(district, dx, dy) {
   const outwardX = dx === 0 ? 1 : Math.sign(dx);
   const outwardY = dy === 0 ? 1 : Math.sign(dy);
@@ -1277,66 +1318,6 @@ function generateRoads(repo, districts, archetype2) {
     };
   }).filter((road) => road !== null);
 }
-function makeId(prefix, ...parts) {
-  const slug = parts.map((p) => p.toLowerCase().replace(/[^a-z0-9]+/g, "-")).join("-");
-  return `${prefix}-${slug}`;
-}
-function generateCityFromRepo(repo) {
-  const archetype2 = classifyRepoArchetype(repo);
-  const connectivityScores = computeConnectivityScores(repo);
-  const sortedModules = [...repo.modules].sort(
-    (a, b) => b.importanceScore - a.importanceScore
-  );
-  const activeModules = orderModulesForLayout(
-    sortedModules.slice(0, 10),
-    archetype2,
-    connectivityScores
-  );
-  const positions = computeLayoutPositions(archetype2, activeModules.length);
-  const maxFileCount = Math.max(1, ...activeModules.map((mod) => mod.fileCount));
-  const districts = activeModules.map((mod, idx) => {
-    const connectivityScore = connectivityScores.get(mod.id) ?? 0;
-    const category = KIND_TO_CATEGORY[mod.kind] ?? "shared";
-    const label = buildDistrictLabel(mod, archetype2);
-    const palette = DISTRICT_COLORS[idx % DISTRICT_COLORS.length];
-    const heat = deriveHeat(mod, repo.signals);
-    const footprint = computeFootprint(mod, connectivityScore, archetype2);
-    const buildings = generateBuildings(mod);
-    return {
-      id: makeId("dist", repo.repoId, mod.id),
-      moduleId: mod.id,
-      name: humanizeModuleName(mod.name),
-      label,
-      description: buildDistrictDescription(repo, mod, archetype2, connectivityScore),
-      category,
-      color: palette.color,
-      emissive: palette.emissive,
-      sizeScore: Math.round(
-        mod.fileCount / maxFileCount * 100
-      ),
-      heatLevel: heat,
-      riskLevel: mod.riskScore,
-      position: positions[idx],
-      footprint,
-      buildings
-    };
-  });
-  const roads = generateRoads(repo, districts, archetype2);
-  const actionableSignals = repo.signals.filter(isActionableSignal);
-  const missions = generateSignalDrivenMissions(repo, districts, actionableSignals);
-  const bots = generateSignalDrivenBots(repo, districts, actionableSignals);
-  return {
-    repoId: repo.repoId,
-    repoName: repo.name,
-    repoOwner: repo.owner,
-    archetype: archetype2,
-    districts,
-    roads,
-    missions,
-    bots,
-    generatedAt: (/* @__PURE__ */ new Date()).toISOString()
-  };
-}
 const ARCHETYPE_FACTIONS = {
   interface: "chrome-syndicate",
   service: "node-mafia",
@@ -1348,75 +1329,75 @@ const ARCHETYPE_FACTIONS = {
   control: "go-yakuza"
 };
 function generatedCityToDistricts(city) {
-  return city.districts.map((gd) => ({
-    id: gd.id,
-    name: gd.label,
-    description: gd.description,
-    color: gd.color,
-    emissive: gd.emissive,
-    position: [gd.position.x, gd.position.y],
-    size: [gd.footprint.width, gd.footprint.height],
-    faction: ARCHETYPE_FACTIONS[gd.category] ?? "unaligned",
-    heatLevel: gd.heatLevel,
+  return city.districts.map((district) => ({
+    id: district.id,
+    name: district.label,
+    description: district.description,
+    color: district.color,
+    emissive: district.emissive,
+    position: [district.position.x, district.position.y],
+    size: [district.footprint.width, district.footprint.height],
+    faction: ARCHETYPE_FACTIONS[district.category] ?? "unaligned",
+    heatLevel: district.heatLevel,
     repoSource: {
       owner: city.repoOwner,
       repo: city.repoName,
-      language: gd.category,
+      language: district.category,
       stars: 0,
-      openIssues: city.missions.filter((m) => m.districtId === gd.id).length,
+      openIssues: city.missions.filter((mission) => mission.districtId === district.id).length,
       lastActivity: city.generatedAt
     },
-    missionIds: city.missions.filter((m) => m.districtId === gd.id).map((m) => m.id)
+    missionIds: city.missions.filter((mission) => mission.districtId === district.id).map((mission) => mission.id)
   }));
 }
 function generatedCityToMissions(city) {
-  return city.missions.map((gm) => {
-    const district = city.districts.find((d) => d.id === gm.districtId);
+  return city.missions.map((mission) => {
+    const district = city.districts.find((candidate) => candidate.id === mission.districtId);
     const pos = district?.position ?? { x: 0, y: 0 };
     return {
-      id: gm.id,
-      title: gm.title,
-      description: gm.description,
-      type: gm.type,
-      districtId: gm.districtId,
-      difficulty: gm.difficulty,
-      timeLimit: gm.type === "boss" ? 60 : 45,
-      reward: gm.difficulty * 100,
-      factionReward: gm.difficulty * 8,
+      id: mission.id,
+      title: mission.title,
+      description: mission.description,
+      type: mission.type,
+      districtId: mission.districtId,
+      difficulty: mission.difficulty,
+      timeLimit: mission.type === "boss" ? 60 : 45,
+      reward: mission.difficulty * 100,
+      factionReward: mission.difficulty * 8,
       status: "available",
-      objectives: gm.objectives,
-      waypoints: gm.objectives.map((obj, i) => ({
-        id: `${gm.id}-wp-${i}`,
-        label: obj,
+      objectives: mission.objectives,
+      waypoints: mission.objectives.map((objective, index) => ({
+        id: `${mission.id}-wp-${index}`,
+        label: objective,
         position: [
-          pos.x + (i - 1) * 8,
+          pos.x + (index - 1) * 8,
           0.5,
-          pos.y + (i - 1) * 5
+          pos.y + (index - 1) * 5
         ],
         radius: 4,
-        order: i
+        order: index
       }))
     };
   });
 }
 function generatedCityToConflicts(city) {
-  const bossMissions = city.missions.filter((m) => m.type === "boss");
-  return bossMissions.map((bm) => {
-    const bot = city.bots.find((b) => b.districtId === bm.districtId && b.sourceSignalType === bm.sourceSignalType) ?? city.bots.find((b) => b.districtId === bm.districtId);
-    const district = city.districts.find((d) => d.id === bm.districtId);
-    const districtLabel = district?.label ?? district?.name ?? bm.districtId;
-    const battleTemplate = getBattleTemplate(bm.sourceSignalType, bot?.archetype ?? "saboteur");
+  const bossMissions = city.missions.filter((mission) => mission.type === "boss");
+  return bossMissions.map((mission) => {
+    const bot = city.bots.find((candidate) => candidate.districtId === mission.districtId && candidate.sourceSignalType === mission.sourceSignalType) ?? city.bots.find((candidate) => candidate.districtId === mission.districtId);
+    const district = city.districts.find((candidate) => candidate.id === mission.districtId);
+    const districtLabel = district?.label ?? district?.name ?? mission.districtId;
+    const battleTemplate = getBattleTemplate(mission.sourceSignalType, bot?.archetype ?? "saboteur");
     const primaryMechanic = battleTemplate.mechanicHints[0];
     const firstPhase = battleTemplate.phases[0];
     const finalPhase = battleTemplate.phases[battleTemplate.phases.length - 1];
     return {
-      id: `conflict-${bm.id}`,
+      id: `conflict-${mission.id}`,
       title: `${battleTemplate.encounterName} at ${districtLabel}`,
       description: `${battleTemplate.summary} ${battleTemplate.copy.intro}`,
-      difficulty: bm.difficulty,
+      difficulty: mission.difficulty,
       timeLimit: 30,
-      districtId: bm.districtId,
-      reward: bm.difficulty * 150,
+      districtId: mission.districtId,
+      reward: mission.difficulty * 150,
       hunks: [
         {
           id: 1,
@@ -1447,6 +1428,27 @@ lockRoute(route);
       correctOrder: [3]
     };
   });
+}
+function generateCityFromRepo(repo) {
+  const archetype2 = classifyRepoArchetype(repo);
+  const connectivityScores = computeConnectivityScores(repo);
+  const { activeModules, positions } = planDistrictLayout(repo.modules, archetype2, connectivityScores);
+  const districts = buildGeneratedDistricts(repo, activeModules, archetype2, positions, connectivityScores);
+  const roads = generateRoads(repo, districts, archetype2);
+  const actionableSignals = repo.signals.filter(isActionableSignal);
+  const missions = generateSignalDrivenMissions(repo, districts, actionableSignals);
+  const bots = generateSignalDrivenBots(repo, districts, actionableSignals);
+  return {
+    repoId: repo.repoId,
+    repoName: repo.name,
+    repoOwner: repo.owner,
+    archetype: archetype2,
+    districts,
+    roads,
+    missions,
+    bots,
+    generatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
 }
 const SEED_FACTIONS = [
   { id: "chrome-syndicate", name: "Chrome Syndicate", color: "#61DAFB", motto: "We render the future.", score: 2400, districtsControlled: 1 },
@@ -2385,42 +2387,9 @@ function measure2DPathDistance(points) {
   }
   return total;
 }
-const WAYPOINT_STATE_KEY = "mc-waypoint-state";
-function saveWaypointState(missionId, currentWaypointIndex, completedWaypoints) {
-  try {
-    sessionStorage.setItem(WAYPOINT_STATE_KEY, JSON.stringify({ missionId, currentWaypointIndex, completedWaypoints }));
-  } catch {
-  }
-}
-function loadWaypointState(missionId) {
-  try {
-    const raw = sessionStorage.getItem(WAYPOINT_STATE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed.missionId !== missionId) return null;
-    return { currentWaypointIndex: parsed.currentWaypointIndex, completedWaypoints: parsed.completedWaypoints };
-  } catch {
-    return null;
-  }
-}
-function clearWaypointState() {
-  try {
-    sessionStorage.removeItem(WAYPOINT_STATE_KEY);
-  } catch {
-  }
-}
-let toastIdCounter = 0;
 const REPO_CITY_MAX_TRANSIT_HOPS = 3;
 const REPO_CITY_MAX_ROUTE_DISTANCE_RATIO = 1.9;
 const REPO_CITY_ROUTE_POINT_EPSILON = 0.75;
-const initialRepoSnapshot = getBootstrapRepoSnapshot();
-const initialGeneratedCity = initialRepoSnapshot ? generateCityFromRepo(initialRepoSnapshot) : null;
-const initialDistricts = initialGeneratedCity ? generatedCityToDistricts(initialGeneratedCity) : SEED_DISTRICTS;
-const initialMissions = initialGeneratedCity ? generatedCityToMissions(initialGeneratedCity) : SEED_MISSIONS;
-const initialConflicts = initialGeneratedCity ? generatedCityToConflicts(initialGeneratedCity) : SEED_CONFLICTS;
-function getOfflineApiStatusMessage(repoCityMode) {
-  return repoCityMode ? "Worker API unavailable. Running local repo-city snapshot mode." : "Worker API unavailable. Running local seed mode.";
-}
 function measureTransitDistance(a, b) {
   return Math.hypot(b[0] - a[0], b[2] - a[2]);
 }
@@ -2552,6 +2521,56 @@ function buildRoadGuidedTransitPath(city, currentDistrictId, targetDistrictId, c
     mode: "roads",
     points: normalizedPoints,
     roadIds: [...new Set(orderedEdges.map((edge) => edge.roadId))]
+  };
+}
+const WAYPOINT_STATE_KEY = "mc-waypoint-state";
+function saveWaypointState(missionId, currentWaypointIndex, completedWaypoints) {
+  try {
+    sessionStorage.setItem(WAYPOINT_STATE_KEY, JSON.stringify({ missionId, currentWaypointIndex, completedWaypoints }));
+  } catch {
+  }
+}
+function loadWaypointState(missionId) {
+  try {
+    const raw = sessionStorage.getItem(WAYPOINT_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.missionId !== missionId) return null;
+    return { currentWaypointIndex: parsed.currentWaypointIndex, completedWaypoints: parsed.completedWaypoints };
+  } catch {
+    return null;
+  }
+}
+function clearWaypointState() {
+  try {
+    sessionStorage.removeItem(WAYPOINT_STATE_KEY);
+  } catch {
+  }
+}
+let toastIdCounter = 0;
+const initialRepoSnapshot = getBootstrapRepoSnapshot();
+const initialGeneratedCity = initialRepoSnapshot ? generateCityFromRepo(initialRepoSnapshot) : null;
+const initialDistricts = initialGeneratedCity ? generatedCityToDistricts(initialGeneratedCity) : SEED_DISTRICTS;
+const initialMissions = initialGeneratedCity ? generatedCityToMissions(initialGeneratedCity) : SEED_MISSIONS;
+const initialConflicts = initialGeneratedCity ? generatedCityToConflicts(initialGeneratedCity) : SEED_CONFLICTS;
+function getOfflineApiStatusMessage(repoCityMode) {
+  return repoCityMode ? "Worker API unavailable. Running local repo-city snapshot mode." : "Worker API unavailable. Running local seed mode.";
+}
+function createInitialSelectedGitHubRepoIngestState() {
+  return {
+    tone: "idle",
+    repoId: null,
+    message: null
+  };
+}
+function buildResetSelectedGitHubRepoState(overrides = {}) {
+  return {
+    selectedGitHubRepo: null,
+    selectedGitHubRepoEligibility: null,
+    selectedGitHubRepoIngestState: createInitialSelectedGitHubRepoIngestState(),
+    selectedGitHubRepoSnapshot: null,
+    showGitHubRepoPicker: false,
+    ...overrides
   };
 }
 const initialCapture = {};
@@ -2856,15 +2875,7 @@ const useGameStore = create((set, get) => ({
   githubAccessToken: null,
   githubAuthStatus: "anonymous",
   githubAuthMessage: null,
-  selectedGitHubRepo: null,
-  selectedGitHubRepoEligibility: null,
-  selectedGitHubRepoIngestState: {
-    tone: "idle",
-    repoId: null,
-    message: null
-  },
-  selectedGitHubRepoSnapshot: null,
-  showGitHubRepoPicker: false,
+  ...buildResetSelectedGitHubRepoState(),
   setGitHubAuthExchanging: () => set({
     githubAuthStatus: "exchanging",
     githubAuthMessage: null
@@ -2873,58 +2884,44 @@ const useGameStore = create((set, get) => ({
     githubAccessToken: token,
     githubAuthStatus: "authenticated",
     githubAuthMessage: null,
-    selectedGitHubRepo: null,
-    selectedGitHubRepoEligibility: null,
-    selectedGitHubRepoIngestState: {
-      tone: "idle",
-      repoId: null,
-      message: null
-    },
-    selectedGitHubRepoSnapshot: null,
-    showGitHubRepoPicker: true
+    ...buildResetSelectedGitHubRepoState({ showGitHubRepoPicker: true })
   }),
   setGitHubAuthError: (message) => set({
     githubAccessToken: null,
     githubAuthStatus: "error",
     githubAuthMessage: message,
-    selectedGitHubRepo: null,
-    selectedGitHubRepoEligibility: null,
-    selectedGitHubRepoIngestState: {
-      tone: "idle",
-      repoId: null,
-      message: null
-    },
-    selectedGitHubRepoSnapshot: null,
-    showGitHubRepoPicker: false
+    ...buildResetSelectedGitHubRepoState()
   }),
   clearGitHubAuth: () => set({
     githubAccessToken: null,
     githubAuthStatus: "anonymous",
     githubAuthMessage: null,
-    selectedGitHubRepo: null,
-    selectedGitHubRepoEligibility: null,
-    selectedGitHubRepoIngestState: {
-      tone: "idle",
-      repoId: null,
-      message: null
-    },
-    selectedGitHubRepoSnapshot: null,
-    showGitHubRepoPicker: false
+    ...buildResetSelectedGitHubRepoState()
   }),
-  setSelectedGitHubRepo: (repo) => set({
-    selectedGitHubRepo: repo,
-    selectedGitHubRepoEligibility: repo ? getGitHubRepoTranslationEligibility(repo.visibility) : null
+  resetSelectedGitHubRepoState: (overrides) => set(buildResetSelectedGitHubRepoState(overrides)),
+  setSelectedGitHubRepo: (repo) => set((state) => {
+    if (!repo) {
+      return buildResetSelectedGitHubRepoState({ showGitHubRepoPicker: state.showGitHubRepoPicker });
+    }
+    const selectedGitHubRepoEligibility = getGitHubRepoTranslationEligibility(repo.visibility);
+    if (state.selectedGitHubRepo?.id === repo.id) {
+      return {
+        selectedGitHubRepo: repo,
+        selectedGitHubRepoEligibility
+      };
+    }
+    return buildResetSelectedGitHubRepoState({
+      selectedGitHubRepo: repo,
+      selectedGitHubRepoEligibility,
+      showGitHubRepoPicker: state.showGitHubRepoPicker
+    });
   }),
   setSelectedGitHubRepoIngestState: (state) => set({ selectedGitHubRepoIngestState: state }),
   setSelectedGitHubRepoSnapshot: (snapshot) => {
     set({
       selectedGitHubRepoSnapshot: snapshot,
       ...snapshot ? {
-        selectedGitHubRepoIngestState: {
-          tone: "idle",
-          repoId: null,
-          message: null
-        }
+        selectedGitHubRepoIngestState: createInitialSelectedGitHubRepoIngestState()
       } : {}
     });
     if (!snapshot) {

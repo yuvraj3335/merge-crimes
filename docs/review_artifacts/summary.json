@@ -1,18 +1,18 @@
 {
-  "run_id": "20260308T170629Z",
-  "cycle_number": 10,
+  "run_id": "20260308T171149Z",
+  "cycle_number": 11,
   "campaign_id": "rc-2026-03-08",
   "mode": "apply_fix",
   "workstream": "complexity",
-  "slice_title": "Fix: `gameStore.ts` centralizes nearly all runtime concerns: gameplay state, waypoint",
+  "slice_title": "Fix: `shared/repoCityGenerator.ts` is a god module that owns repo classification, sig",
   "cycle_valid": true,
   "dry_run": false,
   "new_findings_count": 0,
-  "total_open_findings": 11,
+  "total_open_findings": 10,
   "findings_by_severity": {},
-  "queue_size": 15,
+  "queue_size": 14,
   "queue_review_count": 6,
-  "queue_fix_count": 9,
+  "queue_fix_count": 8,
   "artifacts_written": [
     "/Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/REPO_CITY_REVIEW_TRACKER.json",
     "/Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/review_artifacts/removal_candidates.json",
@@ -20,42 +20,36 @@
   ],
   "should_stop": false,
   "stop_reason": "",
-  "tracker_changes": "--- review_tracker.orig\n+++ review_tracker.new\n@@ -4,10 +4,10 @@\n   \"campaign\": {\n     \"id\": \"rc-2026-03-08\",\n     \"state\": \"running\",\n-    \"cycles_run\": 9,\n+    \"cycles_run\": 10,\n     \"total_findings\": 26,\n     \"total_resolved\": 10,\n-    \"last_updated\": \"2026-03-08T16:57:24Z\"\n+    \"last_updated\": \"2026-03-08T17:06:29Z\"\n   },\n   \"workstreams\": [\n     {\n@@ -47,8 +47,8 @@\n         \"worker/src\"\n       ],\n       \"description\": \"Find overly complex functions that should be simplified or split\",\n-      \"last_run_at\": \"2026-03-08T16:57:24Z\",\n-      \"cycles_assigned\": 1,\n+      \"last_run_at\": \"2026-03-08T17:06:29Z\",\n+      \"cycles_assigned\": 2,\n       \"open_findings_count\": 0,\n       \"findings_open\": 10\n     },\n@@ -178,7 +178,7 @@\n       \"score\": 4.5,\n       \"priority_override\": null,\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T16:57:24Z\"\n+      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n     },\n     {\n       \"id\": \"q-005\",\n@@ -189,7 +189,7 @@\n       \"score\": 4.5,\n       \"priority_override\": null,\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T16:57:24Z\"\n+      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n     },\n     {\n       \"id\": \"q-006\",\n@@ -200,7 +200,7 @@\n       \"score\": 4.5,\n       \"priority_override\": \"defer\",\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T16:57:24Z\"\n+      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n     },\n     {\n       \"id\": \"q-007\",\n@@ -211,7 +211,7 @@\n       \"score\": 4.5,\n       \"priority_override\": null,\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T16:57:24Z\"\n+      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n     },\n     {\n       \"id\": \"q-008\",\n@@ -222,7 +222,7 @@\n       \"score\": 4.5,\n       \"priority_override\": null,\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T16:57:24Z\"\n+      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n     },\n     {\n       \"id\": \"q-009\",\n@@ -233,7 +233,7 @@\n       \"s",
+  "tracker_changes": "--- review_tracker.orig\n+++ review_tracker.new\n@@ -4,10 +4,10 @@\n   \"campaign\": {\n     \"id\": \"rc-2026-03-08\",\n     \"state\": \"running\",\n-    \"cycles_run\": 10,\n+    \"cycles_run\": 11,\n     \"total_findings\": 26,\n     \"total_resolved\": 10,\n-    \"last_updated\": \"2026-03-08T17:06:29Z\"\n+    \"last_updated\": \"2026-03-08T17:11:49Z\"\n   },\n   \"workstreams\": [\n     {\n@@ -47,8 +47,8 @@\n         \"worker/src\"\n       ],\n       \"description\": \"Find overly complex functions that should be simplified or split\",\n-      \"last_run_at\": \"2026-03-08T17:06:29Z\",\n-      \"cycles_assigned\": 2,\n+      \"last_run_at\": \"2026-03-08T17:11:49Z\",\n+      \"cycles_assigned\": 3,\n       \"open_findings_count\": 0,\n       \"findings_open\": 10\n     },\n@@ -178,7 +178,7 @@\n       \"score\": 4.5,\n       \"priority_override\": null,\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n+      \"last_scored_at\": \"2026-03-08T17:11:49Z\"\n     },\n     {\n       \"id\": \"q-005\",\n@@ -189,7 +189,7 @@\n       \"score\": 4.5,\n       \"priority_override\": null,\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n+      \"last_scored_at\": \"2026-03-08T17:11:49Z\"\n     },\n     {\n       \"id\": \"q-006\",\n@@ -200,7 +200,7 @@\n       \"score\": 4.5,\n       \"priority_override\": \"defer\",\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n+      \"last_scored_at\": \"2026-03-08T17:11:49Z\"\n     },\n     {\n       \"id\": \"q-007\",\n@@ -211,7 +211,7 @@\n       \"score\": 4.5,\n       \"priority_override\": null,\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n+      \"last_scored_at\": \"2026-03-08T17:11:49Z\"\n     },\n     {\n       \"id\": \"q-008\",\n@@ -222,7 +222,7 @@\n       \"score\": 4.5,\n       \"priority_override\": null,\n       \"added_at\": \"2026-03-08T00:00:00Z\",\n-      \"last_scored_at\": \"2026-03-08T17:06:29Z\"\n+      \"last_scored_at\": \"2026-03-08T17:11:49Z\"\n     },\n     {\n       \"id\": \"q-009\",\n@@ -233,7 +233,7 @@\n       \"",
   "files_involved": [
     "docs/REPO_CITY_REVIEW_TRACKER.json",
     "docs/review_artifacts/final_report.txt",
-    "docs/review_artifacts/findings.json",
     "docs/review_artifacts/removal_candidates.json",
     "docs/review_artifacts/summary.json",
-    "frontend/src/store/gameStore.ts",
-    "frontend/src/store/roadGuidedTransitPath.ts"
+    "shared/archetypeClassification.ts",
+    "shared/districtLabeling.ts",
+    "shared/gameplayBridge.ts",
+    "shared/repoCityGenerator.ts",
+    "shared/repoCityGeneratorUtils.ts",
+    "shared/roadGeneration.ts",
+    "shared/signalMissionGeneration.ts"
   ],
   "commands_run": [
-    "cd frontend && npm run build",
-    "cd frontend && npm run lint"
+    "cd worker && npm run build"
   ],
   "committed": true,
   "pushed": false,
-  "commit_hash": "dd946fa51ef04656e893e79a0d0255eccf5e9f9b",
+  "commit_hash": "09ab3e7e93a6ecd74134003e561a22b27d2b1a6c",
   "repair_attempts": 0,
   "codex_exit_code": 0,
   "validation_summary": [
     {
-      "command": "cd frontend && npm run build",
+      "command": "cd worker && npm run build",
       "exit_code": 0,
       "passed": true,
       "skipped": false,
       "skip_reason": "",
-      "stdout": "\n> frontend@0.0.0 build\n> tsc -b && vite build\n\nvite v7.3.1 building client environment for production...\ntransforming...\n✓ 634 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                     0.65 kB │ gzip:   0.39 kB\ndist/assets/index-Cb5A9cDy.css     88.45 kB │ gzip:  13.92 kB\ndist/assets/index-BroBBB80.js   1,272.97 kB │ gzip: 355.26 kB\n✓ built in 2.20s\n",
-      "stderr": "\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n"
-    },
-    {
-      "command": "cd frontend && npm run lint",
-      "exit_code": 0,
-      "passed": true,
-      "skipped": false,
-      "skip_reason": "",
-      "stdout": "\n> frontend@0.0.0 lint\n> eslint .\n\n",
+      "stdout": "\n> merge-crimes-api@0.1.0 build\n> tsc --noEmit\n\n",
       "stderr": ""
     }
   ],

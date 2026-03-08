@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 10,
+    "cycles_run": 11,
     "total_findings": 26,
     "total_resolved": 10,
-    "last_updated": "2026-03-08T17:06:29Z"
+    "last_updated": "2026-03-08T17:11:49Z"
   },
   "workstreams": [
     {
@@ -47,8 +47,8 @@
         "worker/src"
       ],
       "description": "Find overly complex functions that should be simplified or split",
-      "last_run_at": "2026-03-08T17:06:29Z",
-      "cycles_assigned": 2,
+      "last_run_at": "2026-03-08T17:11:49Z",
+      "cycles_assigned": 3,
       "open_findings_count": 0,
       "findings_open": 10
     },
@@ -178,7 +178,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "q-005",
@@ -189,7 +189,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "q-006",
@@ -200,7 +200,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "q-007",
@@ -211,7 +211,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "q-008",
@@ -222,7 +222,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "q-009",
@@ -233,7 +233,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000001",
@@ -443,7 +443,7 @@
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
       "last_scored_at": "2026-03-08T17:06:29Z",
-      "completed_at": "2026-03-08T17:22:57Z"
+      "completed_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000018",
@@ -470,7 +470,7 @@
       "score": 2.88,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000020",
@@ -483,7 +483,7 @@
       "score": 2.79,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000021",
@@ -496,7 +496,7 @@
       "score": 2.85,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000022",
@@ -509,7 +509,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000023",
@@ -522,7 +522,7 @@
       "score": 1.82,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000024",
@@ -535,7 +535,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000025",
@@ -548,7 +548,7 @@
       "score": 1.74,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "qfix-f-000026",
@@ -561,7 +561,7 @@
       "score": 1.88,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:06:29Z"
+      "last_scored_at": "2026-03-08T17:11:49Z"
     }
   ],
   "findings": [
@@ -925,7 +925,7 @@
         "Adding a new `RepoSignalType` currently requires touching multiple unrelated sections in the same file: template selection, bot profiles, grouped copy, mission generation, and conflict bridging.",
         "Changing archetype rules now spans classification, hub ordering, layout slots, district labels, and road readability in one module, so a layout tweak can easily regress mission or labeling behavior."
       ],
-      "resolved_at": "2026-03-08T17:22:57Z"
+      "resolved_at": "2026-03-08T17:11:49Z"
     },
     {
       "id": "f-000018",

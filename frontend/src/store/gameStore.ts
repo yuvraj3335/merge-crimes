@@ -87,6 +87,14 @@ export interface SelectedGitHubRepoIngestState {
     message: string | null;
 }
 
+interface SelectedGitHubRepoStateSlice {
+    selectedGitHubRepo: GitHubReadableRepo | null;
+    selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null;
+    selectedGitHubRepoIngestState: SelectedGitHubRepoIngestState;
+    selectedGitHubRepoSnapshot: GitHubRepoMetadataSnapshot | null;
+    showGitHubRepoPicker: boolean;
+}
+
 export interface GameState {
     // Game phase
     phase: GamePhase;
@@ -180,6 +188,7 @@ export interface GameState {
     setGitHubAccessToken: (token: string) => void;
     setGitHubAuthError: (message: string) => void;
     clearGitHubAuth: () => void;
+    resetSelectedGitHubRepoState: (overrides?: Partial<SelectedGitHubRepoStateSlice>) => void;
     setSelectedGitHubRepo: (repo: GitHubReadableRepo | null) => void;
     setSelectedGitHubRepoIngestState: (state: SelectedGitHubRepoIngestState) => void;
     setSelectedGitHubRepoSnapshot: (snapshot: GitHubRepoMetadataSnapshot | null) => void;
@@ -206,6 +215,27 @@ function getOfflineApiStatusMessage(repoCityMode: boolean): string {
     return repoCityMode
         ? 'Worker API unavailable. Running local repo-city snapshot mode.'
         : 'Worker API unavailable. Running local seed mode.';
+}
+
+function createInitialSelectedGitHubRepoIngestState(): SelectedGitHubRepoIngestState {
+    return {
+        tone: 'idle',
+        repoId: null,
+        message: null,
+    };
+}
+
+function buildResetSelectedGitHubRepoState(
+    overrides: Partial<SelectedGitHubRepoStateSlice> = {},
+): SelectedGitHubRepoStateSlice {
+    return {
+        selectedGitHubRepo: null,
+        selectedGitHubRepoEligibility: null,
+        selectedGitHubRepoIngestState: createInitialSelectedGitHubRepoIngestState(),
+        selectedGitHubRepoSnapshot: null,
+        showGitHubRepoPicker: false,
+        ...overrides,
+    };
 }
 
 // ─── Initial capture progress for all districts ───
@@ -558,15 +588,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     githubAccessToken: null,
     githubAuthStatus: 'anonymous',
     githubAuthMessage: null,
-    selectedGitHubRepo: null,
-    selectedGitHubRepoEligibility: null,
-    selectedGitHubRepoIngestState: {
-        tone: 'idle',
-        repoId: null,
-        message: null,
-    },
-    selectedGitHubRepoSnapshot: null,
-    showGitHubRepoPicker: false,
+    ...buildResetSelectedGitHubRepoState(),
     setGitHubAuthExchanging: () => set({
         githubAuthStatus: 'exchanging',
         githubAuthMessage: null,
@@ -575,47 +597,39 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAccessToken: token,
         githubAuthStatus: 'authenticated',
         githubAuthMessage: null,
-        selectedGitHubRepo: null,
-        selectedGitHubRepoEligibility: null,
-        selectedGitHubRepoIngestState: {
-            tone: 'idle',
-            repoId: null,
-            message: null,
-        },
-        selectedGitHubRepoSnapshot: null,
-        showGitHubRepoPicker: true,
+        ...buildResetSelectedGitHubRepoState({ showGitHubRepoPicker: true }),
     }),
     setGitHubAuthError: (message) => set({
         githubAccessToken: null,
         githubAuthStatus: 'error',
         githubAuthMessage: message,
-        selectedGitHubRepo: null,
-        selectedGitHubRepoEligibility: null,
-        selectedGitHubRepoIngestState: {
-            tone: 'idle',
-            repoId: null,
-            message: null,
-        },
-        selectedGitHubRepoSnapshot: null,
-        showGitHubRepoPicker: false,
+        ...buildResetSelectedGitHubRepoState(),
     }),
     clearGitHubAuth: () => set({
         githubAccessToken: null,
         githubAuthStatus: 'anonymous',
         githubAuthMessage: null,
-        selectedGitHubRepo: null,
-        selectedGitHubRepoEligibility: null,
-        selectedGitHubRepoIngestState: {
-            tone: 'idle',
-            repoId: null,
-            message: null,
-        },
-        selectedGitHubRepoSnapshot: null,
-        showGitHubRepoPicker: false,
+        ...buildResetSelectedGitHubRepoState(),
     }),
-    setSelectedGitHubRepo: (repo) => set({
-        selectedGitHubRepo: repo,
-        selectedGitHubRepoEligibility: repo ? getGitHubRepoTranslationEligibility(repo.visibility) : null,
+    resetSelectedGitHubRepoState: (overrides) => set(buildResetSelectedGitHubRepoState(overrides)),
+    setSelectedGitHubRepo: (repo) => set((state) => {
+        if (!repo) {
+            return buildResetSelectedGitHubRepoState({ showGitHubRepoPicker: state.showGitHubRepoPicker });
+        }
+
+        const selectedGitHubRepoEligibility = getGitHubRepoTranslationEligibility(repo.visibility);
+        if (state.selectedGitHubRepo?.id === repo.id) {
+            return {
+                selectedGitHubRepo: repo,
+                selectedGitHubRepoEligibility,
+            };
+        }
+
+        return buildResetSelectedGitHubRepoState({
+            selectedGitHubRepo: repo,
+            selectedGitHubRepoEligibility,
+            showGitHubRepoPicker: state.showGitHubRepoPicker,
+        });
     }),
     setSelectedGitHubRepoIngestState: (state) => set({ selectedGitHubRepoIngestState: state }),
     setSelectedGitHubRepoSnapshot: (snapshot) => {
@@ -623,11 +637,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             selectedGitHubRepoSnapshot: snapshot,
             ...(snapshot
                 ? {
-                    selectedGitHubRepoIngestState: {
-                        tone: 'idle' as const,
-                        repoId: null,
-                        message: null,
-                    },
+                    selectedGitHubRepoIngestState: createInitialSelectedGitHubRepoIngestState(),
                 }
                 : {}),
         });
