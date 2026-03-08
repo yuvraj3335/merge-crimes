@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_3_in_progress",
-  "last_updated": "2026-03-08T22:30:00+05:30",
+  "last_updated": "2026-03-08T06:39:23+00:00",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 3 - Minimal City Frontend",
   "source_of_truth": [
@@ -49,7 +49,7 @@
         "frontend_build": "pass",
         "worker_build": "pass",
         "frontend_lint": "pass",
-        "browser_smoke": "not_run — MainMenu enter-city testid preserved, selector is additive"
+        "browser_smoke": "not_run \u2014 MainMenu enter-city testid preserved, selector is additive"
       }
     },
     {
@@ -85,9 +85,9 @@
           "validation": {
             "worker_build": "pass",
             "frontend_build": "pass",
-            "generator_dry_run": "pass — fullstack and library fixtures now produce distinct labels and placements",
-            "frontend_lint": "not_run — no frontend file changed in this slice",
-            "browser_smoke": "not_run — no UI flow or selector changes"
+            "generator_dry_run": "pass \u2014 fullstack and library fixtures now produce distinct labels and placements",
+            "frontend_lint": "not_run \u2014 no frontend file changed in this slice",
+            "browser_smoke": "not_run \u2014 no UI flow or selector changes"
           }
         },
         {
@@ -100,9 +100,9 @@
           "validation": {
             "worker_build": "pass",
             "frontend_build": "pass",
-            "generator_dry_run": "pass — fixture and generated archetypes match for fullstack, library, and backend repos",
-            "frontend_lint": "not_run — no frontend file changed in this slice",
-            "browser_smoke": "not_run — no UI flow or selector changes"
+            "generator_dry_run": "pass \u2014 fixture and generated archetypes match for fullstack, library, and backend repos",
+            "frontend_lint": "not_run \u2014 no frontend file changed in this slice",
+            "browser_smoke": "not_run \u2014 no UI flow or selector changes"
           }
         },
         {
@@ -115,9 +115,9 @@
           "validation": {
             "worker_build": "pass",
             "frontend_build": "pass",
-            "generator_dry_run": "pass — fixture and generated archetypes match for fullstack, library, backend, and monorepo repos",
-            "frontend_lint": "not_run — no frontend file changed in this slice",
-            "browser_smoke": "not_run — no UI flow or selector changes"
+            "generator_dry_run": "pass \u2014 fixture and generated archetypes match for fullstack, library, backend, and monorepo repos",
+            "frontend_lint": "not_run \u2014 no frontend file changed in this slice",
+            "browser_smoke": "not_run \u2014 no UI flow or selector changes"
           }
         },
         {
@@ -130,9 +130,9 @@
           "validation": {
             "worker_build": "pass",
             "frontend_build": "pass",
-            "generator_dry_run": "pass — fixture and generated archetypes match for fullstack, library, backend, frontend, and monorepo repos",
-            "frontend_lint": "not_run — no frontend file changed in this slice",
-            "browser_smoke": "not_run — no UI flow or selector changes"
+            "generator_dry_run": "pass \u2014 fixture and generated archetypes match for fullstack, library, backend, frontend, and monorepo repos",
+            "frontend_lint": "not_run \u2014 no frontend file changed in this slice",
+            "browser_smoke": "not_run \u2014 no UI flow or selector changes"
           }
         }
       ]
@@ -523,6 +523,19 @@
             "frontend_build": "pass",
             "browser_smoke": "pass"
           }
+        },
+        {
+          "title": "Align repo-city surface mission badges with shell chips",
+          "summary": [
+            "The district mission count markers on the repo-city surface now render as rounded shell-style chips that match the calmer chip language of the header and legend instead of the previous yellow circular badge treatment.",
+            "Mission availability logic, district selection behavior, and active-mission suppression of the marker remain unchanged.",
+            "The change is isolated to RepoCitySurface.tsx and index.css; frontend build and lint pass cleanly."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "skipped"
+          }
         }
       ]
     },
@@ -566,16 +579,16 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Align repo-city surface mission badges with shell chips",
-    "why": "The repo-city surface header now reads coherently, but the district mission count markers still use raw circular badge treatment that stands apart from the calmer shell chip language. The next bounded Phase 3 gap is to restyle those mission markers into clearer shell chips without changing mission availability logic or district selection behavior.",
+    "title": "Phase 3 wrap-up \u2014 verify all deliverables and mark Phase 3 done",
+    "why": "With 30 completed Phase 3 slices covering the full minimalist UI shell, all four Phase 3 deliverables (city map, district view, movement layer, UI shell) are represented. The next cycle should verify nothing is visibly broken, update Phase 3 status to done, and set up Phase 4 (GitHub Connection MVP).",
     "candidate_files": [
-      "frontend/src/ui/RepoCitySurface.tsx",
-      "frontend/src/index.css"
+      "docs/REPO_CITY_TRACKER.json"
     ],
     "acceptance_criteria": [
-      "Repo-city surface mission badges use calmer shell-chip framing without changing mission counts or district selection behavior",
-      "Desktop and mobile repo-city surface mission markers remain readable while classic mode behavior stays unchanged",
-      "frontend lint, build, and browser smoke pass after the mission-badge slice"
+      "Phase 3 milestone status updated to done",
+      "Phase 4 milestone status updated to in_progress",
+      "current_goal updated to Phase 4 - GitHub Connection MVP",
+      "frontend build passes after any final Phase 3 touch-ups"
     ]
   },
   "open_questions": [
