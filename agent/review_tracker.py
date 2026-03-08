@@ -306,12 +306,20 @@ def pick_winning_slice_by_mode(
     weight_coverage_gap: float = 2.0,
     weight_starvation: float = 1.0,
 ) -> Optional[Dict[str, Any]]:
-    """Return the highest-scored pending entry matching the given mode."""
+    """Return the highest-scored pending entry matching the given mode.
+
+    Normalises mode names so the orchestrator's "review_only" / "apply_fix"
+    values match the tracker's stored "review" / "fix" entry modes.
+    """
+    # Map orchestrator mode names → tracker entry mode values
+    _MODE_MAP = {"review_only": "review", "apply_fix": "fix"}
+    entry_mode = _MODE_MAP.get(mode, mode)  # fall back to raw value if already normalised
+
     ranked = rank_queue(
         data, now_iso, weight_severity, weight_recency, weight_coverage_gap, weight_starvation
     )
     for _score, entry in ranked:
-        if entry.get("mode") == mode:
+        if entry.get("mode") == entry_mode:
             return entry
     return None
 
