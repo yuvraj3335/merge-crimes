@@ -200,7 +200,7 @@ def load_review_config() -> ReviewConfig:
 
     # -- Loop controls --
     max_cycles = _parse_int(
-        os.environ.get("REPO_CITY_REVIEW_MAX_CYCLES", "80"), default=80
+        os.environ.get("REPO_CITY_REVIEW_MAX_CYCLES", "200"), default=200
     )
     cycle_delay_seconds = _parse_float(
         os.environ.get("REPO_CITY_REVIEW_CYCLE_DELAY", "10"), default=10.0

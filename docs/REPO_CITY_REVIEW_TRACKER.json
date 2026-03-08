@@ -90,6 +90,46 @@
       "last_run_at": null,
       "cycles_assigned": 0,
       "open_findings_count": 0
+    },
+    {
+      "id": "correctness",
+      "priority": 7,
+      "scope": [
+        "frontend/src",
+        "shared",
+        "worker/src"
+      ],
+      "description": "Verify feature correctness: logic bugs, incorrect calculations, wrong business logic, missing edge case handling, silent failures, incorrect state transitions, off-by-one errors, incorrect conditionals",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
+    },
+    {
+      "id": "performance",
+      "priority": 8,
+      "scope": [
+        "frontend/src",
+        "shared",
+        "worker/src"
+      ],
+      "description": "Find performance issues: N+1 patterns, unnecessary re-renders, inefficient data structures, blocking operations, missing memoization, over-fetching, expensive computations in render paths",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
+    },
+    {
+      "id": "refactor_quality",
+      "priority": 9,
+      "scope": [
+        "frontend/src",
+        "shared",
+        "worker/src",
+        "agent"
+      ],
+      "description": "Find code quality and refactoring opportunities: SOLID violations, god objects, files that are too large to reason about, SRP violations, missing abstractions that would simplify multiple callsites, DRY/YAGNI/LoD principle breaches",
+      "last_run_at": null,
+      "cycles_assigned": 0,
+      "open_findings_count": 0
     }
   ],
   "queue": [
@@ -159,6 +199,39 @@
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
       "last_scored_at": "2026-03-08T15:16:00Z"
+    },
+    {
+      "id": "q-007",
+      "mode": "review",
+      "workstream_id": "correctness",
+      "title": "Scan full codebase for feature correctness bugs and logic errors",
+      "status": "pending",
+      "score": 5.0,
+      "priority_override": null,
+      "added_at": "2026-03-08T00:00:00Z",
+      "last_scored_at": "2026-03-08T00:00:00Z"
+    },
+    {
+      "id": "q-008",
+      "mode": "review",
+      "workstream_id": "performance",
+      "title": "Scan frontend/src and worker/src for performance bottlenecks and inefficiencies",
+      "status": "pending",
+      "score": 4.8,
+      "priority_override": null,
+      "added_at": "2026-03-08T00:00:00Z",
+      "last_scored_at": "2026-03-08T00:00:00Z"
+    },
+    {
+      "id": "q-009",
+      "mode": "review",
+      "workstream_id": "refactor_quality",
+      "title": "Scan full codebase for code quality violations and refactoring opportunities",
+      "status": "pending",
+      "score": 4.6,
+      "priority_override": null,
+      "added_at": "2026-03-08T00:00:00Z",
+      "last_scored_at": "2026-03-08T00:00:00Z"
     },
     {
       "id": "qfix-f-000001",

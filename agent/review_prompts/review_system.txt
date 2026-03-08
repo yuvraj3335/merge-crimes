@@ -37,7 +37,7 @@ Each finding object in the JSON MUST have ALL of these fields:
   "category"           — one of: dead_code | duplication | complexity | architecture |
                          unnecessary_abstraction | overengineering |
                          security_or_trust_boundary | test_gap | correctness |
-                         regression_risk | edge_case | other
+                         performance | regression_risk | edge_case | other
   "description"        — 1–3 sentences describing the problem
   "evidence"           — quoted code snippet OR grep command + output proving the issue
   "recommended_action" — specific actionable fix

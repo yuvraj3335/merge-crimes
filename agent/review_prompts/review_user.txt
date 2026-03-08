@@ -63,6 +63,12 @@ Write a thorough Codex review prompt (target 900–1200 words) that:
     - State ownership violations: state split across modules that should own it centrally
     - Missing abstractions: repeated branching patterns that should be a single utility
     - Architectural violations: wrong-direction imports, layering breaches
+    - Feature correctness: logic bugs, silent failures, wrong business logic, missing edge
+      case handling, incorrect state transitions, off-by-one errors, incorrect conditionals
+    - Performance: N+1 patterns, unnecessary re-renders, missing memoization, blocking ops,
+      over-fetching, inefficient loops or data structures
+    - Code quality: SOLID violations, SRP breaches, god objects/files that are too large to
+      reason about, principle violations (DRY, YAGNI, LoD)
 
 Be concrete: name the files, name the patterns to look for, give Codex specific rg
 search strategies for this workstream. Not generic boilerplate.
