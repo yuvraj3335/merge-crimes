@@ -6,8 +6,8 @@
     "state": "running",
     "cycles_run": 4,
     "total_findings": 16,
-    "total_resolved": 9,
-    "last_updated": "2026-03-08T15:16:00Z"
+    "total_resolved": 10,
+    "last_updated": "2026-03-08T16:16:04Z"
   },
   "workstreams": [
     {
@@ -36,7 +36,7 @@
       "last_run_at": "2026-03-08T15:16:00Z",
       "cycles_assigned": 1,
       "open_findings_count": 0,
-      "findings_open": 7
+      "findings_open": 6
     },
     {
       "id": "complexity",
@@ -293,11 +293,12 @@
       "workstream_id": "duplication",
       "title": "Fix: Heat-status classification is duplicated between the HUD and Repo City surface, ",
       "severity": "medium",
-      "status": "pending",
+      "status": "done",
       "score": 1.92,
       "priority_override": null,
       "added_at": "2026-03-08T15:26:13Z",
-      "last_scored_at": "2026-03-08T15:16:00Z"
+      "last_scored_at": "2026-03-08T15:16:00Z",
+      "completed_at": "2026-03-08T16:16:04Z"
     },
     {
       "id": "qfix-f-000011",
@@ -555,7 +556,7 @@
       "description": "Heat-status classification is duplicated between the HUD and Repo City surface, and the copies have already diverged: the HUD switches to `watch` at 30 while the surface waits until 35.",
       "evidence": "frontend/src/ui/HUD.tsx:25-30\nfunction getHeatLabel(heat: number): string {\n    if (heat < 30) return 'stable';\n    if (heat < 60) return 'watch';\n    if (heat < 80) return 'elevated';\n    return 'critical';\n}\n\nfrontend/src/ui/RepoCitySurface.tsx:47-52\nfunction getHeatLabel(heatLevel: number): string {\n    if (heatLevel >= 80) return 'critical';\n    if (heatLevel >= 60) return 'elevated';\n    if (heatLevel >= 35) return 'watch';\n    return 'stable';\n}",
       "recommended_action": "Extract one shared heat-status helper that returns the label and reuse it from both HUD and surface rendering.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T15:26:13Z",
       "cycle_number": 4,
       "edge_cases": [

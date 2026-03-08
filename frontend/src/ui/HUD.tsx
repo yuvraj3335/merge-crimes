@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import type { GameState } from '../store/gameStore';
 import { SEED_FACTION_BY_ID } from '../../../shared/seed/factions';
 import type { District } from '../../../shared/types';
+import { getHeatLabel } from './heatLabel';
 import { buildRepoHudRefreshNotice } from './repoRefreshCopy';
 import { type SnapshotSource, useSnapshotFreshnessCopy } from './snapshotFreshness';
 
@@ -20,13 +21,6 @@ function getHeatColor(heat: number): string {
     if (heat < 60) return '#ffff00';
     if (heat < 80) return '#ff6b35';
     return '#ff0044';
-}
-
-function getHeatLabel(heat: number): string {
-    if (heat < 30) return 'stable';
-    if (heat < 60) return 'watch';
-    if (heat < 80) return 'elevated';
-    return 'critical';
 }
 
 function measureRouteDistance(start: [number, number, number], pathPoints: [number, number, number][]): number {

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { getHeatLabel } from './heatLabel';
 
 interface SurfaceBounds {
     minX: number;
@@ -42,20 +43,6 @@ function computeSurfaceBounds(city: NonNullable<ReturnType<typeof useGameStore.g
         width: Math.max(1, maxX - minX + padding * 2),
         height: Math.max(1, maxY - minY + padding * 2),
     };
-}
-
-function getHeatLabel(heatLevel: number): string {
-    if (heatLevel >= 80) return 'critical';
-    if (heatLevel >= 60) return 'elevated';
-    if (heatLevel >= 35) return 'watch';
-    return 'stable';
-}
-
-function getHeatClassName(heatLevel: number): string {
-    if (heatLevel >= 80) return 'critical';
-    if (heatLevel >= 60) return 'elevated';
-    if (heatLevel >= 35) return 'watch';
-    return 'stable';
 }
 
 function formatDistance(distance: number): string {
@@ -228,12 +215,8 @@ export function RepoCitySurface() {
             ? 'Current district'
             : 'District status';
     const statusValue = statusDistrict?.name ?? 'No district selected';
-    const heatStatusClassName = statusDistrict
-        ? getHeatClassName(statusDistrict.heatLevel)
-        : 'idle';
-    const heatStatusLabel = statusDistrict
-        ? getHeatLabel(statusDistrict.heatLevel)
-        : 'idle';
+    const heatStatusLabel = statusDistrict ? getHeatLabel(statusDistrict.heatLevel) : 'idle';
+    const heatStatusClassName = heatStatusLabel;
     const surfaceHeaderMeta = [
         {
             key: 'archetype',
