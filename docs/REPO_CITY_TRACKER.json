@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_4_in_progress",
-  "last_updated": "2026-03-08T06:57:30+00:00",
+  "last_updated": "2026-03-08T07:07:34+00:00",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 4 - GitHub Connection MVP",
   "source_of_truth": [
@@ -574,6 +574,20 @@
             "worker_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 for the local worker process"
           }
+        },
+        {
+          "title": "Authenticated GitHub repo list — minimal picker after login",
+          "summary": [
+            "Frontend now calls GitHub's GET /user/repos with the OAuth token already stored in Zustand state and maps the response into a minimal readable repo list.",
+            "The main menu auto-opens a minimal GitHub repo picker after successful login, while preserving the seeded repo selector for the existing repo-city flow.",
+            "Selecting a GitHub repo highlights it in the picker and stores the chosen repo identity in app state for the later ingestion slice."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "worker_build": "not_run — no worker or shared files changed in this slice",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 for the local worker process"
+          }
         }
       ]
     },
@@ -607,20 +621,20 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "Authenticated GitHub repo list \u2014 minimal picker after login",
-    "why": "The OAuth token can now live in frontend state. The next bounded Phase 4 slice is to use that token for one read-only repo listing call and show a minimal authenticated picker, without ingesting repo structure or generating a real city yet.",
+    "title": "Selected GitHub repo metadata ingest \u2014 normalize one real repo snapshot",
+    "why": "The app can now authenticate and hold a selected GitHub repo identity in frontend state. The next bounded Phase 4 slice is to fetch one selected repo's read-only metadata through the worker and normalize it into a minimal snapshot that later city-generation slices can consume.",
     "candidate_files": [
       "worker/src/index.ts",
       "frontend/src/api.ts",
-      "frontend/src/ui/MainMenu.tsx",
-      "frontend/src/store/gameStore.ts"
+      "frontend/src/store/gameStore.ts",
+      "shared/repoModel.ts"
     ],
     "acceptance_criteria": [
-      "Worker exposes a read-only GitHub repo listing endpoint that accepts the frontend bearer token for proxying to GitHub",
-      "Frontend fetches and renders a minimal authenticated repo list after GitHub login succeeds",
-      "Selecting a repo stores the chosen repo identity in app state for a later ingestion slice",
-      "cd frontend && npm run lint passes",
+      "Worker exposes a read-only endpoint that fetches one selected GitHub repo using the existing frontend bearer token",
+      "The worker normalizes repo identity, default branch, visibility, and lightweight metadata into a snapshot that can seed RepoModel generation",
+      "Frontend can trigger ingest for the selected GitHub repo and store the returned snapshot or ingest status for the next slice",
       "cd worker && npm run build passes",
+      "cd frontend && npm run lint passes",
       "cd frontend && npm run build passes"
     ]
   },

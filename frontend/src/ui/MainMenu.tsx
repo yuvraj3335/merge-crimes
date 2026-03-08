@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { REPO_FIXTURES } from '../../../shared/seed/repoFixtures';
 import type { RepoModel } from '../../../shared/repoModel';
 import * as api from '../api';
+import { GitHubRepoPicker } from './GitHubRepoPicker';
 
 export function MainMenu() {
     const phase = useGameStore((s) => s.phase);
@@ -15,6 +16,9 @@ export function MainMenu() {
     const githubAccessToken = useGameStore((s) => s.githubAccessToken);
     const githubAuthStatus = useGameStore((s) => s.githubAuthStatus);
     const githubAuthMessage = useGameStore((s) => s.githubAuthMessage);
+    const selectedGitHubRepo = useGameStore((s) => s.selectedGitHubRepo);
+    const showGitHubRepoPicker = useGameStore((s) => s.showGitHubRepoPicker);
+    const setShowGitHubRepoPicker = useGameStore((s) => s.setShowGitHubRepoPicker);
 
     const [showRepoSelector, setShowRepoSelector] = useState(false);
 
@@ -43,8 +47,10 @@ export function MainMenu() {
         : 'Metadata-first seeded translation';
     const githubAuthCard = githubAccessToken
         ? {
-              title: 'Logged in as GitHub user',
-              meta: 'Access token stored in frontend app state.',
+              title: selectedGitHubRepo ? 'GitHub repo selected' : 'Logged in as GitHub user',
+              meta: selectedGitHubRepo
+                  ? `${selectedGitHubRepo.fullName} · ${selectedGitHubRepo.visibility}`
+                  : 'Access token stored in frontend app state.',
           }
         : githubAuthStatus === 'exchanging'
             ? {
@@ -166,18 +172,50 @@ export function MainMenu() {
                         )}
                     </button>
                 )}
+                {githubAccessToken && (
+                    <button
+                        type="button"
+                        className={`menu-repo-btn ${repoCityMode ? 'repo-city' : ''}`.trim()}
+                        onClick={() => {
+                            setShowRepoSelector(false);
+                            setShowGitHubRepoPicker(true);
+                        }}
+                    >
+                        {repoCityMode ? (
+                            <>
+                                <span className="menu-action-label">
+                                    {selectedGitHubRepo ? 'Change GitHub Repo' : 'Pick GitHub Repo'}
+                                </span>
+                                <span className="menu-action-meta">
+                                    {selectedGitHubRepo
+                                        ? `${selectedGitHubRepo.fullName} selected in app state.`
+                                        : 'Fetch the authenticated repo list from GitHub.'}
+                                </span>
+                            </>
+                        ) : (
+                            selectedGitHubRepo ? 'Change GitHub Repo' : 'Pick GitHub Repo'
+                        )}
+                    </button>
+                )}
                 <button
                     type="button"
                     className={`menu-repo-btn ${repoCityMode ? 'repo-city' : ''}`.trim()}
-                    onClick={() => setShowRepoSelector(!showRepoSelector)}
+                    onClick={() => {
+                        setShowGitHubRepoPicker(false);
+                        setShowRepoSelector(!showRepoSelector);
+                    }}
                 >
                     {repoCityMode ? (
                         <>
-                            <span className="menu-action-label">Change Repo</span>
-                            <span className="menu-action-meta">Swap the city source</span>
+                            <span className="menu-action-label">
+                                {githubAccessToken ? 'Use Seed Repo' : 'Change Repo'}
+                            </span>
+                            <span className="menu-action-meta">
+                                {githubAccessToken ? 'Open the seeded repo snapshots.' : 'Swap the city source'}
+                            </span>
                         </>
                     ) : (
-                        'Connect a Repo'
+                        githubAccessToken ? 'Use Seed Repo' : 'Connect a Repo'
                     )}
                 </button>
                 {repoCityMode && (
@@ -276,6 +314,11 @@ export function MainMenu() {
                     </button>
                 </div>
             )}
+
+            <GitHubRepoPicker
+                open={showGitHubRepoPicker}
+                onClose={() => setShowGitHubRepoPicker(false)}
+            />
 
             {repoCityMode ? (
                 <div className="menu-version repo-city">

@@ -8,7 +8,7 @@ import { SEED_MISSIONS } from '../../../shared/seed/missions';
 import { SEED_EVENTS } from '../../../shared/seed/events';
 import { SEED_CONFLICTS } from '../../../shared/seed/conflicts';
 import * as api from '../api';
-import type { ApiConnectionState, ApiRuntimeStatus, ApiWriteSessionState } from '../api';
+import type { ApiConnectionState, ApiRuntimeStatus, ApiWriteSessionState, GitHubReadableRepo } from '../api';
 
 // ─── Waypoint Persistence (ADR-017: Hybrid Policy) ───
 // Persists waypoint index + completed set across same-tab reloads so the player
@@ -153,10 +153,14 @@ export interface GameState {
     githubAccessToken: string | null;
     githubAuthStatus: 'anonymous' | 'exchanging' | 'authenticated' | 'error';
     githubAuthMessage: string | null;
+    selectedGitHubRepo: GitHubReadableRepo | null;
+    showGitHubRepoPicker: boolean;
     setGitHubAuthExchanging: () => void;
     setGitHubAccessToken: (token: string) => void;
     setGitHubAuthError: (message: string) => void;
     clearGitHubAuth: () => void;
+    setSelectedGitHubRepo: (repo: GitHubReadableRepo | null) => void;
+    setShowGitHubRepoPicker: (show: boolean) => void;
 
     // API
     apiAvailable: boolean;
@@ -705,6 +709,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     githubAccessToken: null,
     githubAuthStatus: 'anonymous',
     githubAuthMessage: null,
+    selectedGitHubRepo: null,
+    showGitHubRepoPicker: false,
     setGitHubAuthExchanging: () => set({
         githubAuthStatus: 'exchanging',
         githubAuthMessage: null,
@@ -713,17 +719,25 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAccessToken: token,
         githubAuthStatus: 'authenticated',
         githubAuthMessage: null,
+        selectedGitHubRepo: null,
+        showGitHubRepoPicker: true,
     }),
     setGitHubAuthError: (message) => set({
         githubAccessToken: null,
         githubAuthStatus: 'error',
         githubAuthMessage: message,
+        selectedGitHubRepo: null,
+        showGitHubRepoPicker: false,
     }),
     clearGitHubAuth: () => set({
         githubAccessToken: null,
         githubAuthStatus: 'anonymous',
         githubAuthMessage: null,
+        selectedGitHubRepo: null,
+        showGitHubRepoPicker: false,
     }),
+    setSelectedGitHubRepo: (repo) => set({ selectedGitHubRepo: repo }),
+    setShowGitHubRepoPicker: (show) => set({ showGitHubRepoPicker: show }),
 
     // District Rooms
     districtRooms: {},

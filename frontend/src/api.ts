@@ -25,6 +25,32 @@ export interface GitHubTokenExchangeResponse {
     scope: string;
 }
 
+export interface GitHubReadableRepo {
+    id: number;
+    name: string;
+    fullName: string;
+    ownerLogin: string;
+    defaultBranch: string;
+    visibility: 'public' | 'private' | 'internal' | 'unknown';
+}
+
+export interface GitHubReadableRepoListResponse {
+    repos: GitHubReadableRepo[];
+    hasNextPage: boolean;
+}
+
+interface GitHubRepoApiResponse {
+    id: number;
+    name: string;
+    full_name: string;
+    private: boolean;
+    visibility?: 'public' | 'private' | 'internal';
+    default_branch: string;
+    owner: {
+        login: string;
+    };
+}
+
 function getOrCreateSessionId(): string {
     const fallback = crypto.randomUUID();
 
@@ -341,6 +367,60 @@ export async function exchangeGitHubOAuthCode(
         method: 'POST',
         body: JSON.stringify({ code, redirectUri }),
     });
+}
+
+function normalizeGitHubRepoVisibility(repo: GitHubRepoApiResponse): GitHubReadableRepo['visibility'] {
+    if (repo.visibility) {
+        return repo.visibility;
+    }
+
+    return repo.private ? 'private' : 'public';
+}
+
+export async function fetchGitHubReadableRepos(
+    accessToken: string,
+    signal?: AbortSignal,
+): Promise<GitHubReadableRepoListResponse> {
+    const response = await fetch(
+        'https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=owner,collaborator,organization_member',
+        {
+            headers: {
+                Accept: 'application/vnd.github+json',
+                Authorization: `Bearer ${accessToken}`,
+                'X-GitHub-Api-Version': '2022-11-28',
+            },
+            signal,
+        },
+    );
+
+    if (!response.ok) {
+        let message = `GitHub repo fetch failed (${response.status}).`;
+
+        try {
+            const payload = await response.json() as { message?: string };
+            if (payload.message) {
+                message = payload.message;
+            }
+        } catch {
+            // Keep the status-based fallback message.
+        }
+
+        throw new Error(message);
+    }
+
+    const payload = await response.json() as GitHubRepoApiResponse[];
+
+    return {
+        repos: payload.map((repo) => ({
+            id: repo.id,
+            name: repo.name,
+            fullName: repo.full_name,
+            ownerLogin: repo.owner.login,
+            defaultBranch: repo.default_branch,
+            visibility: normalizeGitHubRepoVisibility(repo),
+        })),
+        hasNextPage: response.headers.get('link')?.includes('rel="next"') ?? false,
+    };
 }
 
 // ─── Health Check ───
