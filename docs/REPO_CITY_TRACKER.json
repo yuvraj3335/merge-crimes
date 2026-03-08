@@ -1,9 +1,9 @@
 {
   "project": "merge-crimes-repo-city-pivot",
-  "status": "phase_4_in_progress",
-  "last_updated": "2026-03-08T13:16:47+05:30",
+  "status": "phase_5_in_progress",
+  "last_updated": "2026-03-08T13:23:55+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
-  "current_goal": "Phase 4 - GitHub Connection MVP",
+  "current_goal": "Phase 5 - Signal-Driven Missions",
   "source_of_truth": [
     "docs/REPO_CITY_TRACKER.json",
     "docs/REPO_CITY_PRODUCT_VISION.md",
@@ -553,7 +553,7 @@
     },
     {
       "name": "Phase 4 - GitHub Connection MVP",
-      "status": "in_progress",
+      "status": "done",
       "deliverables": [
         "GitHub auth/connect flow",
         "Repo selection flow",
@@ -653,12 +653,26 @@
             "worker_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 for the local worker process"
           }
+        },
+        {
+          "title": "GitHub picker snapshot handoff — load the stored selected GitHub snapshot into repo-city mode",
+          "summary": [
+            "Repo-city bootstrap now reads a validated selected GitHub snapshot from frontend localStorage before falling back to the shared sample snapshot, while smoke mode still skips bootstrap replacement.",
+            "When the GitHub picker stores a normalized snapshot, the frontend now persists that snapshot and immediately routes it through loadRepoCity so the generated city switches to the user's chosen repo without requiring a seeded fixture handoff.",
+            "Malformed or missing cached snapshot data now safely falls back to the existing sample snapshot instead of trusting unvalidated storage payloads."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "worker_build": "not_run — no worker or shared files changed in this slice",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file, running local D1 migrations, and binding 127.0.0.1 for the worker process"
+          }
         }
       ]
     },
     {
       "name": "Phase 5 - Signal-Driven Missions",
-      "status": "pending",
+      "status": "in_progress",
       "deliverables": [
         "Signal normalization",
         "Signal-to-mission generator",
@@ -686,20 +700,18 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "GitHub picker snapshot handoff — load the stored selected GitHub snapshot into repo-city mode",
-    "why": "The frontend can now prove the end-to-end city path with a local normalized snapshot file. The next bounded Phase 4 slice is to replace the hardcoded bootstrap fallback with the stored selected GitHub snapshot already in frontend state so choosing a public repo from the GitHub picker immediately opens its generated city.",
+    "title": "GitHub signal normalization MVP — attach live repo signals to normalized snapshots",
+    "why": "Phase 4 now proves end-to-end city generation from a selected GitHub snapshot. The next bounded slice is to fetch a minimal safe set of GitHub repo signals and normalize them into RepoSignal entries so Phase 5 can drive missions and district heat from real repo activity instead of seeded threats.",
     "candidate_files": [
-      "frontend/src/store/gameStore.ts",
-      "frontend/src/ui/GitHubRepoPicker.tsx",
-      "frontend/src/ui/MainMenu.tsx"
+      "worker/src/index.ts",
+      "shared/repoModel.ts",
+      "shared/repoCityGenerator.ts"
     ],
     "acceptance_criteria": [
-      "Selecting a public GitHub repo with a stored normalized snapshot loads repo-city mode without manually choosing a seeded fixture",
-      "The generated city is built from the stored selected GitHub snapshot already held in frontend state",
-      "The static local sample snapshot remains a fallback when no selected GitHub snapshot is available",
-      "cd frontend && npm run lint passes",
-      "cd frontend && npm run build passes",
-      "cd frontend && npm run browser:smoke passes or is explicitly blocked by the sandbox"
+      "The normalized GitHub snapshot includes a bounded RepoSignal array built from safe read-only repo signals such as open PRs, issues, or workflow failures",
+      "Existing repo-city generation still works when no live GitHub signals are returned",
+      "cd worker && npm run build passes",
+      "cd frontend && npm run build passes"
     ]
   },
   "open_questions": [

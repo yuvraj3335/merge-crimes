@@ -8,7 +8,7 @@ import { SEED_MISSIONS } from '../../../shared/seed/missions';
 import { SEED_EVENTS } from '../../../shared/seed/events';
 import { SEED_CONFLICTS } from '../../../shared/seed/conflicts';
 import * as api from '../api';
-import { getBootstrapRepoSnapshot } from '../repoCityBootstrap';
+import { getBootstrapRepoSnapshot, writeStoredSelectedGitHubRepoSnapshot } from '../repoCityBootstrap';
 import type { ApiConnectionState, ApiRuntimeStatus, ApiWriteSessionState, GitHubReadableRepo } from '../api';
 
 // ─── Waypoint Persistence (ADR-017: Hybrid Policy) ───
@@ -761,7 +761,16 @@ export const useGameStore = create<GameState>((set, get) => ({
         showGitHubRepoPicker: false,
     }),
     setSelectedGitHubRepo: (repo) => set({ selectedGitHubRepo: repo }),
-    setSelectedGitHubRepoSnapshot: (snapshot) => set({ selectedGitHubRepoSnapshot: snapshot }),
+    setSelectedGitHubRepoSnapshot: (snapshot) => {
+        set({ selectedGitHubRepoSnapshot: snapshot });
+
+        if (!snapshot) {
+            return;
+        }
+
+        writeStoredSelectedGitHubRepoSnapshot(snapshot);
+        get().loadRepoCity(snapshot);
+    },
     setShowGitHubRepoPicker: (show) => set({ showGitHubRepoPicker: show }),
 
     // District Rooms
