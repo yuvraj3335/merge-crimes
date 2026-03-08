@@ -76,6 +76,12 @@ export interface RepoCityTransit {
     roadIds: string[];
 }
 
+export interface SelectedGitHubRepoIngestState {
+    tone: 'idle' | 'loading' | 'error';
+    repoId: number | null;
+    message: string | null;
+}
+
 export interface GameState {
     // Game phase
     phase: GamePhase;
@@ -160,6 +166,7 @@ export interface GameState {
     githubAuthMessage: string | null;
     selectedGitHubRepo: GitHubReadableRepo | null;
     selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null;
+    selectedGitHubRepoIngestState: SelectedGitHubRepoIngestState;
     selectedGitHubRepoSnapshot: GitHubRepoMetadataSnapshot | null;
     showGitHubRepoPicker: boolean;
     setGitHubAuthExchanging: () => void;
@@ -167,6 +174,7 @@ export interface GameState {
     setGitHubAuthError: (message: string) => void;
     clearGitHubAuth: () => void;
     setSelectedGitHubRepo: (repo: GitHubReadableRepo | null) => void;
+    setSelectedGitHubRepoIngestState: (state: SelectedGitHubRepoIngestState) => void;
     setSelectedGitHubRepoSnapshot: (snapshot: GitHubRepoMetadataSnapshot | null) => void;
     setShowGitHubRepoPicker: (show: boolean) => void;
 
@@ -736,6 +744,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     githubAuthMessage: null,
     selectedGitHubRepo: null,
     selectedGitHubRepoEligibility: null,
+    selectedGitHubRepoIngestState: {
+        tone: 'idle',
+        repoId: null,
+        message: null,
+    },
     selectedGitHubRepoSnapshot: null,
     showGitHubRepoPicker: false,
     setGitHubAuthExchanging: () => set({
@@ -748,6 +761,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthMessage: null,
         selectedGitHubRepo: null,
         selectedGitHubRepoEligibility: null,
+        selectedGitHubRepoIngestState: {
+            tone: 'idle',
+            repoId: null,
+            message: null,
+        },
         selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: true,
     }),
@@ -757,6 +775,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthMessage: message,
         selectedGitHubRepo: null,
         selectedGitHubRepoEligibility: null,
+        selectedGitHubRepoIngestState: {
+            tone: 'idle',
+            repoId: null,
+            message: null,
+        },
         selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
     }),
@@ -766,6 +789,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthMessage: null,
         selectedGitHubRepo: null,
         selectedGitHubRepoEligibility: null,
+        selectedGitHubRepoIngestState: {
+            tone: 'idle',
+            repoId: null,
+            message: null,
+        },
         selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
     }),
@@ -773,8 +801,20 @@ export const useGameStore = create<GameState>((set, get) => ({
         selectedGitHubRepo: repo,
         selectedGitHubRepoEligibility: repo ? getGitHubRepoTranslationEligibility(repo.visibility) : null,
     }),
+    setSelectedGitHubRepoIngestState: (state) => set({ selectedGitHubRepoIngestState: state }),
     setSelectedGitHubRepoSnapshot: (snapshot) => {
-        set({ selectedGitHubRepoSnapshot: snapshot });
+        set({
+            selectedGitHubRepoSnapshot: snapshot,
+            ...(snapshot
+                ? {
+                    selectedGitHubRepoIngestState: {
+                        tone: 'idle' as const,
+                        repoId: null,
+                        message: null,
+                    },
+                }
+                : {}),
+        });
 
         if (!snapshot) {
             return;

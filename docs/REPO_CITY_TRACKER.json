@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T16:31:32+05:30",
+  "last_updated": "2026-03-08T16:39:46+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -953,21 +953,33 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "Eligible-repo ingest status copy — surface when a selected public repo is still waiting on its active snapshot",
+          "summary": [
+            "The frontend now tracks the selected public GitHub repo's metadata ingest state in shared menu data so the UI can distinguish a waiting snapshot from a merely eligible selection.",
+            "The GitHub repo picker marks eligible public repo ingest as in progress immediately on selection and records a clear failure state when GitHub does not return a readable snapshot, without changing the underlying read-only ingest flow.",
+            "The repo-city menu and picker now show explicit waiting copy, including 'Ingesting repository data... Please wait before entering the city.', while the previous active city remains visible until the new snapshot becomes active."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Eligible-repo ingest status copy — surface when a selected public repo is still waiting on its active snapshot",
-    "why": "The menu now distinguishes listed-only private repos, but public repo selection still relies on silent background ingest before the active city switches. The next trust gap is showing explicit loading or failure feedback when an eligible repo is selected but not yet active.",
+    "title": "Pending-ingest enter-city action copy — keep the launch CTA aligned with the active snapshot",
+    "why": "The menu and picker now surface when a selected public repo is still ingesting, but the Enter Repo City CTA still reads like the newly selected repo is immediately ready. The next trust gap is aligning that action copy with the fact that the previous snapshot remains active until ingest completes or fails.",
     "candidate_files": [
       "frontend/src/ui/MainMenu.tsx",
-      "frontend/src/ui/GitHubRepoPicker.tsx",
-      "frontend/src/store/gameStore.ts"
+      "frontend/src/ui/selectedRepoStatusCopy.ts"
     ],
     "acceptance_criteria": [
-      "Selecting an eligible public repo shows clear in-progress or failure status until that repo becomes the active connected city.",
-      "The menu no longer relies on silent background ingest to explain why the previously connected city is still active after a new public selection.",
+      "When a selected public repo is still ingesting or has failed ingest, the Enter Repo City CTA makes it explicit whether it will enter the current active city or should wait for the pending snapshot.",
+      "The launch action no longer implies that the newly selected public repo is ready before its snapshot becomes active.",
       "Frontend lint and build pass, and browser smoke is run unless the sandbox blocks Wrangler again."
     ]
   },

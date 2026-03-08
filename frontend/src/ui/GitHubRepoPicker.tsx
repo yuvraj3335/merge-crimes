@@ -6,6 +6,7 @@ import {
     isGitHubRepoTranslationEligible,
 } from '../repoTranslationEligibility';
 import { GitHubTrustNotice } from './GitHubTrustNotice';
+import { buildSelectedRepoStatusCopy } from './selectedRepoStatusCopy';
 
 interface GitHubRepoPickerProps {
     open: boolean;
@@ -33,8 +34,12 @@ interface PickerStatusCopy {
 export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     const githubAccessToken = useGameStore((s) => s.githubAccessToken);
     const repoCityMode = useGameStore((s) => s.repoCityMode);
+    const connectedRepo = useGameStore((s) => s.connectedRepo);
     const selectedGitHubRepo = useGameStore((s) => s.selectedGitHubRepo);
     const setSelectedGitHubRepo = useGameStore((s) => s.setSelectedGitHubRepo);
+    const selectedGitHubRepoEligibility = useGameStore((s) => s.selectedGitHubRepoEligibility);
+    const selectedGitHubRepoIngestState = useGameStore((s) => s.selectedGitHubRepoIngestState);
+    const setSelectedGitHubRepoIngestState = useGameStore((s) => s.setSelectedGitHubRepoIngestState);
     const setSelectedGitHubRepoSnapshot = useGameStore((s) => s.setSelectedGitHubRepoSnapshot);
 
     const [repos, setRepos] = useState<api.GitHubReadableRepo[]>([]);
@@ -129,6 +134,21 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     const translationEligibleRepos = visibleRepos.filter((repo) => isGitHubRepoTranslationEligible(repo.visibility));
     const listedOnlyCount = visibleRepos.length - translationEligibleRepos.length;
     const repoCountCopy = `${visibleRepos.length} listed ${visibleRepos.length === 1 ? 'repository' : 'repositories'}`;
+    const selectedGitHubRepoIsActive = Boolean(
+        selectedGitHubRepo
+        && connectedRepo?.metadata?.provider === 'github'
+        && connectedRepo.metadata.providerRepoId === selectedGitHubRepo.id,
+    );
+    const selectedRepoStatusCopy = buildSelectedRepoStatusCopy(
+        selectedGitHubRepo,
+        selectedGitHubRepoEligibility,
+        selectedGitHubRepoIsActive,
+        connectedRepo,
+        selectedGitHubRepoIngestState,
+    );
+    const pickerSelectedRepoStatusCopy = selectedRepoStatusCopy?.tone === 'loading' || selectedRepoStatusCopy?.tone === 'error'
+        ? selectedRepoStatusCopy
+        : null;
 
     const pickerHint = githubAccessToken
         ? 'You only see repos this GitHub connection can already list. Private repos need explicit permission, and only eligible repos can be translated here.'
@@ -203,6 +223,11 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
         ingestControllerRef.current?.abort();
         setSelectedGitHubRepoSnapshot(null);
+        setSelectedGitHubRepoIngestState({
+            tone: 'idle',
+            repoId: null,
+            message: null,
+        });
 
         if (!shouldTriggerIngest) {
             return;
@@ -210,6 +235,11 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
         const controller = new AbortController();
         ingestControllerRef.current = controller;
+        setSelectedGitHubRepoIngestState({
+            tone: 'loading',
+            repoId: repo.id,
+            message: 'Ingesting repository data... Please wait before entering the city.',
+        });
 
         void api.fetchGitHubRepoMetadata(
             repo.ownerLogin,
@@ -218,12 +248,21 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
             githubAccessToken ?? undefined,
         )
             .then((snapshot) => {
-                if (!snapshot || controller.signal.aborted) {
+                if (controller.signal.aborted) {
                     return;
                 }
 
                 const currentSelection = useGameStore.getState().selectedGitHubRepo;
                 if (currentSelection?.id !== repo.id) {
+                    return;
+                }
+
+                if (!snapshot) {
+                    setSelectedGitHubRepoIngestState({
+                        tone: 'error',
+                        repoId: repo.id,
+                        message: 'GitHub did not return a readable snapshot. The current city is still active.',
+                    });
                     return;
                 }
 
@@ -234,10 +273,28 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                     return;
                 }
 
+                const currentSelection = useGameStore.getState().selectedGitHubRepo;
+                if (currentSelection?.id !== repo.id) {
+                    return;
+                }
+
+                setSelectedGitHubRepoIngestState({
+                    tone: 'error',
+                    repoId: repo.id,
+                    message: error instanceof Error
+                        ? `${error.message} The current city is still active.`
+                        : 'Repo ingest failed. The current city is still active.',
+                });
+
                 console.warn(
                     '[MergeCrimes] GitHub repo metadata ingest failed',
                     error instanceof Error ? error.message : error,
                 );
+            })
+            .finally(() => {
+                if (ingestControllerRef.current === controller) {
+                    ingestControllerRef.current = null;
+                }
             });
     }
 
@@ -298,6 +355,39 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                     </button>
                 )}
             </div>
+
+            {pickerSelectedRepoStatusCopy && (
+                <div
+                    className={`repo-connection-feedback ${pickerSelectedRepoStatusCopy.tone}`.trim()}
+                    aria-live="polite"
+                    aria-busy={pickerSelectedRepoStatusCopy.tone === 'loading'}
+                >
+                    <div className="repo-connection-feedback-layout">
+                        <div
+                            className={`repo-connection-feedback-icon ${pickerSelectedRepoStatusCopy.tone}`.trim()}
+                            aria-hidden="true"
+                        >
+                            {pickerSelectedRepoStatusCopy.showSpinner ? (
+                                <span className="repo-status-spinner" />
+                            ) : (
+                                <span className="repo-status-dot" />
+                            )}
+                        </div>
+                        <div className="repo-connection-feedback-body">
+                            <div className="repo-connection-feedback-header">
+                                <span className={`repo-connection-feedback-pill ${pickerSelectedRepoStatusCopy.tone}`.trim()}>
+                                    {pickerSelectedRepoStatusCopy.pill}
+                                </span>
+                                <span className="repo-connection-feedback-title">
+                                    {pickerSelectedRepoStatusCopy.title}
+                                </span>
+                            </div>
+                            <div className="repo-connection-feedback-copy">{pickerSelectedRepoStatusCopy.message}</div>
+                            <div className="repo-connection-feedback-detail">{pickerSelectedRepoStatusCopy.detail}</div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {displayStatus === 'ready' ? (
                 <>

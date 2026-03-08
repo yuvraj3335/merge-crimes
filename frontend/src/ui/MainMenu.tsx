@@ -3,12 +3,11 @@ import { useGameStore } from '../store/gameStore';
 import { REPO_FIXTURES } from '../../../shared/seed/repoFixtures';
 import type { RepoModel } from '../../../shared/repoModel';
 import * as api from '../api';
-import type { GitHubReadableRepo } from '../api';
 import { GitHubRepoPicker } from './GitHubRepoPicker';
 import { GitHubTrustNotice } from './GitHubTrustNotice';
 import { RepoPrivacyNotice } from './RepoPrivacyNotice';
-import { type GitHubRepoTranslationEligibility } from '../repoTranslationEligibility';
 import { buildSnapshotFreshnessCopy } from './snapshotFreshness';
+import { buildSelectedRepoStatusCopy } from './selectedRepoStatusCopy';
 
 type RepoRefreshTone = 'idle' | 'loading' | 'success' | 'error';
 
@@ -31,6 +30,7 @@ export function MainMenu() {
     const githubAuthMessage = useGameStore((s) => s.githubAuthMessage);
     const selectedGitHubRepo = useGameStore((s) => s.selectedGitHubRepo);
     const selectedGitHubRepoEligibility = useGameStore((s) => s.selectedGitHubRepoEligibility);
+    const selectedGitHubRepoIngestState = useGameStore((s) => s.selectedGitHubRepoIngestState);
     const setSelectedGitHubRepoSnapshot = useGameStore((s) => s.setSelectedGitHubRepoSnapshot);
     const showGitHubRepoPicker = useGameStore((s) => s.showGitHubRepoPicker);
     const setShowGitHubRepoPicker = useGameStore((s) => s.setShowGitHubRepoPicker);
@@ -237,6 +237,7 @@ export function MainMenu() {
         selectedGitHubRepoEligibility,
         selectedGitHubRepoIsActive,
         connectedRepo,
+        selectedGitHubRepoIngestState,
     );
     const githubRepoActionMeta = selectedGitHubRepo
         ? selectedGitHubRepoEligibility?.eligible
@@ -339,7 +340,11 @@ export function MainMenu() {
                                         className={`repo-connection-feedback-icon ${selectedRepoStatusCopy.tone}`.trim()}
                                         aria-hidden="true"
                                     >
-                                        <span className="repo-status-dot" />
+                                        {selectedRepoStatusCopy.showSpinner ? (
+                                            <span className="repo-status-spinner" />
+                                        ) : (
+                                            <span className="repo-status-dot" />
+                                        )}
                                     </div>
                                     <div className="repo-connection-feedback-body">
                                         <div className="repo-connection-feedback-header">
@@ -605,49 +610,4 @@ export function MainMenu() {
             )}
         </div>
     );
-}
-
-interface SelectedRepoStatusCopy {
-    tone: 'success' | 'empty';
-    pill: string;
-    title: string;
-    message: string;
-    detail: string;
-}
-
-function buildSelectedRepoStatusCopy(
-    selectedGitHubRepo: GitHubReadableRepo | null,
-    selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null,
-    selectedGitHubRepoIsActive: boolean,
-    connectedRepo: RepoModel | null,
-): SelectedRepoStatusCopy | null {
-    if (!selectedGitHubRepo || !selectedGitHubRepoEligibility) {
-        return null;
-    }
-
-    if (selectedGitHubRepoEligibility.eligible) {
-        return {
-            tone: 'success',
-            pill: selectedGitHubRepoIsActive ? 'Active city' : selectedGitHubRepoEligibility.pill,
-            title: selectedGitHubRepoIsActive ? 'Selected repo is active' : 'Selected repo is eligible',
-            message: selectedGitHubRepoIsActive
-                ? `${selectedGitHubRepo.fullName} is the public repo behind the current Repo City snapshot.`
-                : `${selectedGitHubRepo.fullName} is eligible for Repo City translation in this flow.`,
-            detail: selectedGitHubRepoIsActive
-                ? 'Menu status and actions now match the same eligibility rule shown in the picker.'
-                : connectedRepo
-                    ? `${connectedRepo.owner}/${connectedRepo.name} stays active until a read-only snapshot for the selected repo is available.`
-                    : 'The menu only switches the active city after a read-only GitHub snapshot is available.',
-        };
-    }
-
-    return {
-        tone: 'empty',
-        pill: selectedGitHubRepoEligibility.pill,
-        title: 'Selected repo is listed only',
-        message: `${selectedGitHubRepo.fullName} is visible through GitHub, but ${selectedGitHubRepoEligibility.menuDetail.toLowerCase()}`,
-        detail: connectedRepo
-            ? `${connectedRepo.owner}/${connectedRepo.name} stays the active city. Pick an eligible public repo to switch translation.`
-            : 'Pick an eligible public repo to generate a city here.',
-    };
 }
