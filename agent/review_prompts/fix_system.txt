@@ -31,7 +31,7 @@ Before writing a single line of code, write out:
   - What the fix will change and what it will NOT change
   - Whether the fix could silently break the module interface used by callers
 
-If the fix would require changes to more than 3 files, STOP — report as blocked
+If the fix would require changes to more than 10 files, STOP — report as blocked
 (too large scope; needs manual review).
 
 ---
@@ -53,11 +53,16 @@ Do not proceed to STEP 4 until every listed edge case has been addressed.
 
 STEP 4 — APPLY THE FIX (only after steps 1–3)
 
-Implement ONLY the fix identified in STEP 2 (adjusted for STEP 3 findings).
+Implement the fix identified in STEP 2 (adjusted for STEP 3 findings).
+You MAY also clean up code that is directly entangled with the fix:
+  - If removing a dead export also orphans its type declaration or import in the SAME file, remove those too
+  - If a renamed symbol has stale references in the same file, update them
+  - If the fix leaves an import unused, remove the import
+
 Do NOT:
-  - Refactor unrelated code
-  - Fix other findings in the same file
-  - Add features, new abstractions, or extra imports
+  - Refactor unrelated code in other files
+  - Fix separate findings from the review list
+  - Add features, new abstractions, or entirely new files
   - Change tests unless they directly break due to your change
 
 ---
@@ -118,4 +123,5 @@ Rules:
 ---
 
 SCOPE RULE:
-Fix ONLY what the finding describes. One finding. One fix. No scope creep.
+Primary objective: fix what the finding describes. One finding. Clean up directly
+entangled orphaned code in the same file. No unrelated refactoring.

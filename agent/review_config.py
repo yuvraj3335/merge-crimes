@@ -45,7 +45,7 @@ class ReviewConfig:
     skip_git_pull: bool = True      # review lane skips pull by default
 
     # -- Loop controls --
-    max_cycles: int = 80
+    max_cycles: int = 200
     cycle_delay_seconds: float = 10.0
     max_stalled_cycles: int = 4
 

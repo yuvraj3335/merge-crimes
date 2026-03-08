@@ -43,10 +43,10 @@ REPO ROOT: {repo_root}
 
 ---
 
-Write a complete Codex review prompt (under 600 words) that:
+Write a thorough Codex review prompt (target 900–1200 words) that:
 
 1. Names the specific files to read (from the TARGET FILES list above)
-2. Instructs Codex to focus exclusively on the "{workstream}" workstream category
+2. Instructs Codex to focus on the "{workstream}" workstream category
 3. Tells Codex to verify every finding by actually reading the file and running rg/grep
 4. For dead_code: requires Codex to show the rg search command + output confirming
    zero cross-file references before claiming a symbol is dead
@@ -54,5 +54,15 @@ Write a complete Codex review prompt (under 600 words) that:
 6. Requires "edge_cases" in each finding with ≥2 entries grounded in the actual code
 7. Instructs Codex to output {{"findings": []}} if the scope is clean
 8. Reminds Codex: read-only review — do NOT change any files, do NOT run browser:smoke
+9. Instructs Codex to look for SYSTEMIC patterns: if the same class of issue appears
+   in 5+ locations, report it as ONE high-severity systemic finding with all locations
+   listed in the evidence field — do not report each instance separately
+10. Instructs Codex to go DEEP beyond surface exports:
+    - Duplicate logic: same calculation or transformation implemented twice
+    - Reimplemented interfaces: logic that should live in shared/ but is copied
+    - State ownership violations: state split across modules that should own it centrally
+    - Missing abstractions: repeated branching patterns that should be a single utility
+    - Architectural violations: wrong-direction imports, layering breaches
 
-The prompt must be specific to this workstream and scope — not generic boilerplate.
+Be concrete: name the files, name the patterns to look for, give Codex specific rg
+search strategies for this workstream. Not generic boilerplate.

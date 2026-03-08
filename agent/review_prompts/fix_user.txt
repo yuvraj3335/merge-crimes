@@ -43,8 +43,10 @@ EXECUTION CHECKLIST (work through each in order):
 [ ] STEP 3 — (Skip if BUG_VERIFIED: false) For each edge case listed above, state
              whether your proposed fix handles it. Revise the fix if any case is not covered.
 
-[ ] STEP 4 — (Skip if BUG_VERIFIED: false) Apply the fix from STEP 2/3. Scope: this
-             finding only. No extra changes.
+[ ] STEP 4 — (Skip if BUG_VERIFIED: false) Apply the fix from STEP 2/3.
+             Primary scope: finding {finding_id}. Also clean up any directly orphaned
+             code in the same file (unused imports, stale type declarations left behind
+             by the fix). Do NOT touch unrelated logic or other files.
 
 [ ] STEP 5 — Run validation (npm run build / lint as appropriate).
              Output: FIX_STATUS: APPLIED   OR   FIX_STATUS: REVERTED
@@ -57,4 +59,5 @@ EXECUTION CHECKLIST (work through each in order):
 ---
 
 Output the 8-section report at the end (see system prompt for format).
-Remember: Fix ONLY finding {finding_id}. One finding. One fix.
+Primary objective: fix finding {finding_id}. Clean up directly orphaned code in the
+same file. Do NOT touch unrelated files or logic.

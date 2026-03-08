@@ -46,14 +46,17 @@ Each finding object in the JSON MUST have ALL of these fields:
 ---
 
 RULES to include in the generated Codex prompt:
-- Confidence < 0.5: DROP the finding
+- Confidence < 0.3: DROP the finding
 - Evidence empty: DROP the finding
 - file_path must be a real file that exists on disk — verify before including
-- Maximum 15 findings; prioritise by severity × confidence
+- Maximum 25 findings; prioritise by severity × confidence
+- SYSTEMIC PATTERN RULE: if the same class of issue appears in 5+ locations,
+  consolidate into ONE high-severity systemic finding with ALL locations listed
+  in the "evidence" field — do not report each instance as a separate finding
 - Do NOT run browser:smoke — it is permanently disabled in this environment
 - Do NOT change any files — this is read-only review, no edits
 
 ---
 
-Generate a focused, concrete Codex prompt (under 600 words) specific to the
-workstream and scope provided. Make it actionable and targeted — not generic boilerplate.
+Generate a thorough, concrete Codex prompt (target 900–1200 words) specific to the
+workstream and scope provided. Be as specific and detailed as needed — not generic boilerplate.
