@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 import type { GameState } from '../store/gameStore';
@@ -69,7 +69,22 @@ const selectHudState = (state: GameState) => ({
     repoCityTransit: state.repoCityTransit,
 });
 
-export function HUD() {
+type DirectionArrowProps = {
+    playerPosition: [number, number, number];
+    waypointPosition: [number, number, number];
+    color: string;
+};
+
+type MinimapProps = {
+    playerPosition: [number, number, number];
+    districts: District[];
+    waypointPosition: [number, number, number] | null;
+    waypointColor: string;
+};
+
+// App subscribes broadly to the game store, so memoizing the HUD keeps unrelated parent updates
+// from rebuilding the overlay while Zustand still pushes the HUD's own selected state changes through.
+export const HUD = memo(function HUD() {
     const {
         phase,
         credits,
@@ -513,13 +528,11 @@ export function HUD() {
             </div>
         </div>
     );
-}
+});
 
-function DirectionArrow({ playerPosition, waypointPosition, color }: {
-    playerPosition: [number, number, number];
-    waypointPosition: [number, number, number];
-    color: string;
-}) {
+HUD.displayName = 'HUD';
+
+const DirectionArrow = memo(function DirectionArrow({ playerPosition, waypointPosition, color }: DirectionArrowProps) {
     const dx = waypointPosition[0] - playerPosition[0];
     const dz = waypointPosition[2] - playerPosition[2];
     const dist = Math.sqrt(dx * dx + dz * dz);
@@ -544,32 +557,35 @@ function DirectionArrow({ playerPosition, waypointPosition, color }: {
             <div className="direction-arrow-dist">{distText}</div>
         </div>
     );
-}
+});
 
-function Minimap({ playerPosition, districts, waypointPosition, waypointColor }: {
-    playerPosition: [number, number, number];
-    districts: District[];
-    waypointPosition: [number, number, number] | null;
-    waypointColor: string;
-}) {
+DirectionArrow.displayName = 'DirectionArrow';
+
+const Minimap = memo(function Minimap({ playerPosition, districts, waypointPosition, waypointColor }: MinimapProps) {
     const mapSize = 150;
     const worldSize = 200;
     const scale = mapSize / worldSize;
+    const districtRects = useMemo(() => (
+        districts.map((district) => ({
+            id: district.id,
+            style: {
+                left: `${(district.position[0] + worldSize / 2 - district.size[0] / 2) * scale}px`,
+                top: `${(district.position[1] + worldSize / 2 - district.size[1] / 2) * scale}px`,
+                width: `${district.size[0] * scale}px`,
+                height: `${district.size[1] * scale}px`,
+                backgroundColor: district.color,
+            },
+        }))
+    ), [districts, scale, worldSize]);
 
     return (
         <div className="minimap">
             {/* Districts */}
-            {districts.map((d) => (
+            {districtRects.map((district) => (
                 <div
-                    key={d.id}
+                    key={district.id}
                     className="minimap-district"
-                    style={{
-                        left: `${(d.position[0] + worldSize / 2 - d.size[0] / 2) * scale}px`,
-                        top: `${(d.position[1] + worldSize / 2 - d.size[1] / 2) * scale}px`,
-                        width: `${d.size[0] * scale}px`,
-                        height: `${d.size[1] * scale}px`,
-                        backgroundColor: d.color,
-                    }}
+                    style={district.style}
                 />
             ))}
 
@@ -596,4 +612,6 @@ function Minimap({ playerPosition, districts, waypointPosition, waypointColor }:
             />
         </div>
     );
-}
+});
+
+Minimap.displayName = 'Minimap';

@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T15:58:44+05:30",
+  "last_updated": "2026-03-08T16:04:09+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -888,15 +888,36 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "HUD memoization boundary — stop overlay rerenders from broad parent updates",
+          "summary": [
+            "The HUD component is now wrapped in React.memo so App-level rerenders from the broader game-store subscription no longer rebuild the full overlay when HUD state itself has not changed.",
+            "The direction arrow and minimap are memoized as independent HUD subcomponents, and the minimap now caches its static district rectangles so movement and mission-timer updates do not remap every district node on each repaint.",
+            "The slice stays isolated to HUD rendering behavior and does not change mission logic, player movement, district state, or repo-city trust copy."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "tbd",
-    "why": "Phase 7 remains in progress, but the next bounded polish slice should be chosen from a concrete measured hotspot instead of guessing after this HUD-only performance pass.",
-    "candidate_files": [],
-    "acceptance_criteria": []
+    "title": "Token trust clarity — surface GitHub OAuth scope and app-usage boundaries before connect",
+    "why": "Phase 7 is still in progress, and the next bounded trust hotspot is the pre-connect flow: players should see exact GitHub scope and read-only usage language before starting OAuth, not only after entering the picker.",
+    "candidate_files": [
+      "frontend/src/ui/MainMenu.tsx",
+      "frontend/src/ui/GitHubRepoPicker.tsx",
+      "frontend/src/index.css"
+    ],
+    "acceptance_criteria": [
+      "The pre-connect shell explains the exact GitHub access scope and keeps read-only, no-write behavior explicit.",
+      "The repo picker repeats the same trust boundary so the scope explanation stays visible during selection.",
+      "Frontend lint and build pass, and browser smoke is attempted unless the sandbox blocks Wrangler again."
+    ]
   },
   "open_questions": [
     "Should GitHub integration use OAuth first or a GitHub App first?",
