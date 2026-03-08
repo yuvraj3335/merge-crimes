@@ -305,11 +305,17 @@ def pick_winning_slice_by_mode(
     weight_recency: float = 1.5,
     weight_coverage_gap: float = 2.0,
     weight_starvation: float = 1.0,
+    max_ws_review_cycles: int = 5,
 ) -> Optional[Dict[str, Any]]:
     """Return the highest-scored pending entry matching the given mode.
 
     Normalises mode names so the orchestrator's "review_only" / "apply_fix"
     values match the tracker's stored "review" / "fix" entry modes.
+
+    For review mode, enforces workstream rotation via three passes:
+      Pass 1 — prefer workstreams never run (cycles_assigned == 0)
+      Pass 2 — prefer workstreams under the per-workstream cap
+      Pass 3 — accept any remaining review entry (ignores cap)
     """
     # Map orchestrator mode names → tracker entry mode values
     _MODE_MAP = {"review_only": "review", "apply_fix": "fix"}
@@ -318,6 +324,28 @@ def pick_winning_slice_by_mode(
     ranked = rank_queue(
         data, now_iso, weight_severity, weight_recency, weight_coverage_gap, weight_starvation
     )
+
+    if entry_mode == "review":
+        # Pass 1: workstreams that have never been reviewed
+        for _score, entry in ranked:
+            if entry.get("mode") != "review":
+                continue
+            ws = _get_workstream(data, entry.get("workstream_id", ""))
+            if ws is not None and ws.get("cycles_assigned", 0) == 0:
+                return entry
+        # Pass 2: workstreams under the per-workstream cycle cap
+        for _score, entry in ranked:
+            if entry.get("mode") != "review":
+                continue
+            ws = _get_workstream(data, entry.get("workstream_id", ""))
+            if ws is None or ws.get("cycles_assigned", 0) < max_ws_review_cycles:
+                return entry
+        # Pass 3: cap exhausted — pick best-scored remaining review entry
+        for _score, entry in ranked:
+            if entry.get("mode") == "review":
+                return entry
+        return None
+
     for _score, entry in ranked:
         if entry.get("mode") == entry_mode:
             return entry
@@ -374,12 +402,22 @@ def evaluate_stop_policy(
                 f"{stop_on_score_below:.2f}"
             )
 
-    # 5. Open findings below threshold AND enough coverage
+    # 5. Open findings below threshold AND enough coverage AND all workstreams covered
     open_findings = get_open_findings(data)
     workstream_count = max(1, len(data.get("workstreams", [])))
+    # Only stop on low-findings once every review workstream has run at least once
+    uncovered = [
+        e for e in get_pending_review_queue(data)
+        if (
+            (lambda ws: ws is not None and ws.get("cycles_assigned", 0) == 0)(
+                _get_workstream(data, e.get("workstream_id", ""))
+            )
+        )
+    ]
     if (
         len(open_findings) < stop_on_findings_below
         and cycles_run >= workstream_count * 2
+        and len(uncovered) == 0
     ):
         return True, (
             f"Open findings ({len(open_findings)}) below threshold "
