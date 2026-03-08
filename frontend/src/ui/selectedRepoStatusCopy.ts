@@ -17,6 +17,36 @@ export interface SelectedRepoStatusCopy {
     showSpinner?: boolean;
 }
 
+export function isSelectedGitHubRepoSnapshotIngesting(
+    selectedGitHubRepo: GitHubReadableRepo | null,
+    selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null,
+    selectedGitHubRepoIsActive: boolean,
+    selectedGitHubRepoIngestState: SelectedGitHubRepoIngestStateLike,
+): boolean {
+    return Boolean(
+        selectedGitHubRepo
+        && selectedGitHubRepoEligibility?.eligible
+        && !selectedGitHubRepoIsActive
+        && selectedGitHubRepoIngestState.tone === 'loading'
+        && selectedGitHubRepoIngestState.repoId === selectedGitHubRepo.id,
+    );
+}
+
+export function didSelectedGitHubRepoSnapshotIngestFail(
+    selectedGitHubRepo: GitHubReadableRepo | null,
+    selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null,
+    selectedGitHubRepoIsActive: boolean,
+    selectedGitHubRepoIngestState: SelectedGitHubRepoIngestStateLike,
+): boolean {
+    return Boolean(
+        selectedGitHubRepo
+        && selectedGitHubRepoEligibility?.eligible
+        && !selectedGitHubRepoIsActive
+        && selectedGitHubRepoIngestState.tone === 'error'
+        && selectedGitHubRepoIngestState.repoId === selectedGitHubRepo.id,
+    );
+}
+
 export function buildSelectedRepoStatusCopy(
     selectedGitHubRepo: GitHubReadableRepo | null,
     selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null,
@@ -28,10 +58,12 @@ export function buildSelectedRepoStatusCopy(
         return null;
     }
 
-    const repoStillIngesting = selectedGitHubRepoEligibility.eligible
-        && !selectedGitHubRepoIsActive
-        && selectedGitHubRepoIngestState.tone === 'loading'
-        && selectedGitHubRepoIngestState.repoId === selectedGitHubRepo.id;
+    const repoStillIngesting = isSelectedGitHubRepoSnapshotIngesting(
+        selectedGitHubRepo,
+        selectedGitHubRepoEligibility,
+        selectedGitHubRepoIsActive,
+        selectedGitHubRepoIngestState,
+    );
 
     if (repoStillIngesting) {
         return {
@@ -46,10 +78,12 @@ export function buildSelectedRepoStatusCopy(
         };
     }
 
-    const repoIngestFailed = selectedGitHubRepoEligibility.eligible
-        && !selectedGitHubRepoIsActive
-        && selectedGitHubRepoIngestState.tone === 'error'
-        && selectedGitHubRepoIngestState.repoId === selectedGitHubRepo.id;
+    const repoIngestFailed = didSelectedGitHubRepoSnapshotIngestFail(
+        selectedGitHubRepo,
+        selectedGitHubRepoEligibility,
+        selectedGitHubRepoIsActive,
+        selectedGitHubRepoIngestState,
+    );
 
     if (repoIngestFailed) {
         return {

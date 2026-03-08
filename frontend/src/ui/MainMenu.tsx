@@ -7,7 +7,11 @@ import { GitHubRepoPicker } from './GitHubRepoPicker';
 import { GitHubTrustNotice } from './GitHubTrustNotice';
 import { RepoPrivacyNotice } from './RepoPrivacyNotice';
 import { buildSnapshotFreshnessCopy } from './snapshotFreshness';
-import { buildSelectedRepoStatusCopy } from './selectedRepoStatusCopy';
+import {
+    buildSelectedRepoStatusCopy,
+    didSelectedGitHubRepoSnapshotIngestFail,
+    isSelectedGitHubRepoSnapshotIngesting,
+} from './selectedRepoStatusCopy';
 
 type RepoRefreshTone = 'idle' | 'loading' | 'success' | 'error';
 
@@ -171,8 +175,39 @@ export function MainMenu() {
         && selectedGitHubRepoEligibility
         && !selectedGitHubRepoEligibility.eligible,
     );
-    const startKicker = selectedRepoBlocksTranslation ? 'Current active city' : 'Launch translation';
-    const startMeta = selectedRepoBlocksTranslation
+    const selectedRepoStillIngesting = isSelectedGitHubRepoSnapshotIngesting(
+        selectedGitHubRepo,
+        selectedGitHubRepoEligibility,
+        selectedGitHubRepoIsActive,
+        selectedGitHubRepoIngestState,
+    );
+    const selectedRepoIngestFailed = didSelectedGitHubRepoSnapshotIngestFail(
+        selectedGitHubRepo,
+        selectedGitHubRepoEligibility,
+        selectedGitHubRepoIsActive,
+        selectedGitHubRepoIngestState,
+    );
+    const selectedRepoPendingSnapshot = selectedRepoStillIngesting || selectedRepoIngestFailed;
+    const selectedRepoName = selectedGitHubRepo?.fullName ?? 'The selected GitHub repo';
+    const startKicker = selectedRepoPendingSnapshot && !connectedRepo
+        ? 'Preparing snapshot'
+        : selectedRepoBlocksTranslation || selectedRepoPendingSnapshot
+            ? 'Current active city'
+            : 'Launch translation';
+    const startTitle = selectedRepoStillIngesting && !connectedRepo
+        ? 'Preparing Repo City...'
+        : selectedRepoPendingSnapshot && connectedRepo
+            ? 'Enter Current Repo City'
+            : 'Enter Repo City';
+    const startMeta = selectedRepoStillIngesting
+        ? connectedRepo
+            ? `${selectedRepoName} is still ingesting. Entering ${connectedRepo.owner}/${connectedRepo.name} until the new snapshot is ready.`
+            : `${selectedRepoName} is still ingesting. Wait for the read-only snapshot before entering.`
+        : selectedRepoIngestFailed
+            ? connectedRepo
+                ? `${selectedRepoName} did not finish ingest. Entering ${connectedRepo.owner}/${connectedRepo.name}.`
+                : `${selectedRepoName} is not ready yet. Retry the public repo selection before entering.`
+            : selectedRepoBlocksTranslation
         ? connectedRepo
             ? `${selectedGitHubRepo?.fullName} is listed only. Entering ${connectedRepo.owner}/${connectedRepo.name}.`
             : `${selectedGitHubRepo?.fullName} is listed only. Pick an eligible public repo to generate a city.`
@@ -413,7 +448,7 @@ export function MainMenu() {
                 {repoCityMode ? (
                     <>
                         <span className="menu-start-kicker">{startKicker}</span>
-                        <span className="menu-start-title">Enter Repo City</span>
+                        <span className="menu-start-title">{startTitle}</span>
                         <span className="menu-start-meta">{startMeta}</span>
                     </>
                 ) : (

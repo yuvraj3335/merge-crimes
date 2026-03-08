@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T16:39:46+05:30",
+  "last_updated": "2026-03-08T16:46:04+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -966,20 +966,33 @@
             "frontend_build": "pass",
             "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
           }
+        },
+        {
+          "title": "Pending-ingest enter-city action copy — keep the launch CTA aligned with the active snapshot",
+          "summary": [
+            "The repo-city menu CTA now switches to current-active-city copy when a newly selected public GitHub repo is still ingesting or its snapshot ingest has failed, instead of implying the pending repo is ready immediately.",
+            "The Enter Repo City button keeps the existing launch flow, but its kicker, title, and meta now explicitly tell the player whether they are entering the current active city or should wait for a new read-only snapshot.",
+            "The slice stays frontend-only and reuses the existing selected-repo ingest-state logic rather than introducing new repo-selection or ingest behavior."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 during the local worker migration step"
+          }
         }
       ]
     }
   ],
   "current_slice_recommendation": {
-    "title": "Pending-ingest enter-city action copy — keep the launch CTA aligned with the active snapshot",
-    "why": "The menu and picker now surface when a selected public repo is still ingesting, but the Enter Repo City CTA still reads like the newly selected repo is immediately ready. The next trust gap is aligning that action copy with the fact that the previous snapshot remains active until ingest completes or fails.",
+    "title": "Pending-ingest repo action meta — align secondary GitHub repo copy with waiting and failed snapshot states",
+    "why": "The primary Enter Repo City CTA now reflects whether the current active snapshot or a pending GitHub snapshot will launch, but the secondary Change GitHub Repo action still describes pending public repos as generically eligible. The next trust slice is to keep that action meta aligned with the same ingesting or failed state already shown elsewhere in the menu.",
     "candidate_files": [
       "frontend/src/ui/MainMenu.tsx",
       "frontend/src/ui/selectedRepoStatusCopy.ts"
     ],
     "acceptance_criteria": [
-      "When a selected public repo is still ingesting or has failed ingest, the Enter Repo City CTA makes it explicit whether it will enter the current active city or should wait for the pending snapshot.",
-      "The launch action no longer implies that the newly selected public repo is ready before its snapshot becomes active.",
+      "When a selected public repo is still ingesting or has failed ingest, the secondary GitHub repo action meta uses waiting or failure copy instead of generic eligibility copy.",
+      "The repo-selection secondary action stays consistent with the selected-repo status banner and the launch CTA about which snapshot is active versus pending.",
       "Frontend lint and build pass, and browser smoke is run unless the sandbox blocks Wrangler again."
     ]
   },
