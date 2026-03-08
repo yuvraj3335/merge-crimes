@@ -1,9 +1,9 @@
 {
   "project": "merge-crimes-repo-city-pivot",
-  "status": "phase_5_in_progress",
-  "last_updated": "2026-03-08T13:46:02+05:30",
+  "status": "phase_6_in_progress",
+  "last_updated": "2026-03-08T13:57:12+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
-  "current_goal": "Phase 5 - Signal-Driven Missions",
+  "current_goal": "Phase 6 - AI Bot Battle Layer",
   "source_of_truth": [
     "docs/REPO_CITY_TRACKER.json",
     "docs/REPO_CITY_PRODUCT_VISION.md",
@@ -672,7 +672,8 @@
     },
     {
       "name": "Phase 5 - Signal-Driven Missions",
-      "status": "in_progress",
+      "status": "done",
+      "completed_at": "2026-03-08T13:57:12+05:30",
       "deliverables": [
         "Signal normalization",
         "Signal-to-mission generator",
@@ -704,12 +705,26 @@
             "frontend_build": "pass",
             "frontend_lint": "not_run — no frontend files changed in this slice"
           }
+        },
+        {
+          "title": "GitHub signal-to-mission generator refinement — turn mapped repo signals into clearer mission mixes",
+          "summary": [
+            "Mission generation now groups actionable mapped signals by signal type and resolved module target so one readable mission batch can represent a real repo hotspot instead of emitting only one generic card per raw event.",
+            "Generated mission titles, descriptions, and lead objectives now call out the underlying mapped signal directly while keeping district routing tied to the module target selected by the signal heat mapper.",
+            "Repeated same-type signals on the same module now roll up into a summarized mission, and worker-side regression coverage checks both repo-level PR mapping and same-target stale PR rollup behavior."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "mission_generator_test": "pass — compiled and ran worker/src/__tests__/repoCityMissionGeneration.test.ts",
+            "frontend_build": "not_run — no frontend files changed in this slice",
+            "frontend_lint": "not_run — no frontend files changed in this slice"
+          }
         }
       ]
     },
     {
       "name": "Phase 6 - AI Bot Battle Layer",
-      "status": "pending",
+      "status": "in_progress",
       "deliverables": [
         "Bot archetype system",
         "Battle template mapping",
@@ -728,19 +743,17 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "GitHub signal-to-mission generator refinement — turn mapped repo signals into clearer mission mixes",
-    "why": "Phase 5 now normalizes live GitHub signals and maps them onto concrete module heat. The next bounded slice is to make mission generation lean on those mapped signals more deliberately so repo activity changes the mission list, not just district pressure.",
+    "title": "Signal-to-bot archetype alignment — make enemy rosters match live repo threat types",
+    "why": "Phase 5 now drives district pressure and mission batches from mapped GitHub signals. The next bounded slice is to make bot generation use those same grouped signals so enemies feel like the concrete repo threat behind each mission instead of generic placeholders.",
     "candidate_files": [
-      "worker/src/github/fetchRepoSignals.ts",
       "shared/repoCityGenerator.ts",
-      "shared/repoModel.ts"
+      "shared/repoModel.ts",
+      "shared/seed/conflicts.ts"
     ],
     "acceptance_criteria": [
-      "Mapped GitHub signals generate readable mission types without falling back to generic placeholder routing",
-      "Mission district selection follows the resolved module targets from the signal heat mapper",
-      "Zero-severity telemetry signals remain non-actionable",
-      "cd worker && npm run build passes",
-      "cd frontend && npm run build passes"
+      "Bot archetypes and names follow the same mapped signal groups that now drive mission generation",
+      "High-severity merge, security, and workflow signals surface more distinct threat copy than generic bot placeholders",
+      "cd worker && npm run build passes"
     ]
   },
   "open_questions": [

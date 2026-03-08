@@ -337,6 +337,256 @@ function isActionableSignal(signal: RepoSignal): boolean {
     && getBotArchetype(signal.type) !== null;
 }
 
+interface ActionableSignalGroup {
+  type: RepoSignalType;
+  target: string;
+  signals: RepoSignal[];
+  maxSeverity: RepoSignal['severity'];
+}
+
+const SIGNAL_MISSION_COPY: Record<RepoSignalType, {
+  singular: string;
+  plural: string;
+  missionVerb: string;
+  objectiveVerb: string;
+}> = {
+  failing_workflow: {
+    singular: 'failing workflow',
+    plural: 'failing workflows',
+    missionVerb: 'Stabilize',
+    objectiveVerb: 'Audit',
+  },
+  open_issue: {
+    singular: 'open issue',
+    plural: 'open issues',
+    missionVerb: 'Clear',
+    objectiveVerb: 'Audit',
+  },
+  open_pr: {
+    singular: 'open pull request',
+    plural: 'open pull requests',
+    missionVerb: 'Review',
+    objectiveVerb: 'Inspect',
+  },
+  merge_conflict: {
+    singular: 'merge conflict',
+    plural: 'merge conflicts',
+    missionVerb: 'Resolve',
+    objectiveVerb: 'Enter',
+  },
+  security_alert: {
+    singular: 'security alert',
+    plural: 'security alerts',
+    missionVerb: 'Purge',
+    objectiveVerb: 'Trace',
+  },
+  issue_spike: {
+    singular: 'issue spike',
+    plural: 'issue spikes',
+    missionVerb: 'Contain',
+    objectiveVerb: 'Audit',
+  },
+  stale_pr: {
+    singular: 'stale pull request',
+    plural: 'stale pull requests',
+    missionVerb: 'Recover',
+    objectiveVerb: 'Locate',
+  },
+  flaky_tests: {
+    singular: 'flaky test alert',
+    plural: 'flaky test alerts',
+    missionVerb: 'Trace',
+    objectiveVerb: 'Track',
+  },
+  dependency_drift: {
+    singular: 'dependency drift alert',
+    plural: 'dependency drift alerts',
+    missionVerb: 'Refresh',
+    objectiveVerb: 'Inventory',
+  },
+  latest_commit: {
+    singular: 'latest commit',
+    plural: 'latest commits',
+    missionVerb: 'Inspect',
+    objectiveVerb: 'Trace',
+  },
+};
+
+function pluralizeLabel(count: number, singular: string, plural: string): string {
+  return count === 1 ? singular : plural;
+}
+
+function summarizeSignalGroup(group: ActionableSignalGroup): string {
+  const copy = SIGNAL_MISSION_COPY[group.type];
+
+  if (group.signals.length === 1) {
+    const [signal] = group.signals;
+    const title = signal.title?.trim();
+    if (title) {
+      return title;
+    }
+
+    if (typeof signal.value === 'number' && Number.isFinite(signal.value) && signal.value > 0) {
+      return `${signal.value} ${pluralizeLabel(signal.value, copy.singular, copy.plural)}`;
+    }
+
+    return `1 ${copy.singular}`;
+  }
+
+  const aggregateValue = group.signals.reduce((sum, signal) => (
+    typeof signal.value === 'number' && Number.isFinite(signal.value) && signal.value > 0
+      ? sum + signal.value
+      : sum
+  ), 0);
+
+  if (aggregateValue > 0) {
+    return `${aggregateValue} ${pluralizeLabel(aggregateValue, copy.singular, copy.plural)}`;
+  }
+
+  return `${group.signals.length} ${pluralizeLabel(group.signals.length, copy.singular, copy.plural)}`;
+}
+
+function buildSignalHighlights(group: ActionableSignalGroup): string | null {
+  const titles = [...new Set(
+    group.signals
+      .map((signal) => signal.title?.trim())
+      .filter((title): title is string => Boolean(title)),
+  )];
+
+  if (titles.length <= 1) {
+    return null;
+  }
+
+  if (titles.length === 2) {
+    return `Priority reports: ${titles[0]} and ${titles[1]}.`;
+  }
+
+  return `Priority reports: ${titles[0]}, ${titles[1]}, and ${titles.length - 2} more.`;
+}
+
+function groupActionableSignals(signals: RepoSignal[]): ActionableSignalGroup[] {
+  const groups = new Map<string, ActionableSignalGroup>();
+
+  signals
+    .filter(isActionableSignal)
+    .forEach((signal) => {
+      const key = `${signal.type}::${signal.target}`;
+      const existing = groups.get(key);
+
+      if (existing) {
+        existing.signals.push(signal);
+        existing.maxSeverity = Math.max(existing.maxSeverity, signal.severity) as RepoSignal['severity'];
+        return;
+      }
+
+      groups.set(key, {
+        type: signal.type,
+        target: signal.target,
+        signals: [signal],
+        maxSeverity: signal.severity,
+      });
+    });
+
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      signals: [...group.signals].sort(
+        (left, right) => right.severity - left.severity || (left.title ?? '').localeCompare(right.title ?? ''),
+      ),
+    }))
+    .sort(
+      (left, right) => right.maxSeverity - left.maxSeverity
+        || right.signals.length - left.signals.length
+        || left.type.localeCompare(right.type)
+        || left.target.localeCompare(right.target),
+    );
+}
+
+function buildSignalDrivenMissionTitle(group: ActionableSignalGroup, districtLabel: string): string {
+  const copy = SIGNAL_MISSION_COPY[group.type];
+  const prefix = group.type === 'merge_conflict' ? 'BOSS: ' : '';
+
+  return `${prefix}${copy.missionVerb} ${summarizeSignalGroup(group)} at ${districtLabel}`;
+}
+
+function buildSignalDrivenMissionDescription(
+  group: ActionableSignalGroup,
+  districtLabel: string,
+  template: MissionTemplate,
+): string {
+  const copy = SIGNAL_MISSION_COPY[group.type];
+  const [primarySignal] = group.signals;
+  const detail = primarySignal.detail?.trim();
+  const highlights = buildSignalHighlights(group);
+  const summary = summarizeSignalGroup(group);
+  const mappedSignalLine = group.signals.length > 1
+    ? `This mission condenses ${group.signals.length} mapped ${copy.plural} into one readable batch.`
+    : `This mission is rooted in one mapped ${copy.singular} signal.`;
+
+  const descriptionParts = [
+    `${districtLabel} is reacting to ${summary}.`,
+    template.descriptionTemplate,
+  ];
+
+  if (detail && detail !== template.descriptionTemplate) {
+    descriptionParts.push(`Signal report: ${detail}`);
+  }
+
+  if (highlights) {
+    descriptionParts.push(highlights);
+  }
+
+  descriptionParts.push(mappedSignalLine);
+
+  return descriptionParts.join(' ');
+}
+
+function buildSignalDrivenMissionObjectives(
+  group: ActionableSignalGroup,
+  districtLabel: string,
+  template: MissionTemplate,
+): string[] {
+  const copy = SIGNAL_MISSION_COPY[group.type];
+  const objectives = [...template.objectiveTemplates];
+
+  objectives[0] = `${copy.objectiveVerb} ${summarizeSignalGroup(group)} mapped to ${districtLabel}`;
+
+  return objectives;
+}
+
+function generateSignalDrivenMissions(
+  repo: RepoModel,
+  districts: GeneratedDistrict[],
+  signals: RepoSignal[],
+): GeneratedMission[] {
+  return groupActionableSignals(signals).flatMap((group) => {
+    const template = getMissionTemplate(group.type);
+    if (!template) {
+      return [];
+    }
+
+    const targetDistrict = districts.find((district) => district.moduleId === group.target);
+    const districtId = targetDistrict?.id ?? districts[0]?.id ?? 'unknown';
+    const districtLabel = targetDistrict?.label ?? targetDistrict?.name ?? humanizeModuleName(group.target);
+    const effectiveSeverity = Math.min(5, group.maxSeverity + Math.min(1, Math.max(0, group.signals.length - 1)));
+    const difficulty = Math.min(5, Math.max(1, Math.round(
+      (template.baseDifficulty + effectiveSeverity) / 2,
+    ))) as 1 | 2 | 3 | 4 | 5;
+
+    return [{
+      id: makeId('mission', repo.repoId, group.type, group.target),
+      districtId,
+      title: buildSignalDrivenMissionTitle(group, districtLabel),
+      type: template.type,
+      difficulty,
+      sourceSignalType: group.type,
+      targetRef: group.target,
+      description: buildSignalDrivenMissionDescription(group, districtLabel, template),
+      objectives: buildSignalDrivenMissionObjectives(group, districtLabel, template),
+    }];
+  });
+}
+
 // ─── Layout Helpers ───
 
 function humanizeModuleName(name: string): string {
@@ -845,35 +1095,7 @@ export function generateCityFromRepo(repo: RepoModel): GeneratedCity {
   const actionableSignals = repo.signals.filter(isActionableSignal);
 
   // Generate missions from signals
-  const missions: GeneratedMission[] = actionableSignals.flatMap((signal, idx) => {
-    const template = getMissionTemplate(signal.type);
-    if (!template) {
-      return [];
-    }
-
-    const targetDistrict = districts.find((d) => d.moduleId === signal.target);
-    const districtId = targetDistrict?.id ?? districts[0]?.id ?? 'unknown';
-
-    const difficulty = Math.min(5, Math.max(1, Math.round(
-      (template.baseDifficulty + signal.severity) / 2,
-    ))) as 1 | 2 | 3 | 4 | 5;
-
-    const title = signal.title
-      ? `${template.titlePrefix}: ${signal.title}`
-      : `${template.titlePrefix}: ${signal.type.replace(/_/g, ' ')} in ${targetDistrict?.name ?? 'unknown'}`;
-
-    return [{
-      id: makeId('mission', repo.repoId, signal.type, String(idx)),
-      districtId,
-      title,
-      type: template.type,
-      difficulty,
-      sourceSignalType: signal.type,
-      targetRef: signal.target,
-      description: signal.detail ?? template.descriptionTemplate,
-      objectives: template.objectiveTemplates,
-    }];
-  });
+  const missions = generateSignalDrivenMissions(repo, districts, actionableSignals);
 
   // Generate bots from signals
   const bots: GeneratedBot[] = actionableSignals.flatMap((signal, idx) => {
