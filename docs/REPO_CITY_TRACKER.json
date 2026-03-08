@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_4_in_progress",
-  "last_updated": "2026-03-08T13:06:34+05:30",
+  "last_updated": "2026-03-08T13:16:47+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 4 - GitHub Connection MVP",
   "source_of_truth": [
@@ -639,6 +639,20 @@
             "worker_build": "pass",
             "frontend_build": "pass"
           }
+        },
+        {
+          "title": "GitHub snapshot city bootstrap — generate and load a local normalized snapshot in the frontend",
+          "summary": [
+            "Added a shared sample normalized GitHub snapshot JSON and a small frontend bootstrap loader that keeps the JSON import boundary localized while validating that a bounded top-level modules array exists before use.",
+            "The frontend store now boots repo-city mode from that stored snapshot on first render, generates districts, missions, and conflicts through the existing repo-city generator, and preserves that generated state when Worker hydration returns classic seed data.",
+            "Local smoke mode explicitly skips the new snapshot bootstrap so the existing browser harness can keep asserting against the legacy seed districts while normal runs render the real stored snapshot path."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "worker_build": "pass",
+            "browser_smoke": "blocked — sandbox prevented Wrangler from writing its log file and binding 127.0.0.1 for the local worker process"
+          }
         }
       ]
     },
@@ -672,19 +686,20 @@
     }
   ],
   "current_slice_recommendation": {
-    "title": "GitHub snapshot city bootstrap — generate and load a real repo city from the stored normalized snapshot",
-    "why": "The selected GitHub repo snapshot now carries a bounded top-level modules array, which is enough for the existing repo-city generator to produce first-pass districts. The next bounded Phase 4 slice is to bridge the stored GitHub snapshot into the existing loadRepoCity flow so choosing a public repo yields a visible generated city without waiting for deeper dependency or signal work.",
+    "title": "GitHub picker snapshot handoff — load the stored selected GitHub snapshot into repo-city mode",
+    "why": "The frontend can now prove the end-to-end city path with a local normalized snapshot file. The next bounded Phase 4 slice is to replace the hardcoded bootstrap fallback with the stored selected GitHub snapshot already in frontend state so choosing a public repo from the GitHub picker immediately opens its generated city.",
     "candidate_files": [
       "frontend/src/store/gameStore.ts",
       "frontend/src/ui/GitHubRepoPicker.tsx",
-      "shared/repoCityGenerator.ts"
+      "frontend/src/ui/MainMenu.tsx"
     ],
     "acceptance_criteria": [
-      "Selecting a public GitHub repo with a stored snapshot can load repo-city mode without manually choosing a seeded fixture",
-      "The generated city uses the extracted top-level modules to produce readable first-pass districts from real repo metadata",
-      "Existing seeded repo selection still works alongside the GitHub path",
+      "Selecting a public GitHub repo with a stored normalized snapshot loads repo-city mode without manually choosing a seeded fixture",
+      "The generated city is built from the stored selected GitHub snapshot already held in frontend state",
+      "The static local sample snapshot remains a fallback when no selected GitHub snapshot is available",
       "cd frontend && npm run lint passes",
-      "cd frontend && npm run build passes"
+      "cd frontend && npm run build passes",
+      "cd frontend && npm run browser:smoke passes or is explicitly blocked by the sandbox"
     ]
   },
   "open_questions": [

@@ -1,0 +1,190 @@
+{
+  "repoId": "github-yuvrajmuley-merge-crimes",
+  "owner": "yuvrajmuley",
+  "name": "merge-crimes",
+  "defaultBranch": "main",
+  "visibility": "public",
+  "archetype": "unknown",
+  "languages": [
+    {
+      "name": "TypeScript",
+      "bytes": 612000,
+      "share": 0.71
+    },
+    {
+      "name": "CSS",
+      "bytes": 82000,
+      "share": 0.1
+    },
+    {
+      "name": "Markdown",
+      "bytes": 99000,
+      "share": 0.11
+    },
+    {
+      "name": "SQL",
+      "bytes": 26000,
+      "share": 0.03
+    },
+    {
+      "name": "Shell",
+      "bytes": 47000,
+      "share": 0.05
+    }
+  ],
+  "modules": [
+    {
+      "id": "mod-frontend",
+      "name": "frontend",
+      "path": "frontend/",
+      "type": "directory",
+      "kind": "app",
+      "language": "TypeScript",
+      "fileCount": 38,
+      "totalBytes": 484211,
+      "importanceScore": 88,
+      "activityScore": 84,
+      "riskScore": 38
+    },
+    {
+      "id": "mod-worker",
+      "name": "worker",
+      "path": "worker/",
+      "type": "directory",
+      "kind": "service",
+      "language": "TypeScript",
+      "fileCount": 12,
+      "totalBytes": 120897,
+      "importanceScore": 82,
+      "activityScore": 74,
+      "riskScore": 44
+    },
+    {
+      "id": "mod-shared",
+      "name": "shared",
+      "path": "shared/",
+      "type": "directory",
+      "kind": "package",
+      "language": "TypeScript",
+      "fileCount": 10,
+      "totalBytes": 92406,
+      "importanceScore": 76,
+      "activityScore": 67,
+      "riskScore": 29
+    },
+    {
+      "id": "mod-docs",
+      "name": "docs",
+      "path": "docs/",
+      "type": "directory",
+      "kind": "docs",
+      "language": "Markdown",
+      "fileCount": 20,
+      "totalBytes": 181219,
+      "importanceScore": 54,
+      "activityScore": 80,
+      "riskScore": 16
+    },
+    {
+      "id": "mod-control",
+      "name": "repo-city-cycle",
+      "path": "repo-city-cycle",
+      "type": "file",
+      "kind": "control",
+      "language": "Shell",
+      "fileCount": 1,
+      "totalBytes": 6120,
+      "importanceScore": 61,
+      "activityScore": 58,
+      "riskScore": 31
+    }
+  ],
+  "dependencyEdges": [
+    {
+      "fromModuleId": "mod-frontend",
+      "toModuleId": "mod-shared",
+      "weight": 0.92,
+      "reason": "import"
+    },
+    {
+      "fromModuleId": "mod-worker",
+      "toModuleId": "mod-shared",
+      "weight": 0.88,
+      "reason": "import"
+    },
+    {
+      "fromModuleId": "mod-frontend",
+      "toModuleId": "mod-worker",
+      "weight": 0.71,
+      "reason": "service_link"
+    },
+    {
+      "fromModuleId": "mod-control",
+      "toModuleId": "mod-worker",
+      "weight": 0.54,
+      "reason": "service_link"
+    },
+    {
+      "fromModuleId": "mod-docs",
+      "toModuleId": "mod-shared",
+      "weight": 0.38,
+      "reason": "folder_reference"
+    }
+  ],
+  "signals": [
+    {
+      "type": "merge_conflict",
+      "target": "mod-frontend",
+      "severity": 4,
+      "title": "Shell merge pressure",
+      "detail": "Concurrent UI shell changes are colliding around the repo-city entry surface."
+    },
+    {
+      "type": "open_pr",
+      "target": "mod-worker",
+      "severity": 2,
+      "title": "Worker review queue",
+      "detail": "Read-only GitHub ingest work has stacked up around the worker API boundary."
+    },
+    {
+      "type": "flaky_tests",
+      "target": "mod-shared",
+      "severity": 3,
+      "title": "Shared contract drift",
+      "detail": "Cross-package contract checks are intermittently failing when repo snapshots change shape."
+    },
+    {
+      "type": "failing_workflow",
+      "target": "mod-control",
+      "severity": 3,
+      "title": "Cycle wrapper validation drift",
+      "detail": "Repo-city cycle validation is flagging inconsistent slice bookkeeping in the automation path."
+    }
+  ],
+  "generatedAt": "2026-03-08T13:45:00.000Z",
+  "metadata": {
+    "provider": "github",
+    "providerRepoId": 1000001,
+    "fullName": "yuvrajmuley/merge-crimes",
+    "description": "Repo-city defense game prototype with React, Cloudflare Workers, and shared generation logic.",
+    "htmlUrl": "https://github.com/yuvrajmuley/merge-crimes",
+    "homepageUrl": null,
+    "topics": [
+      "repo-city",
+      "react",
+      "cloudflare-workers",
+      "typescript",
+      "game"
+    ],
+    "stars": 0,
+    "forks": 0,
+    "watchers": 0,
+    "openIssues": 4,
+    "primaryLanguage": "TypeScript",
+    "license": null,
+    "archived": false,
+    "fork": false,
+    "updatedAt": "2026-03-08T13:45:00.000Z",
+    "pushedAt": "2026-03-08T13:45:00.000Z"
+  }
+}

@@ -8,6 +8,7 @@ import { SEED_MISSIONS } from '../../../shared/seed/missions';
 import { SEED_EVENTS } from '../../../shared/seed/events';
 import { SEED_CONFLICTS } from '../../../shared/seed/conflicts';
 import * as api from '../api';
+import { getBootstrapRepoSnapshot } from '../repoCityBootstrap';
 import type { ApiConnectionState, ApiRuntimeStatus, ApiWriteSessionState, GitHubReadableRepo } from '../api';
 
 // ─── Waypoint Persistence (ADR-017: Hybrid Policy) ───
@@ -179,6 +180,11 @@ let toastIdCounter = 0;
 const REPO_CITY_MAX_TRANSIT_HOPS = 3;
 const REPO_CITY_MAX_ROUTE_DISTANCE_RATIO = 1.9;
 const REPO_CITY_ROUTE_POINT_EPSILON = 0.75;
+const initialRepoSnapshot = getBootstrapRepoSnapshot();
+const initialGeneratedCity = initialRepoSnapshot ? generateCityFromRepo(initialRepoSnapshot) : null;
+const initialDistricts = initialGeneratedCity ? generatedCityToDistricts(initialGeneratedCity) : SEED_DISTRICTS;
+const initialMissions = initialGeneratedCity ? generatedCityToMissions(initialGeneratedCity) : SEED_MISSIONS;
+const initialConflicts = initialGeneratedCity ? generatedCityToConflicts(initialGeneratedCity) : SEED_CONFLICTS;
 
 type TransitPoint = [number, number, number];
 
@@ -193,6 +199,12 @@ interface RoutedTransitPath {
     mode: 'direct' | 'roads';
     points: TransitPoint[];
     roadIds: string[];
+}
+
+function getOfflineApiStatusMessage(repoCityMode: boolean): string {
+    return repoCityMode
+        ? 'Worker API unavailable. Running local repo-city snapshot mode.'
+        : 'Worker API unavailable. Running local seed mode.';
 }
 
 function measureTransitDistance(a: TransitPoint, b: TransitPoint): number {
@@ -377,7 +389,7 @@ function buildRoadGuidedTransitPath(
 
 // ─── Initial capture progress for all districts ───
 const initialCapture: Record<string, DistrictCapture> = {};
-SEED_DISTRICTS.forEach((d) => {
+initialDistricts.forEach((d) => {
     initialCapture[d.id] = { progress: 0, capturing: false };
 });
 
@@ -398,7 +410,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     setSprinting: (v) => set({ isSprinting: v }),
 
     // Districts
-    districts: SEED_DISTRICTS,
+    districts: initialDistricts,
     currentDistrict: null,
     repoCityTransit: null,
     setCurrentDistrict: (district) => set({ currentDistrict: district }),
@@ -480,7 +492,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     },
 
     // Missions
-    missions: SEED_MISSIONS,
+    missions: initialMissions,
     activeMission: null,
     currentWaypointIndex: 0,
     completedWaypoints: [],
@@ -599,7 +611,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     setShowBulletin: (show) => set({ showBulletin: show }),
 
     // Merge Conflicts
-    conflicts: SEED_CONFLICTS,
+    conflicts: initialConflicts,
     activeConflict: null,
     startBossFight: (conflictId) => {
         const conflict = get().conflicts.find((c) => c.id === conflictId);
@@ -650,9 +662,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     },
 
     // Repo City
-    connectedRepo: null,
-    generatedCity: null,
-    repoCityMode: false,
+    connectedRepo: initialRepoSnapshot,
+    generatedCity: initialGeneratedCity,
+    repoCityMode: initialGeneratedCity !== null,
     loadRepoCity: (repo) => {
         const city = generateCityFromRepo(repo);
         const districts = generatedCityToDistricts(city);
@@ -680,6 +692,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             completedWaypoints: [],
             missionTimer: 0,
             phase: 'menu',
+            apiStatusMessage: get().apiConnectionState === 'offline'
+                ? getOfflineApiStatusMessage(true)
+                : get().apiStatusMessage,
         });
     },
     clearRepoCity: () => {
@@ -704,6 +719,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             completedWaypoints: [],
             missionTimer: 0,
             phase: 'menu',
+            apiStatusMessage: get().apiConnectionState === 'offline'
+                ? getOfflineApiStatusMessage(false)
+                : get().apiStatusMessage,
         });
     },
 
@@ -774,7 +792,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             apiConnectionState: status.connectionState,
             apiAvailable: status.connectionState === 'offline' ? false : s.apiAvailable,
             apiStatusMessage: status.connectionState === 'offline'
-                ? 'Worker API unavailable. Running local seed mode.'
+                ? getOfflineApiStatusMessage(s.repoCityMode)
                 : s.apiStatusMessage,
             writeSessionState: status.writeSessionState,
             writeSessionMessage: status.writeSessionMessage,
@@ -791,6 +809,19 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         // If any core data came back, mark API as available
         if (districts && missions) {
+            const preserveRepoCityState = get().repoCityMode && !!get().generatedCity && !!get().connectedRepo;
+            if (preserveRepoCityState) {
+                set({
+                    apiAvailable: true,
+                    apiConnectionState: 'online',
+                    apiStatusMessage: null,
+                    ...(leaderboard ? { leaderboard } : {}),
+                    ...(events ? { events } : {}),
+                });
+                console.log('[MergeCrimes] Loaded runtime data from Worker API without replacing repo-city bootstrap state');
+                return;
+            }
+
             const capture: Record<string, DistrictCapture> = {};
             districts.forEach((d) => {
                 capture[d.id] = get().captureProgress[d.id] ?? { progress: 0, capturing: false };
@@ -834,9 +865,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             set({
                 apiAvailable: false,
                 apiConnectionState: 'offline',
-                apiStatusMessage: 'Worker API unavailable. Running local seed mode.',
+                apiStatusMessage: getOfflineApiStatusMessage(get().repoCityMode),
             });
-            console.log('[MergeCrimes] Worker API unavailable, using seed data');
+            console.log('[MergeCrimes] Worker API unavailable, using local fallback data');
         }
     },
 }));
