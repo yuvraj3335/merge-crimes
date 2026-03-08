@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 14,
+    "cycles_run": 15,
     "total_findings": 26,
     "total_resolved": 10,
-    "last_updated": "2026-03-08T17:39:01Z"
+    "last_updated": "2026-03-08T17:46:54Z"
   },
   "workstreams": [
     {
@@ -47,8 +47,8 @@
         "worker/src"
       ],
       "description": "Find overly complex functions that should be simplified or split",
-      "last_run_at": "2026-03-08T17:39:01Z",
-      "cycles_assigned": 6,
+      "last_run_at": "2026-03-08T17:46:54Z",
+      "cycles_assigned": 7,
       "open_findings_count": 0,
       "findings_open": 10
     },
@@ -178,7 +178,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "q-005",
@@ -189,7 +189,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "q-006",
@@ -200,7 +200,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "q-007",
@@ -211,7 +211,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "q-008",
@@ -222,7 +222,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "q-009",
@@ -233,7 +233,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "qfix-f-000001",
@@ -512,7 +512,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "qfix-f-000023",
@@ -521,11 +521,12 @@
       "workstream_id": "complexity",
       "title": "Fix: `MainMenu` is an oversized controller component that owns refresh orchestration,",
       "severity": "medium",
-      "status": "pending",
+      "status": "done",
       "score": 1.82,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z",
+      "completed_at": "2026-03-08T17:59:46Z"
     },
     {
       "id": "qfix-f-000024",
@@ -538,7 +539,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "qfix-f-000025",
@@ -551,7 +552,7 @@
       "score": 1.74,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:39:01Z"
+      "last_scored_at": "2026-03-08T17:46:54Z"
     },
     {
       "id": "qfix-f-000026",
@@ -565,7 +566,7 @@
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
       "last_scored_at": "2026-03-08T17:39:01Z",
-      "completed_at": "2026-03-08T17:49:07Z"
+      "completed_at": "2026-03-08T17:46:54Z"
     }
   ],
   "findings": [
@@ -1032,7 +1033,7 @@
       "description": "`App.tsx` is acting as a root controller instead of a thin composition shell. It mixes DO polling, repo refresh polling, OAuth callback exchange, smoke harness installation, keyboard shortcuts, mission timer behavior, and top-level rendering in one file.",
       "evidence": "`DistrictRoomPoller` at frontend/src/App.tsx:58-95 mixes local capture ticking with DO heartbeat requests. `ConnectedRepoRefreshPoller` at :97-227 handles visibility/offline backoff, abort controllers, repo identity guards, polling cadence, and store writes. The `App` component at :255-356 bootstraps API hydration, runtime status subscription, GitHub OAuth callback exchange, smoke bridge installation, write-session priming, keyboard shortcuts, and mission timer logic before rendering the scene and overlays at :358-400.",
       "recommended_action": "Extract root concerns into dedicated hooks/components such as `useDistrictRoomPolling`, `useConnectedRepoRefreshPolling`, `useGitHubOAuthCallback`, and `useMissionTimer`. Keep `App` focused on scene/UI composition.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T17:06:08Z",
       "cycle_number": 9,
       "edge_cases": [
@@ -1053,7 +1054,7 @@
       "description": "`MainMenu` is an oversized controller component that owns refresh orchestration, seeded repo selection, GitHub auth/status modeling, repo selector toggles, and a very large mode-dependent render tree. Its responsibilities exceed simple view composition and make the menu hard to change safely.",
       "evidence": "The file is 662 LOC. At frontend/src/ui/MainMenu.tsx:108-125, `MainMenu` pulls many store slices plus local refresh state. `handleRefreshRepo` at :154-225 owns controller lifecycle, network call, optimistic status, snapshot activation, and error reporting. The render body at :296-659 includes repo hero, snapshot freshness, refresh feedback, selected-repo status, start-button copy, GitHub auth card, GitHub picker launch, seeded repo selector, classic mode switch, and embedded `GitHubRepoPicker`.",
       "recommended_action": "Split the component into hooks and subviews such as `useRepoRefresh`, `RepoHero`, `SelectedRepoStatusPanel`, `MenuActions`, and `SeedRepoSelector`. Keep derived status assembly out of the JSX-heavy component.",
-      "status": "open",
+      "status": "resolved",
       "found_at": "2026-03-08T17:06:08Z",
       "cycle_number": 9,
       "edge_cases": [
@@ -1123,7 +1124,7 @@
         "Calling `generateCityFromRepo` twice for the same snapshot yields different `generatedAt` values, which defeats simple equality checks and can trigger avoidable downstream re-renders.",
         "Any test or cache keyed on `GeneratedCity` shape becomes unstable because the generator's output changes even when repo modules, edges, and signals do not."
       ],
-      "resolved_at": "2026-03-08T17:49:07Z"
+      "resolved_at": "2026-03-08T17:46:54Z"
     }
   ],
   "stop_policy": {

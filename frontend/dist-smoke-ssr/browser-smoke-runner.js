@@ -1447,7 +1447,7 @@ function generateCityFromRepo(repo) {
     roads,
     missions,
     bots,
-    generatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    generatedAt: repo.generatedAt
   };
 }
 const SEED_FACTIONS = [

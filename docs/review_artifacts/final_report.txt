@@ -1,41 +1,39 @@
 Campaign:
 ID:      rc-2026-03-08
-Cycle:   14
+Cycle:   15
 Mode:    apply_fix
 Dry run: False
 
 Mode and slice:
 Mode:        apply_fix
 Workstream:  complexity
-Slice:       Fix: Classic mode and repo-city mode are implemented as pervasive inline branches ins
+Slice:       Fix: `generateCityFromRepo` claims to be part of a deterministic translation layer, b
 
 Files involved:
   docs/REPO_CITY_REVIEW_TRACKER.json
   docs/review_artifacts/final_report.txt
   docs/review_artifacts/removal_candidates.json
   docs/review_artifacts/summary.json
-  frontend/src/ui/HUD.tsx
+  shared/repoCityGenerator.ts
 
 Commands run:
-  cd frontend && npm run build
-  cd frontend && npm run lint
+  cd worker && npm run build
 
 Findings this cycle:
 New findings: 0
 
 Total finding queue:
-Open findings: 7
-Pending queue: 11 total  (6 review, 5 fix)
+Open findings: 6
+Pending queue: 10 total  (6 review, 4 fix)
 
 Artifacts written:
   /Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/REPO_CITY_REVIEW_TRACKER.json
   /Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/review_artifacts/removal_candidates.json
 
 What is now safer or simpler:
-- `BUG_VERIFIED: true`
-- `FIX_STATUS: APPLIED`
-- `frontend/src/ui/HUD.tsx` no longer contains scattered inline `repoCityMode ? ... : ...` render branches; only the top-level mode selection remains
-- Lint, build, and browser smoke all passed
+`BUG_VERIFIED: true` for the hidden wall-clock impurity in `generateCityFromRepo`
+The prompt’s quoted top-of-file purity header is not present in the current `shared/repoCityGenerator.ts`, so that part of the evidence is stale
+`FIX_STATUS: APPLIED` by changing `generatedAt: new Date().toISOString()` to `generatedAt: repo.generatedAt`
 
 Stop policy decision:
 Continuing — next slice available
@@ -47,12 +45,12 @@ Tracker changes:
    "campaign": {
      "id": "rc-2026-03-08",
      "state": "running",
--    "cycles_run": 13,
-+    "cycles_run": 14,
+-    "cycles_run": 14,
++    "cycles_run": 15,
      "total_findings": 26,
      "total_resolved": 10,
--    "last_updated": "2026-03-08T17:31:35Z"
-+    "last_updated": "2026-03-08T17:39:01Z"
+-    "last_updated": "2026-03-08T17:39:01Z"
++    "last_updated": "2026-03-08T17:46:54Z"
    },
    "workstreams": [
      {
@@ -60,10 +58,10 @@ Tracker changes:
          "worker/src"
        ],
        "description": "Find overly complex functions that should be simplified or split",
--      "last_run_at": "2026-03-08T17:31:35Z",
--      "cycles_assigned": 5,
-+      "last_run_at": "2026-03-08T17:39:01Z",
-+      "cycles_assigned": 6,
+-      "last_run_at": "2026-03-08T17:39:01Z",
+-      "cycles_assigned": 6,
++      "last_run_at": "2026-03-08T17:46:54Z",
++      "cycles_assigned": 7,
        "open_findings_count": 0,
        "findings_open": 10
      },
@@ -71,8 +69,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:31:35Z"
-+      "last_scored_at": "2026-03-08T17:39:01Z"
+-      "last_scored_at": "2026-03-08T17:39:01Z"
++      "last_scored_at": "2026-03-08T17:46:54Z"
      },
      {
        "id": "q-005",
@@ -80,8 +78,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:31:35Z"
-+      "last_scored_at": "2026-03-08T17:39:01Z"
+-      "last_scored_at": "2026-03-08T17:39:01Z"
++      "last_scored_at": "2026-03-08T17:46:54Z"
      },
      {
        "id": "q-006",
@@ -89,8 +87,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": "defer",
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:31:35Z"
-+      "last_scored_at": "2026-03-08T17:39:01Z"
+-      "last_scored_at": "2026-03-08T17:39:01Z"
++      "last_scored_at": "2026-03-08T17:46:54Z"
      },
      {
        "id": "q-007",
@@ -98,8 +96,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:31:35Z"
-+      "last_scored_at": "2026-03-08T17:39:01Z"
+-      "last_scored_at": "2026-03-08T17:39:01Z"
++      "last_scored_at": "2026-03-08T17:46:54Z"
      },
      {
        "id": "q-008",
@@ -107,8 +105,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T17:31:35Z"
-+      "last_scored_at": "2026-03-08T17:39:01Z"
+-      "last_scored_at": "2026-03-08T17:39:01Z"
++      "last_scored_at": "2026-03-08T17:46:54Z"
      },
      {
        "id": "q-009",
