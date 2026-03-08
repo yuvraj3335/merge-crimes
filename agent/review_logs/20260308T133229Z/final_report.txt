@@ -1,0 +1,35 @@
+Campaign:
+ID:      (unknown)
+Cycle:   0
+Mode:    review_only
+Dry run: False
+
+Mode and slice:
+Mode:        review_only
+Workstream:  (none)
+Slice:       (none)
+
+Files involved:
+  (none)
+
+Commands run:
+  (none)
+
+Findings this cycle:
+New findings: 0
+
+Total finding queue:
+Open findings: 0
+Pending queue: 0 total  (0 review, 0 fix)
+
+Artifacts written:
+  (none)
+
+What is now safer or simpler:
+(no changes applied this cycle)
+
+Stop policy decision:
+Continuing — next slice available
+
+Tracker changes:
+none
