@@ -180,6 +180,8 @@ export interface GeneratedBot {
   archetype: BotArchetype;
   name: string;
   districtId: string;
+  sourceSignalType: RepoSignalType;
+  targetRef: string;
   threatLevel: number; // 1–5
 }
 

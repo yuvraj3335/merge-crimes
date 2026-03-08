@@ -233,6 +233,11 @@ interface MissionTemplate {
   baseDifficulty: 1 | 2 | 3 | 4 | 5;
 }
 
+interface SignalBotProfile {
+  archetype: BotArchetype;
+  names: readonly string[];
+}
+
 const SIGNAL_MISSION_TEMPLATES: Partial<Record<RepoSignalType, MissionTemplate>> = {
   failing_workflow: {
     titlePrefix: 'Defend',
@@ -301,40 +306,61 @@ const SIGNAL_MISSION_TEMPLATES: Partial<Record<RepoSignalType, MissionTemplate>>
 
 // ─── Signal -> Bot Archetype ───
 
-const SIGNAL_TO_BOT: Partial<Record<RepoSignalType, BotArchetype>> = {
-  failing_workflow: 'saboteur',
-  open_issue: 'regression',
-  merge_conflict: 'merge',
-  open_pr: 'hallucination',
-  security_alert: 'dependency',
-  issue_spike: 'regression',
-  stale_pr: 'refactor',
-  flaky_tests: 'saboteur',
-  dependency_drift: 'dependency',
+const DEFAULT_BOT_PROFILE: SignalBotProfile = {
+  archetype: 'saboteur',
+  names: ['Repo Saboteur', 'Threat Proxy', 'Intrusion Wraith'],
 };
 
-const BOT_NAMES: Record<BotArchetype, string[]> = {
-  hallucination: ['Phantom Patcher', 'Ghost Writer', 'Mirage Bot'],
-  merge: ['Conflict Core', 'Branch Breaker', 'Merge Mimic'],
-  regression: ['Rollback Runner', 'Regression Agent', 'Revert Phantom'],
-  dependency: ['Dep Leech', 'Package Poison', 'Supply Chain Ghost'],
-  type: ['Type Siren', 'Schema Wraith', 'Contract Breaker'],
-  refactor: ['Refactor Storm', 'Dead Code Walker', 'Cleanup Mirage'],
-  saboteur: ['Test Saboteur', 'Pipeline Wrecker', 'CI Gremlin'],
+const SIGNAL_TO_BOT_PROFILE: Partial<Record<RepoSignalType, SignalBotProfile>> = {
+  failing_workflow: {
+    archetype: 'saboteur',
+    names: ['Pipeline Wrecker', 'Deploy Jammer', 'CI Gremlin'],
+  },
+  open_issue: {
+    archetype: 'regression',
+    names: ['Bug Swarm', 'Rollback Runner', 'Backlog Shade'],
+  },
+  merge_conflict: {
+    archetype: 'merge',
+    names: ['Conflict Core', 'Branch Breaker', 'Rebase Raider'],
+  },
+  open_pr: {
+    archetype: 'hallucination',
+    names: ['Review Phantom', 'Patch Spammer', 'Approval Mirage'],
+  },
+  security_alert: {
+    archetype: 'dependency',
+    names: ['Package Poisoner', 'Vulnerability Leech', 'Supply Chain Ghost'],
+  },
+  issue_spike: {
+    archetype: 'regression',
+    names: ['Escalation Hydra', 'Regression Agent', 'Bug Surge'],
+  },
+  stale_pr: {
+    archetype: 'refactor',
+    names: ['Branch Hoarder', 'Review Fossil', 'Cleanup Mirage'],
+  },
+  flaky_tests: {
+    archetype: 'saboteur',
+    names: ['Test Saboteur', 'Spec Scrambler', 'Assertion Ghost'],
+  },
+  dependency_drift: {
+    archetype: 'dependency',
+    names: ['Dependency Drifter', 'Version Leech', 'Outdated Package Phantom'],
+  },
 };
 
 function getMissionTemplate(signalType: RepoSignalType): MissionTemplate | null {
   return SIGNAL_MISSION_TEMPLATES[signalType] ?? null;
 }
 
-function getBotArchetype(signalType: RepoSignalType): BotArchetype | null {
-  return SIGNAL_TO_BOT[signalType] ?? null;
+function getBotProfile(signalType: RepoSignalType): SignalBotProfile {
+  return SIGNAL_TO_BOT_PROFILE[signalType] ?? DEFAULT_BOT_PROFILE;
 }
 
 function isActionableSignal(signal: RepoSignal): boolean {
   return signal.severity > 0
-    && getMissionTemplate(signal.type) !== null
-    && getBotArchetype(signal.type) !== null;
+    && getMissionTemplate(signal.type) !== null;
 }
 
 interface ActionableSignalGroup {
@@ -444,6 +470,13 @@ function summarizeSignalGroup(group: ActionableSignalGroup): string {
   }
 
   return `${group.signals.length} ${pluralizeLabel(group.signals.length, copy.singular, copy.plural)}`;
+}
+
+function getGroupedSignalThreatLevel(group: ActionableSignalGroup): 1 | 2 | 3 | 4 | 5 {
+  return Math.min(
+    5,
+    group.maxSeverity + Math.min(1, Math.max(0, group.signals.length - 1)),
+  ) as 1 | 2 | 3 | 4 | 5;
 }
 
 function buildSignalHighlights(group: ActionableSignalGroup): string | null {
@@ -568,7 +601,7 @@ function generateSignalDrivenMissions(
     const targetDistrict = districts.find((district) => district.moduleId === group.target);
     const districtId = targetDistrict?.id ?? districts[0]?.id ?? 'unknown';
     const districtLabel = targetDistrict?.label ?? targetDistrict?.name ?? humanizeModuleName(group.target);
-    const effectiveSeverity = Math.min(5, group.maxSeverity + Math.min(1, Math.max(0, group.signals.length - 1)));
+    const effectiveSeverity = getGroupedSignalThreatLevel(group);
     const difficulty = Math.min(5, Math.max(1, Math.round(
       (template.baseDifficulty + effectiveSeverity) / 2,
     ))) as 1 | 2 | 3 | 4 | 5;
@@ -584,6 +617,35 @@ function generateSignalDrivenMissions(
       description: buildSignalDrivenMissionDescription(group, districtLabel, template),
       objectives: buildSignalDrivenMissionObjectives(group, districtLabel, template),
     }];
+  });
+}
+
+function generateSignalDrivenBots(
+  repo: RepoModel,
+  districts: GeneratedDistrict[],
+  signals: RepoSignal[],
+): GeneratedBot[] {
+  const profileUsageBySignalType = new Map<RepoSignalType, number>();
+
+  return groupActionableSignals(signals).map((group) => {
+    const profile = getBotProfile(group.type);
+    const targetDistrict = districts.find((district) => district.moduleId === group.target);
+    const districtId = targetDistrict?.id ?? districts[0]?.id ?? 'unknown';
+    const profileUsage = profileUsageBySignalType.get(group.type) ?? 0;
+    const names = profile.names.length > 0 ? profile.names : DEFAULT_BOT_PROFILE.names;
+    const name = names[profileUsage % names.length];
+
+    profileUsageBySignalType.set(group.type, profileUsage + 1);
+
+    return {
+      id: makeId('bot', repo.repoId, group.type, group.target),
+      archetype: profile.archetype,
+      name,
+      districtId,
+      sourceSignalType: group.type,
+      targetRef: group.target,
+      threatLevel: getGroupedSignalThreatLevel(group),
+    };
   });
 }
 
@@ -1097,26 +1159,8 @@ export function generateCityFromRepo(repo: RepoModel): GeneratedCity {
   // Generate missions from signals
   const missions = generateSignalDrivenMissions(repo, districts, actionableSignals);
 
-  // Generate bots from signals
-  const bots: GeneratedBot[] = actionableSignals.flatMap((signal, idx) => {
-    const archetype = getBotArchetype(signal.type);
-    if (!archetype) {
-      return [];
-    }
-
-    const names = BOT_NAMES[archetype];
-    const name = names[idx % names.length];
-    const targetDistrict = districts.find((d) => d.moduleId === signal.target);
-    const districtId = targetDistrict?.id ?? districts[0]?.id ?? 'unknown';
-
-    return [{
-      id: makeId('bot', repo.repoId, archetype, String(idx)),
-      archetype,
-      name,
-      districtId,
-      threatLevel: signal.severity,
-    }];
-  });
+  // Generate one roster entry per mapped repo threat group instead of one raw signal at a time.
+  const bots = generateSignalDrivenBots(repo, districts, actionableSignals);
 
   return {
     repoId: repo.repoId,
@@ -1210,7 +1254,10 @@ export function generatedCityToConflicts(city: GeneratedCity): MergeConflictEnco
   const bossMissions = city.missions.filter((m) => m.type === 'boss');
 
   return bossMissions.map((bm) => {
-    const bot = city.bots.find((b) => b.districtId === bm.districtId);
+    const bot = city.bots.find((b) => (
+      b.districtId === bm.districtId
+      && b.sourceSignalType === bm.sourceSignalType
+    )) ?? city.bots.find((b) => b.districtId === bm.districtId);
     const district = city.districts.find((d) => d.id === bm.districtId);
 
     return {

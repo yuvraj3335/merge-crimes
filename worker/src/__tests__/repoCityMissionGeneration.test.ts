@@ -1,4 +1,4 @@
-import { generateCityFromRepo } from '../../../shared/repoCityGenerator';
+import { generateCityFromRepo, generatedCityToConflicts } from '../../../shared/repoCityGenerator';
 import { applySignalHeatToRepoModel } from '../../../shared/repoSignalMapping';
 import type { RepoModel } from '../../../shared/repoModel';
 
@@ -148,7 +148,84 @@ function testSameTypeSignalsRollUpIntoOneMission(): void {
   assert(city.missions.some((mission) => mission.sourceSignalType === 'flaky_tests'), 'Other signal types should still produce their own missions.');
 }
 
+function testBotsFollowMappedThreatGroupsInsteadOfRawSignals(): void {
+  const repo = applySignalHeatToRepoModel(buildRepo([
+    {
+      type: 'open_pr',
+      target: 'github:mission-test',
+      severity: 3,
+      title: '7 open pull requests',
+      detail: 'Seven review items are waiting on the API boundary.',
+      value: 7,
+    },
+    {
+      type: 'open_pr',
+      target: 'github:mission-test',
+      severity: 2,
+      title: '2 queued approvals',
+      detail: 'Two more review items landed before the first batch cleared.',
+      value: 2,
+    },
+    {
+      type: 'dependency_drift',
+      target: 'mod-ui',
+      severity: 2,
+      title: 'Outdated UI dependencies',
+      detail: 'The UI bundle is pinned to stale package versions.',
+    },
+  ]));
+
+  const city = generateCityFromRepo(repo);
+  const reviewBots = city.bots.filter((bot) => bot.sourceSignalType === 'open_pr');
+
+  assertEqual(reviewBots.length, 1, 'Same mapped PR threat group should produce one roster entry.');
+
+  const reviewBot = reviewBots[0];
+  assertEqual(reviewBot.archetype, 'hallucination', 'Open PR threats should map to the hallucination archetype.');
+  assertEqual(reviewBot.name, 'Review Phantom', 'Open PR threats should use the review-themed bot copy.');
+  assertEqual(reviewBot.targetRef, 'mod-api', 'Repo-level PR threats should inherit the mapped module target.');
+  assertEqual(reviewBot.threatLevel, 4, 'Grouped PR threats should lift threat level above the raw max severity.');
+
+  const reviewDistrict = city.districts.find((district) => district.id === reviewBot.districtId);
+  assert(reviewDistrict, 'Expected the grouped PR bot to point at a real district.');
+  assertEqual(reviewDistrict.moduleId, 'mod-api', 'Grouped PR bots should land in the mapped API district.');
+
+  const dependencyBot = city.bots.find((bot) => bot.sourceSignalType === 'dependency_drift');
+  assert(dependencyBot, 'Expected dependency drift to generate a roster entry.');
+  assertEqual(dependencyBot.archetype, 'dependency', 'Dependency drift should map to the dependency archetype.');
+  assertEqual(dependencyBot.name, 'Dependency Drifter', 'Dependency drift should use dependency-specific bot copy.');
+  assertEqual(dependencyBot.targetRef, 'mod-ui', 'Explicit dependency targets should stay attached to their module.');
+}
+
+function testBossConflictUsesTheMergeThreatBotWhenDistrictHasMultipleThreats(): void {
+  const city = generateCityFromRepo(buildRepo([
+    {
+      type: 'security_alert',
+      target: 'mod-api',
+      severity: 5,
+      title: 'Critical package vulnerability',
+      detail: 'A vulnerable transitive package has reached the API boundary.',
+    },
+    {
+      type: 'merge_conflict',
+      target: 'mod-api',
+      severity: 4,
+      title: 'API branch deadlock',
+      detail: 'Two release branches disagree on the API contract.',
+    },
+  ]));
+
+  const conflicts = generatedCityToConflicts(city);
+  assertEqual(conflicts.length, 1, 'Expected a single merge-conflict boss encounter.');
+
+  const [conflict] = conflicts;
+  assertMatch(conflict.hunks[0].label, /^Conflict Core's patch$/i, 'Boss encounter copy should use the merge bot label.');
+  assertMatch(conflict.hunks[0].code, /Conflict Core suggests:/i, 'Boss encounter copy should use the merge bot name, not another district threat.');
+}
+
 testRepoLevelPrSignalsGenerateMappedReviewMission();
 testSameTypeSignalsRollUpIntoOneMission();
+testBotsFollowMappedThreatGroupsInsteadOfRawSignals();
+testBossConflictUsesTheMergeThreatBotWhenDistrictHasMultipleThreats();
 
 console.log('repoCityMissionGeneration.test.ts: ok');
