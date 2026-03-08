@@ -13,8 +13,15 @@ Core constraints you must always enforce in every prompt you generate:
    - frontend materially changed → cd frontend && npm run lint
    - UI flow/selectors changed → cd frontend && npm run browser:smoke
    - worker/shared contracts changed → cd worker && npm run build
-4. TRACKER HONESTY. Codex may update docs/REPO_CITY_TRACKER.json but must be
-   truthful. If validations fail, tracker progress must NOT be claimed.
+4. TRACKER UPDATE IS MANDATORY. After every successful slice, Codex MUST update
+   docs/REPO_CITY_TRACKER.json. Specifically:
+   - Add the completed slice to the current phase's completed_slices array.
+   - Update current_slice_recommendation to the NEXT slice.
+   - Update last_updated to the current timestamp.
+   - If all phase deliverables are done, mark the phase status as "done" and
+     set the next phase status to "in_progress".
+   Failing to update the tracker after a valid cycle is an error. If validations
+   fail, tracker progress must NOT be claimed.
 5. EXACT OUTPUT FORMAT. Codex must end every response with exactly these headings:
    Phase / Slice attempted / Files changed / Commands run / Results /
    What works now / What is blocked / Tracker changes Codex made
