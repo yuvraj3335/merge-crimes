@@ -4,10 +4,10 @@
   "campaign": {
     "id": "rc-2026-03-08",
     "state": "running",
-    "cycles_run": 15,
+    "cycles_run": 16,
     "total_findings": 26,
-    "total_resolved": 10,
-    "last_updated": "2026-03-08T17:46:54Z"
+    "total_resolved": 11,
+    "last_updated": "2026-03-08T18:10:01Z"
   },
   "workstreams": [
     {
@@ -47,10 +47,10 @@
         "worker/src"
       ],
       "description": "Find overly complex functions that should be simplified or split",
-      "last_run_at": "2026-03-08T17:46:54Z",
-      "cycles_assigned": 7,
+      "last_run_at": "2026-03-08T18:10:01Z",
+      "cycles_assigned": 8,
       "open_findings_count": 0,
-      "findings_open": 10
+      "findings_open": 9
     },
     {
       "id": "unused_exports",
@@ -178,7 +178,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "q-005",
@@ -189,7 +189,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "q-006",
@@ -200,7 +200,7 @@
       "score": 4.5,
       "priority_override": "defer",
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "q-007",
@@ -211,7 +211,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "q-008",
@@ -222,7 +222,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "q-009",
@@ -233,7 +233,7 @@
       "score": 4.5,
       "priority_override": null,
       "added_at": "2026-03-08T00:00:00Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "qfix-f-000001",
@@ -508,11 +508,12 @@
       "workstream_id": "complexity",
       "title": "Fix: `App.tsx` is acting as a root controller instead of a thin composition shell. It",
       "severity": "medium",
-      "status": "pending",
+      "status": "done",
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z",
+      "completed_at": "2026-03-08T18:10:01Z"
     },
     {
       "id": "qfix-f-000023",
@@ -526,7 +527,7 @@
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
       "last_scored_at": "2026-03-08T17:46:54Z",
-      "completed_at": "2026-03-08T17:59:46Z"
+      "completed_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "qfix-f-000024",
@@ -539,7 +540,7 @@
       "score": 1.8,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "qfix-f-000025",
@@ -552,7 +553,7 @@
       "score": 1.74,
       "priority_override": null,
       "added_at": "2026-03-08T17:06:08Z",
-      "last_scored_at": "2026-03-08T17:46:54Z"
+      "last_scored_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "qfix-f-000026",
@@ -1039,7 +1040,8 @@
       "edge_cases": [
         "Changing mount order or cleanup behavior now risks unrelated systems because polling, OAuth, and timer effects all live beside each other in the same root module.",
         "Debugging stale intervals or abort-controller leaks spans multiple nested hooks in one file, especially when refresh polling and district-room polling are both active."
-      ]
+      ],
+      "resolved_at": "2026-03-08T18:10:01Z"
     },
     {
       "id": "f-000023",
@@ -1060,7 +1062,8 @@
       "edge_cases": [
         "Refreshing repo behavior is coupled to menu rendering and selected-repo copy, so a refresh-flow change can break status presentation or start-button wording in the same component.",
         "`selectedGitHubRepoIsActive` and status-copy assembly are recomputed here separately from the picker/store paths, so menu and picker behavior can drift if one side changes first."
-      ]
+      ],
+      "resolved_at": "2026-03-08T17:50:58Z"
     },
     {
       "id": "f-000024",
