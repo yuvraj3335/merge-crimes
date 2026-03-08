@@ -1,10 +1,10 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 import type { GameState } from '../store/gameStore';
 import { SEED_FACTION_BY_ID } from '../../../shared/seed/factions';
 import type { District } from '../../../shared/types';
-import { buildSnapshotFreshnessCopy } from './snapshotFreshness';
+import { type SnapshotSource, useSnapshotFreshnessCopy } from './snapshotFreshness';
 
 const MISSION_TYPE_COLORS: Record<string, string> = {
     delivery: '#00ff88',
@@ -83,6 +83,39 @@ type MinimapProps = {
     waypointColor: string;
 };
 
+interface HudSnapshotProvenanceProps {
+    generatedAt: string | null | undefined;
+    source: SnapshotSource;
+}
+
+const HudSnapshotProvenance = memo(function HudSnapshotProvenance({
+    generatedAt,
+    source,
+}: HudSnapshotProvenanceProps) {
+    const snapshotFreshness = useSnapshotFreshnessCopy(generatedAt, source);
+
+    return (
+        <div className="repo-hud-provenance">
+            <span className={`repo-hud-provenance-pill ${snapshotFreshness.source}`.trim()}>
+                {snapshotFreshness.sourceLabel}
+            </span>
+            <div className="repo-hud-provenance-copy">
+                <span className="repo-hud-provenance-primary">
+                    {snapshotFreshness.primary}
+                </span>
+                {snapshotFreshness.detail && generatedAt && (
+                    <time
+                        className="repo-hud-provenance-detail"
+                        dateTime={generatedAt}
+                    >
+                        {snapshotFreshness.detail}
+                    </time>
+                )}
+            </div>
+        </div>
+    );
+});
+
 // App subscribes broadly to the game store, so memoizing the HUD keeps unrelated parent updates
 // from rebuilding the overlay while Zustand still pushes the HUD's own selected state changes through.
 export const HUD = memo(function HUD() {
@@ -110,22 +143,7 @@ export const HUD = memo(function HUD() {
         generatedCity,
         repoCityTransit,
     } = useGameStore(useShallow(selectHudState));
-    const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
     const hideHud = phase === 'menu' || phase === 'boss';
-
-    useEffect(() => {
-        if (hideHud || !repoCityMode || !connectedRepo) {
-            return;
-        }
-
-        const intervalId = window.setInterval(() => {
-            setFreshnessNow(Date.now());
-        }, 30_000);
-
-        return () => {
-            window.clearInterval(intervalId);
-        };
-    }, [connectedRepo, hideHud, repoCityMode]);
 
     if (hideHud) return null;
 
@@ -199,13 +217,7 @@ export const HUD = memo(function HUD() {
             meta: 'Current maintainer standing',
         },
     ] as const;
-    const snapshotFreshness = repoCityMode && connectedRepo
-        ? buildSnapshotFreshnessCopy(
-            connectedRepo.generatedAt,
-            connectedRepo.metadata?.provider === 'github' ? 'github' : 'seeded',
-            freshnessNow,
-        )
-        : null;
+    const snapshotSource: SnapshotSource = connectedRepo?.metadata?.provider === 'github' ? 'github' : 'seeded';
     const repoRefreshNotice = repoCityMode
         && connectedRepo
         && connectedRepoRefreshStatus?.hasNewerRemote
@@ -259,28 +271,10 @@ export const HUD = memo(function HUD() {
                                         {generatedCity.districts.length} districts · {generatedCity.bots.length} threats
                                     </span>
                                 )}
-                                {snapshotFreshness && (
-                                    <div className="repo-hud-provenance">
-                                        <span
-                                            className={`repo-hud-provenance-pill ${snapshotFreshness.source}`.trim()}
-                                        >
-                                            {snapshotFreshness.sourceLabel}
-                                        </span>
-                                        <div className="repo-hud-provenance-copy">
-                                            <span className="repo-hud-provenance-primary">
-                                                {snapshotFreshness.primary}
-                                            </span>
-                                            {snapshotFreshness.detail && (
-                                                <time
-                                                    className="repo-hud-provenance-detail"
-                                                    dateTime={connectedRepo.generatedAt}
-                                                >
-                                                    {snapshotFreshness.detail}
-                                                </time>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                                <HudSnapshotProvenance
+                                    generatedAt={connectedRepo.generatedAt}
+                                    source={snapshotSource}
+                                />
                                 {repoRefreshNotice && (
                                     <div className="repo-hud-refresh-available" role="status" aria-live="polite">
                                         <span className="repo-hud-refresh-pill">Refresh available</span>

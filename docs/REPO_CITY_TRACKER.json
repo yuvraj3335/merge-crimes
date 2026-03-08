@@ -1,7 +1,7 @@
 {
   "project": "merge-crimes-repo-city-pivot",
   "status": "phase_7_in_progress",
-  "last_updated": "2026-03-08T18:18:03+05:30",
+  "last_updated": "2026-03-08T18:25:40+05:30",
   "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
   "current_goal": "Phase 7 - Trust, refresh, and polish",
   "source_of_truth": [
@@ -1082,23 +1082,38 @@
             "frontend_build": "pass",
             "browser_smoke": "not_run — explicitly skipped per cycle instruction; browser:smoke was forbidden for this slice"
           }
+        },
+        {
+          "title": "HUD freshness render boundary — isolate snapshot ticking from the full repo-city overlay",
+          "summary": [
+            "The repo-city HUD no longer owns the 30-second freshness clock, so credits, transit cards, district state, and other overlay sections are not forced to rerender just to age the snapshot provenance line.",
+            "Snapshot freshness ticking now lives inside a memoized HUD provenance subcomponent backed by the shared useSnapshotFreshnessCopy hook, which confines interval-driven rerenders to the freshness UI that actually changes.",
+            "HUD provenance text and timestamps still update on the same cadence while refresh-available notices, mission state, and transit context continue reacting only to real store changes."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "not_run — permanently skipped in this sandbox; no UI flow or selector changes"
+          }
         }
       ]
     }
   ],
   "smoke_blocker_status": "PERMANENTLY_SKIPPED — Wrangler cannot write logs outside /Users/yuvrajmuley/Library/Preferences/.wrangler/logs and cannot bind 127.0.0.1 in this sandbox. This has blocked browser:smoke for 8+ consecutive cycles. All future cycles must skip browser:smoke and note this permanently instead of reporting it as 'blocked' each time.",
   "current_slice_recommendation": {
-    "title": "Isolate HUD snapshot freshness ticking so the full repo-city HUD does not rerender every 30 seconds",
-    "why": "Phase 7 still has an unfinished performance pass. The repo-city HUD keeps its freshness clock in HUD state, which forces the full overlay to rerender every 30 seconds even though only the provenance line needs the timer.",
-    "validity_gate": "This recommendation is functional, not cosmetic. It changes runtime render behavior and reduces unnecessary HUD work rather than only changing copy or CSS.",
+    "title": "Frontend-only repo-city smoke harness for trust and refresh states",
+    "why": "Phase 7 still has an unfinished stability and testing deliverable. Browser smoke is permanently skipped in this sandbox, so the trust and refresh surfaces need a deterministic frontend-only harness that can actually run here.",
+    "validity_gate": "This recommendation is functional, not cosmetic. It changes the validation harness so repo-city trust and refresh behavior can be exercised automatically without relying on the blocked worker startup path.",
     "candidate_files": [
-      "frontend/src/ui/HUD.tsx",
-      "frontend/src/ui/snapshotFreshness.ts"
+      "frontend/package.json",
+      "frontend/scripts/browser-smoke.mjs",
+      "frontend/src/localSmokeBridge.ts",
+      "frontend/src/store/gameStore.ts"
     ],
     "acceptance_criteria": [
-      "The connected-repo freshness timer is moved into a narrower provenance component or hook so the full HUD tree no longer rerenders every 30 seconds.",
-      "HUD freshness text still updates on the existing cadence while refresh-available notices, mission state, and transit cards keep their current behavior.",
-      "No copy-only or CSS-only change satisfies this slice. At least one .ts or .tsx file must change in a way that materially improves repo-city HUD render behavior."
+      "A runnable frontend-only smoke path covers repo-city trust and refresh states without requiring Wrangler, worker bindings, or the blocked browser:smoke environment.",
+      "The harness verifies at least snapshot freshness or provenance and refresh-available UI states using deterministic injected or seeded data.",
+      "The cycle adds executable validation coverage rather than only documenting manual QA steps or changing copy or CSS."
     ]
   },
   "open_questions": [
