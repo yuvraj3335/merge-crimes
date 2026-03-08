@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { REPO_FIXTURES } from '../../../shared/seed/repoFixtures';
 import type { RepoModel } from '../../../shared/repoModel';
+import * as api from '../api';
 
 export function MainMenu() {
     const phase = useGameStore((s) => s.phase);
@@ -11,6 +12,9 @@ export function MainMenu() {
     const repoCityMode = useGameStore((s) => s.repoCityMode);
     const connectedRepo = useGameStore((s) => s.connectedRepo);
     const generatedCity = useGameStore((s) => s.generatedCity);
+    const githubAccessToken = useGameStore((s) => s.githubAccessToken);
+    const githubAuthStatus = useGameStore((s) => s.githubAuthStatus);
+    const githubAuthMessage = useGameStore((s) => s.githubAuthMessage);
 
     const [showRepoSelector, setShowRepoSelector] = useState(false);
 
@@ -37,6 +41,17 @@ export function MainMenu() {
     const footerNote = generatedCity
         ? `${generatedCity.repoName} snapshot · ${generatedCity.districts.length} districts ready`
         : 'Metadata-first seeded translation';
+    const githubAuthCard = githubAccessToken
+        ? {
+              title: 'Logged in as GitHub user',
+              meta: 'Access token stored in frontend app state.',
+          }
+        : githubAuthStatus === 'exchanging'
+            ? {
+                  title: 'Completing GitHub login',
+                  meta: 'Exchanging the OAuth code for an access token.',
+              }
+            : null;
     const repoCitySummaryMetrics = generatedCity
         ? [
               { label: 'Districts', value: generatedCity.districts.length },
@@ -123,6 +138,34 @@ export function MainMenu() {
             </button>
 
             <div className={`menu-secondary-actions ${repoCityMode ? 'repo-city' : ''}`.trim()}>
+                {githubAuthCard ? (
+                    <div
+                        className={`menu-repo-btn menu-auth-status ${repoCityMode ? 'repo-city' : ''}`.trim()}
+                        aria-live="polite"
+                    >
+                        <span className="menu-action-label">{githubAuthCard.title}</span>
+                        <span className="menu-action-meta">{githubAuthCard.meta}</span>
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        className={`menu-repo-btn ${repoCityMode ? 'repo-city' : ''}`.trim()}
+                        onClick={() => api.startGitHubOAuthLogin()}
+                    >
+                        {repoCityMode ? (
+                            <>
+                                <span className="menu-action-label">Login with GitHub</span>
+                                <span className="menu-action-meta">
+                                    {githubAuthStatus === 'error'
+                                        ? (githubAuthMessage ?? 'GitHub login failed. Try again.')
+                                        : 'Start the minimal OAuth token flow.'}
+                                </span>
+                            </>
+                        ) : (
+                            'Login with GitHub'
+                        )}
+                    </button>
+                )}
                 <button
                     type="button"
                     className={`menu-repo-btn ${repoCityMode ? 'repo-city' : ''}`.trim()}

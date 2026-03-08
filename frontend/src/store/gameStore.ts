@@ -149,6 +149,15 @@ export interface GameState {
     loadRepoCity: (repo: RepoModel) => void;
     clearRepoCity: () => void;
 
+    // GitHub Auth
+    githubAccessToken: string | null;
+    githubAuthStatus: 'anonymous' | 'exchanging' | 'authenticated' | 'error';
+    githubAuthMessage: string | null;
+    setGitHubAuthExchanging: () => void;
+    setGitHubAccessToken: (token: string) => void;
+    setGitHubAuthError: (message: string) => void;
+    clearGitHubAuth: () => void;
+
     // API
     apiAvailable: boolean;
     apiConnectionState: ApiConnectionState;
@@ -691,6 +700,30 @@ export const useGameStore = create<GameState>((set, get) => ({
             phase: 'menu',
         });
     },
+
+    // GitHub Auth
+    githubAccessToken: null,
+    githubAuthStatus: 'anonymous',
+    githubAuthMessage: null,
+    setGitHubAuthExchanging: () => set({
+        githubAuthStatus: 'exchanging',
+        githubAuthMessage: null,
+    }),
+    setGitHubAccessToken: (token) => set({
+        githubAccessToken: token,
+        githubAuthStatus: 'authenticated',
+        githubAuthMessage: null,
+    }),
+    setGitHubAuthError: (message) => set({
+        githubAccessToken: null,
+        githubAuthStatus: 'error',
+        githubAuthMessage: message,
+    }),
+    clearGitHubAuth: () => set({
+        githubAccessToken: null,
+        githubAuthStatus: 'anonymous',
+        githubAuthMessage: null,
+    }),
 
     // District Rooms
     districtRooms: {},

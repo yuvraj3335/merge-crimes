@@ -16,6 +16,9 @@ type Bindings = {
     LEADERBOARD?: KVNamespace;
     EVENTS?: KVNamespace;
     DISTRICT_ROOM?: DurableObjectNamespace;
+    GITHUB_CLIENT_ID?: string;
+    GITHUB_CLIENT_SECRET?: string;
+    GITHUB_OAUTH_SCOPE?: string;
     PUBLIC_SESSION_SECRET?: string;
     PUBLIC_ORIGIN_ALLOWLIST?: string;
     ADMIN_SEED_SECRET?: string;
@@ -46,10 +49,20 @@ interface PublicSessionResponse {
     sessionId: string;
 }
 
+interface GitHubAccessTokenResponse {
+    access_token?: string;
+    token_type?: string;
+    scope?: string;
+    error?: string;
+    error_description?: string;
+}
+
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder();
 const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
 const LOCAL_DEV_PUBLIC_SESSION_SECRET = 'merge-crimes-local-dev-public-session';
+const DEFAULT_GITHUB_CLIENT_ID_PLACEHOLDER = 'replace-with-github-client-id';
+const DEFAULT_GITHUB_OAUTH_SCOPE = 'read:user';
 const LOCAL_DEV_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
@@ -133,6 +146,30 @@ function getPublicSessionSecret(c: AppContext): string | null {
     }
 
     return null;
+}
+
+function getGitHubClientId(env: Bindings): string {
+    return env.GITHUB_CLIENT_ID?.trim() || DEFAULT_GITHUB_CLIENT_ID_PLACEHOLDER;
+}
+
+function getGitHubClientSecret(env: Bindings): string | null {
+    const secret = env.GITHUB_CLIENT_SECRET?.trim();
+    return secret ? secret : null;
+}
+
+function getGitHubOAuthScope(env: Bindings): string {
+    return env.GITHUB_OAUTH_SCOPE?.trim() || DEFAULT_GITHUB_OAUTH_SCOPE;
+}
+
+function isAllowedRedirectUri(request: Request, env: Bindings, redirectUri: string): boolean {
+    let parsedRedirectUri: URL;
+    try {
+        parsedRedirectUri = new URL(redirectUri);
+    } catch {
+        return false;
+    }
+
+    return getAllowedOrigins(env, new URL(request.url)).has(parsedRedirectUri.origin);
 }
 
 function getRequestFingerprintSource(request: Request): string {
@@ -439,6 +476,14 @@ app.use('/*', cors({
 // ─── Zod Schemas ───
 const MissionIdParam = z.object({ id: z.string().min(1) });
 const DistrictIdParam = z.object({ id: z.string().min(1) });
+const GitHubAuthStartQuery = z.object({
+    redirectUri: z.string().url(),
+    state: z.string().min(1).max(512).optional(),
+});
+const GitHubTokenExchangeBody = z.object({
+    code: z.string().min(1),
+    redirectUri: z.string().url(),
+});
 const MissionsQuery = z.object({
     district: z.string().optional(),
     sessionId: z.string().uuid().optional(),
@@ -581,6 +626,84 @@ app.get('/api/health', (c) => {
         game: 'merge-crimes',
         version: '0.2.0',
         timestamp: new Date().toISOString(),
+    });
+});
+
+// ─── GitHub OAuth ───
+app.get('/api/auth/github/start', (c) => {
+    const query = GitHubAuthStartQuery.safeParse({
+        redirectUri: c.req.query('redirectUri'),
+        state: c.req.query('state'),
+    });
+    if (!query.success) {
+        return c.json({ error: 'invalid_query', details: query.error.flatten() }, 400);
+    }
+
+    if (!isAllowedRedirectUri(c.req.raw, c.env, query.data.redirectUri)) {
+        return c.json({ error: 'forbidden_redirect_uri', message: 'Redirect URI origin is not allowed' }, 403);
+    }
+
+    const authorizeUrl = new URL('https://github.com/login/oauth/authorize');
+    authorizeUrl.searchParams.set('client_id', getGitHubClientId(c.env));
+    authorizeUrl.searchParams.set('redirect_uri', query.data.redirectUri);
+
+    const scope = getGitHubOAuthScope(c.env);
+    if (scope) {
+        authorizeUrl.searchParams.set('scope', scope);
+    }
+
+    if (query.data.state) {
+        authorizeUrl.searchParams.set('state', query.data.state);
+    }
+
+    return c.redirect(authorizeUrl.toString(), 302);
+});
+
+app.post('/api/auth/github/token', async (c) => {
+    const parsed = await parseJsonBody(c, GitHubTokenExchangeBody);
+    if (!parsed.ok) {
+        return parsed.response;
+    }
+
+    if (!isAllowedRedirectUri(c.req.raw, c.env, parsed.data.redirectUri)) {
+        return c.json({ error: 'forbidden_redirect_uri', message: 'Redirect URI origin is not allowed' }, 403);
+    }
+
+    const clientSecret = getGitHubClientSecret(c.env);
+    if (!clientSecret) {
+        return c.json({
+            error: 'github_oauth_unconfigured',
+            message: 'GITHUB_CLIENT_SECRET must be configured to exchange GitHub OAuth codes.',
+        }, 503);
+    }
+
+    const response = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            client_id: getGitHubClientId(c.env),
+            client_secret: clientSecret,
+            code: parsed.data.code,
+            redirect_uri: parsed.data.redirectUri,
+        }),
+    });
+
+    const payload = await response.json() as GitHubAccessTokenResponse;
+    if (!response.ok || payload.error || !payload.access_token) {
+        const status = response.ok ? 502 : 400;
+        return c.json({
+            error: 'github_oauth_exchange_failed',
+            message: payload.error_description ?? payload.error ?? 'GitHub did not return an access token.',
+        }, status);
+    }
+
+    return c.json({
+        accessToken: payload.access_token,
+        tokenType: payload.token_type ?? 'bearer',
+        scope: payload.scope ?? getGitHubOAuthScope(c.env),
     });
 });
 

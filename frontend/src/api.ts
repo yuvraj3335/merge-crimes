@@ -7,6 +7,8 @@ import { getRuntimeApiBaseOverride } from './runtimeConfig';
 const API_BASE = getRuntimeApiBaseOverride() ?? import.meta.env.VITE_API_BASE ?? 'http://localhost:8787';
 const WRITE_SESSION_REFRESH_BUFFER_MS = 60_000;
 const SESSION_STORAGE_KEY = 'merge-crimes-session-id';
+const GITHUB_OAUTH_STATE_STORAGE_KEY = 'merge-crimes-github-oauth-state';
+export const GITHUB_OAUTH_CALLBACK_PATH = '/auth/github/callback';
 
 export type ApiConnectionState = 'unknown' | 'online' | 'offline';
 export type ApiWriteSessionState = 'unknown' | 'checking' | 'ready' | 'error';
@@ -15,6 +17,12 @@ export interface ApiRuntimeStatus {
     connectionState: ApiConnectionState;
     writeSessionState: ApiWriteSessionState;
     writeSessionMessage: string | null;
+}
+
+export interface GitHubTokenExchangeResponse {
+    accessToken: string;
+    tokenType: string;
+    scope: string;
 }
 
 function getOrCreateSessionId(): string {
@@ -229,6 +237,110 @@ export async function failMission(id: string): Promise<Mission | null> {
 
 export async function seedDatabase(): Promise<{ status: string; inserted: Record<string, number> } | null> {
     return apiFetch<{ status: string; inserted: Record<string, number> }>('/api/admin/seed', { method: 'POST' });
+}
+
+function getGitHubOAuthRedirectUri(): string {
+    if (typeof window === 'undefined') {
+        return GITHUB_OAUTH_CALLBACK_PATH;
+    }
+
+    const redirectUrl = new URL(GITHUB_OAUTH_CALLBACK_PATH, window.location.origin);
+    const currentParams = new URLSearchParams(window.location.search);
+    const apiBase = currentParams.get('apiBase');
+    const smoke = currentParams.get('smoke');
+
+    if (apiBase) {
+        redirectUrl.searchParams.set('apiBase', apiBase);
+    }
+
+    if (smoke) {
+        redirectUrl.searchParams.set('smoke', smoke);
+    }
+
+    return redirectUrl.toString();
+}
+
+export function startGitHubOAuthLogin(): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const state = crypto.randomUUID();
+    try {
+        window.sessionStorage.setItem(GITHUB_OAUTH_STATE_STORAGE_KEY, state);
+    } catch {
+        // sessionStorage is best-effort only for this MVP flow.
+    }
+
+    const query = new URLSearchParams({
+        redirectUri: getGitHubOAuthRedirectUri(),
+        state,
+    });
+
+    window.location.assign(`${API_BASE}/api/auth/github/start?${query.toString()}`);
+}
+
+export function readGitHubOAuthCallback():
+    | {
+        code: string | null;
+        state: string | null;
+        redirectUri: string;
+    }
+    | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const url = new URL(window.location.href);
+    if (url.pathname !== GITHUB_OAUTH_CALLBACK_PATH) {
+        return null;
+    }
+
+    return {
+        code: url.searchParams.get('code'),
+        state: url.searchParams.get('state'),
+        redirectUri: getGitHubOAuthRedirectUri(),
+    };
+}
+
+export function clearGitHubOAuthCallbackUrl(): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const url = new URL(window.location.href);
+    url.pathname = '/';
+    url.searchParams.delete('code');
+    url.searchParams.delete('state');
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_description');
+
+    const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+    window.history.replaceState({}, document.title, nextUrl);
+}
+
+export function validateGitHubOAuthState(returnedState: string | null): boolean {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    try {
+        const expectedState = window.sessionStorage.getItem(GITHUB_OAUTH_STATE_STORAGE_KEY);
+        window.sessionStorage.removeItem(GITHUB_OAUTH_STATE_STORAGE_KEY);
+        return !expectedState || expectedState === returnedState;
+    } catch {
+        return true;
+    }
+}
+
+export async function exchangeGitHubOAuthCode(
+    code: string,
+    redirectUri: string,
+): Promise<GitHubTokenExchangeResponse | null> {
+    return apiFetch<GitHubTokenExchangeResponse>('/api/auth/github/token', {
+        method: 'POST',
+        body: JSON.stringify({ code, redirectUri }),
+    });
 }
 
 // ─── Health Check ───

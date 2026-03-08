@@ -82,6 +82,9 @@ function App() {
     apiAvailable,
     setApiRuntimeStatus,
     repoCityMode,
+    setGitHubAuthExchanging,
+    setGitHubAccessToken,
+    setGitHubAuthError,
   } = useGameStore();
 
   // Hydrate from the Worker once on mount so the same tab can restore active missions after reload.
@@ -98,6 +101,39 @@ function App() {
       setApiRuntimeStatus(status);
     });
   }, [setApiRuntimeStatus]);
+
+  useEffect(() => {
+    const callback = api.readGitHubOAuthCallback();
+    if (!callback) {
+      return;
+    }
+
+    api.clearGitHubOAuthCallbackUrl();
+
+    if (!callback.code) {
+      setGitHubAuthError('GitHub login did not return an authorization code.');
+      return;
+    }
+
+    if (!api.validateGitHubOAuthState(callback.state)) {
+      setGitHubAuthError('GitHub login state check failed.');
+      return;
+    }
+
+    setGitHubAuthExchanging();
+    void api.exchangeGitHubOAuthCode(callback.code, callback.redirectUri)
+      .then((response) => {
+        if (!response?.accessToken) {
+          setGitHubAuthError('GitHub token exchange failed.');
+          return;
+        }
+
+        setGitHubAccessToken(response.accessToken);
+      })
+      .catch(() => {
+        setGitHubAuthError('GitHub token exchange failed.');
+      });
+  }, [setGitHubAuthError, setGitHubAuthExchanging, setGitHubAccessToken]);
 
   useEffect(() => installLocalSmokeBridge(), []);
 
