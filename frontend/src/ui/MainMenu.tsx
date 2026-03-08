@@ -12,9 +12,10 @@ import {
     useSnapshotFreshnessCopy,
 } from './snapshotFreshness';
 import {
-    buildSelectedRepoStatusCopy,
-    didSelectedGitHubRepoSnapshotIngestFail,
-    isSelectedGitHubRepoSnapshotIngesting,
+    buildSelectedRepoAuthCardCopy,
+    buildSelectedRepoStartCopy,
+    buildSelectedRepoStatusCopyFromModel,
+    getSelectedRepoStatusModel,
 } from './selectedRepoStatusCopy';
 import {
     buildRepoRefreshIndicatorTone,
@@ -240,50 +241,14 @@ export function MainMenu() {
         && connectedRepo?.metadata?.provider === 'github'
         && connectedRepo.metadata.providerRepoId === selectedGitHubRepo.id,
     );
-    const selectedRepoBlocksTranslation = Boolean(
-        selectedGitHubRepo
-        && selectedGitHubRepoEligibility
-        && !selectedGitHubRepoEligibility.eligible,
-    );
-    const selectedRepoStillIngesting = isSelectedGitHubRepoSnapshotIngesting(
+    const selectedRepoStatusModel = getSelectedRepoStatusModel(
         selectedGitHubRepo,
         selectedGitHubRepoEligibility,
         selectedGitHubRepoIsActive,
+        connectedRepo,
         selectedGitHubRepoIngestState,
     );
-    const selectedRepoIngestFailed = didSelectedGitHubRepoSnapshotIngestFail(
-        selectedGitHubRepo,
-        selectedGitHubRepoEligibility,
-        selectedGitHubRepoIsActive,
-        selectedGitHubRepoIngestState,
-    );
-    const selectedRepoPendingSnapshot = selectedRepoStillIngesting || selectedRepoIngestFailed;
-    const selectedRepoName = selectedGitHubRepo?.fullName ?? 'The selected GitHub repo';
-    const startKicker = selectedRepoPendingSnapshot && !connectedRepo
-        ? 'Preparing snapshot'
-        : selectedRepoBlocksTranslation || selectedRepoPendingSnapshot
-            ? 'Current active city'
-            : 'Launch translation';
-    const startTitle = selectedRepoStillIngesting && !connectedRepo
-        ? 'Preparing Repo City...'
-        : selectedRepoPendingSnapshot && connectedRepo
-            ? 'Enter Current Repo City'
-            : 'Enter Repo City';
-    const startMeta = selectedRepoStillIngesting
-        ? connectedRepo
-            ? `${selectedRepoName} is still ingesting. Entering ${connectedRepo.owner}/${connectedRepo.name} until the new snapshot is ready.`
-            : `${selectedRepoName} is still ingesting. Wait for the read-only snapshot before entering.`
-        : selectedRepoIngestFailed
-            ? connectedRepo
-                ? `${selectedRepoName} did not finish ingest. Entering ${connectedRepo.owner}/${connectedRepo.name}.`
-                : `${selectedRepoName} is not ready yet. Retry the public repo selection before entering.`
-            : selectedRepoBlocksTranslation
-        ? connectedRepo
-            ? `${selectedGitHubRepo?.fullName} is listed only. Entering ${connectedRepo.owner}/${connectedRepo.name}.`
-            : `${selectedGitHubRepo?.fullName} is listed only. Pick an eligible public repo to generate a city.`
-        : generatedCity
-            ? `${generatedCity.districts.length} districts · ${generatedCity.missions.length} routes ready`
-            : 'Repo city translation ready';
+    const startCopy = buildSelectedRepoStartCopy(selectedRepoStatusModel, generatedCity);
     const footerNote = generatedCity
         ? `${generatedCity.repoName} snapshot · ${generatedCity.districts.length} districts ready`
         : 'Metadata-first seeded translation';
@@ -308,62 +273,16 @@ export function MainMenu() {
         connectedRepoRefreshStatus,
         repoRefreshStatus,
     );
-    const selectedRepoStatusCopy = buildSelectedRepoStatusCopy(
-        selectedGitHubRepo,
-        selectedGitHubRepoEligibility,
-        selectedGitHubRepoIsActive,
-        connectedRepo,
-        selectedGitHubRepoIngestState,
-    );
-    const githubRepoActionMeta = selectedGitHubRepo
-        ? selectedRepoStillIngesting
-            ? connectedRepo
-                ? `Waiting for GitHub ingest... ${selectedGitHubRepo.fullName} is still loading, so ${connectedRepo.owner}/${connectedRepo.name} stays active for now.`
-                : `Waiting for GitHub ingest... ${selectedGitHubRepo.fullName} is still loading before it can become the active city.`
-            : selectedRepoIngestFailed
-                ? connectedRepo
-                    ? `Snapshot failed—retry or reconnect. ${connectedRepo.owner}/${connectedRepo.name} stays active until ${selectedGitHubRepo.fullName} loads successfully.`
-                    : `Snapshot failed—retry or reconnect. ${selectedGitHubRepo.fullName} is not ready to become the active city yet.`
-                : selectedGitHubRepoEligibility?.eligible
-                    ? selectedGitHubRepoIsActive
-                        ? `${selectedGitHubRepo.fullName} is the active translated repo.`
-                        : `${selectedGitHubRepo.fullName} is eligible for repo-city translation in this flow.`
-                    : `${selectedGitHubRepo.fullName} is listed only. ${selectedGitHubRepoEligibility?.menuDetail ?? "This repo can't be translated here yet."}`
-        : 'Load the readable repo list without leaving this menu.';
+    const selectedRepoStatusCopy = buildSelectedRepoStatusCopyFromModel(selectedRepoStatusModel);
+    const selectedRepoAuthCardCopy = buildSelectedRepoAuthCardCopy(selectedRepoStatusModel);
+    const githubRepoButtonMeta = selectedRepoAuthCardCopy?.meta
+        ?? 'Load the readable repo list without leaving this menu.';
     const githubAuthCard: GitHubAuthCardCopy | null = githubAccessToken
-        ? {
-              title: selectedGitHubRepo
-                  ? selectedRepoStillIngesting
-                      ? 'Waiting for GitHub snapshot'
-                      : selectedRepoIngestFailed
-                          ? 'GitHub snapshot failed'
-                          : selectedGitHubRepoEligibility?.eligible
-                              ? selectedGitHubRepoIsActive
-                                  ? 'GitHub repo active'
-                                  : 'GitHub repo selected'
-                              : 'GitHub repo listed only'
-                  : 'Logged in as GitHub user',
-              meta: selectedGitHubRepo
-                  ? githubRepoActionMeta
-                  : 'GitHub login is active in this browser session.',
-              tone: selectedGitHubRepo
-                  ? selectedRepoStillIngesting
-                      ? 'waiting'
-                      : selectedRepoIngestFailed
-                          ? 'failed'
-                          : selectedGitHubRepoEligibility?.eligible
-                              ? 'active'
-                              : 'listed-only'
-                  : 'neutral',
-              icon: selectedGitHubRepo
-                  ? selectedRepoStillIngesting
-                      ? 'spinner'
-                      : selectedRepoIngestFailed
-                          ? 'x'
-                          : selectedGitHubRepoEligibility?.eligible
-                              ? 'check'
-                              : 'list'
-                  : 'dot',
+        ? selectedRepoAuthCardCopy ?? {
+              title: 'Logged in as GitHub user',
+              meta: 'GitHub login is active in this browser session.',
+              tone: 'neutral',
+              icon: 'dot',
           }
         : githubAuthStatus === 'exchanging'
             ? {
@@ -525,9 +444,9 @@ export function MainMenu() {
             >
                 {repoCityMode ? (
                     <>
-                        <span className="menu-start-kicker">{startKicker}</span>
-                        <span className="menu-start-title">{startTitle}</span>
-                        <span className="menu-start-meta">{startMeta}</span>
+                        <span className="menu-start-kicker">{startCopy.kicker}</span>
+                        <span className="menu-start-title">{startCopy.title}</span>
+                        <span className="menu-start-meta">{startCopy.meta}</span>
                     </>
                 ) : (
                     'Enter the City'
@@ -598,7 +517,7 @@ export function MainMenu() {
                                     {selectedGitHubRepo ? 'Change GitHub Repo' : 'Pick GitHub Repo'}
                                 </span>
                                 <span className="menu-action-meta">
-                                    {githubRepoActionMeta}
+                                    {githubRepoButtonMeta}
                                 </span>
                             </>
                         ) : (

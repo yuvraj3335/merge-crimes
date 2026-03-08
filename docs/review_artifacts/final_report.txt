@@ -1,20 +1,23 @@
 Campaign:
 ID:      rc-2026-03-08
-Cycle:   5
+Cycle:   6
 Mode:    apply_fix
 Dry run: False
 
 Mode and slice:
 Mode:        apply_fix
 Workstream:  duplication
-Slice:       Fix: Current-waypoint distance calculation and `m` formatting are duplicated across t
+Slice:       Fix: Transit path-length accumulation is implemented three times across HUD, Repo Cit
 
 Files involved:
   docs/REPO_CITY_REVIEW_TRACKER.json
-  frontend/src/game/Waypoint.tsx
-  frontend/src/game/waypointUtils.ts
+  docs/review_artifacts/final_report.txt
+  docs/review_artifacts/removal_candidates.json
+  docs/review_artifacts/summary.json
+  frontend/src/store/gameStore.ts
   frontend/src/ui/HUD.tsx
-  frontend/src/ui/MissionObjectiveTracker.tsx
+  frontend/src/ui/RepoCitySurface.tsx
+  frontend/src/utils/
 
 Commands run:
   cd frontend && npm run build
@@ -24,8 +27,8 @@ Findings this cycle:
 New findings: 0
 
 Total finding queue:
-Open findings: 5
-Pending queue: 10 total  (7 review, 3 fix)
+Open findings: 4
+Pending queue: 9 total  (7 review, 2 fix)
 
 Artifacts written:
   /Users/yuvrajmuley/Documents/yuvraj/merge-crimes/docs/REPO_CITY_REVIEW_TRACKER.json
@@ -34,9 +37,8 @@ Artifacts written:
 What is now safer or simpler:
 BUG_VERIFIED: true
 FIX_STATUS: APPLIED
-VALIDATION_STATUS: lint/build/browser:smoke all passed
-The new helper now owns the planar waypoint distance math and `"Xm"` formatting, and all three verified callsites use it.
-No functional validation failures occurred.
+All required frontend validations passed.
+Existing dirty files under `docs/review_artifacts/` were left untouched.
 
 Stop policy decision:
 Continuing — next slice available
@@ -48,12 +50,12 @@ Tracker changes:
    "campaign": {
      "id": "rc-2026-03-08",
      "state": "running",
--    "cycles_run": 4,
-+    "cycles_run": 5,
+-    "cycles_run": 5,
++    "cycles_run": 6,
      "total_findings": 16,
      "total_resolved": 10,
--    "last_updated": "2026-03-08T16:16:04Z"
-+    "last_updated": "2026-03-08T16:30:54Z"
+-    "last_updated": "2026-03-08T16:30:54Z"
++    "last_updated": "2026-03-08T16:35:35Z"
    },
    "workstreams": [
      {
@@ -61,10 +63,10 @@ Tracker changes:
          "worker/src"
        ],
        "description": "Find duplicated logic that should be extracted into shared utilities",
--      "last_run_at": "2026-03-08T15:16:00Z",
--      "cycles_assigned": 1,
-+      "last_run_at": "2026-03-08T16:30:54Z",
-+      "cycles_assigned": 2,
+-      "last_run_at": "2026-03-08T16:30:54Z",
+-      "cycles_assigned": 2,
++      "last_run_at": "2026-03-08T16:35:35Z",
++      "cycles_assigned": 3,
        "open_findings_count": 0,
        "findings_open": 6
      },
@@ -72,8 +74,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T15:16:00Z"
-+      "last_scored_at": "2026-03-08T16:30:54Z"
+-      "last_scored_at": "2026-03-08T16:30:54Z"
++      "last_scored_at": "2026-03-08T16:35:35Z"
      },
      {
        "id": "q-004",
@@ -81,8 +83,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T15:16:00Z"
-+      "last_scored_at": "2026-03-08T16:30:54Z"
+-      "last_scored_at": "2026-03-08T16:30:54Z"
++      "last_scored_at": "2026-03-08T16:35:35Z"
      },
      {
        "id": "q-005",
@@ -90,8 +92,8 @@ Tracker changes:
        "score": 4.5,
        "priority_override": null,
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T15:16:00Z"
-+      "last_scored_at": "2026-03-08T16:30:54Z"
+-      "last_scored_at": "2026-03-08T16:30:54Z"
++      "last_scored_at": "2026-03-08T16:35:35Z"
      },
      {
        "id": "q-006",
@@ -99,16 +101,19 @@ Tracker changes:
        "score": 4.5,
        "priority_override": "defer",
        "added_at": "2026-03-08T00:00:00Z",
--      "last_scored_at": "2026-03-08T15:16:00Z"
-+      "last_scored_at": "2026-03-08T16:30:54Z"
+-      "last_scored_at": "2026-03-08T16:30:54Z"
++      "last_scored_at": "2026-03-08T16:35:35Z"
      },
      {
        "id": "q-007",
-@@ -206,10 +206,10 @@
-       "workstream_id": "correctness",
-       "title": "Scan full codebase for feature correctness bugs and logic errors",
-       "status": "pending",
--      "score": 5.0,
--      "priority_override": null,
--      "added_at": "2026-03-08T00:00:00Z",
--      
+@@ -209,7 +209,7 @@
+       "score": 4.5,
+       "priority_override": null,
+       "added_at": "2026-03-08T00:00:00Z",
+-      "last_scored_at": "2026-03-08T16:30:54Z"
++      "last_scored_at": "2026-03-08T16:35:35Z"
+     },
+     {
+       "id": "q-008",
+@@ -220,7 +220,7 @@
+       
