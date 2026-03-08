@@ -1,0 +1,4 @@
+PUBLIC_SESSION_SECRET=merge-crimes-local-dev-secret
+PUBLIC_ORIGIN_ALLOWLIST=http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173
+# Optional for non-local reseed tests:
+# ADMIN_SEED_SECRET=merge-crimes-admin-dev-secret

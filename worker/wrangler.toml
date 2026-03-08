@@ -1,0 +1,39 @@
+name = "merge-crimes-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# For production-style local auth verification, copy `.dev.vars.example` to `.dev.vars`
+# and run `npx wrangler dev --local --port 8787`.
+
+# ─── D1 Database ───
+[[d1_databases]]
+binding = "DB"
+database_name = "merge-crimes-db"
+database_id = "823c401b-1b85-4a86-9498-965a7bab4c8c"
+migrations_dir = "migrations"
+
+# ─── KV Namespaces ───
+# Uncomment after creating: npx wrangler kv namespace create GITHUB_CACHE
+# [[kv_namespaces]]
+# binding = "GITHUB_CACHE"
+# id = "<fill-after-creation>"
+
+# LEADERBOARD KV: 60s TTL read-optimised leaderboard cache
+[[kv_namespaces]]
+binding = "LEADERBOARD"
+id = "410d8544ed32465eb2a45320de20cc81"
+
+# EVENTS KV: 60s TTL city bulletin cache
+[[kv_namespaces]]
+binding = "EVENTS"
+id = "6049c00ca10240e6a3a04887e3f42348"
+
+# ─── Durable Objects ───
+[[durable_objects.bindings]]
+name = "DISTRICT_ROOM"
+class_name = "DistrictRoom"
+
+# DO migration: free plan requires new_sqlite_classes (not new_classes)
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DistrictRoom"]

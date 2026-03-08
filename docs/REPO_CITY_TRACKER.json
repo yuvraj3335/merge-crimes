@@ -1,0 +1,545 @@
+{
+  "project": "merge-crimes-repo-city-pivot",
+  "status": "phase_3_in_progress",
+  "last_updated": "2026-03-08T22:30:00+05:30",
+  "north_star": "Connect a GitHub repo, translate it into a playable city, and fight AI bots attacking the project through coding battles.",
+  "current_goal": "Phase 3 - Minimal City Frontend",
+  "source_of_truth": [
+    "docs/REPO_CITY_TRACKER.json",
+    "docs/REPO_CITY_PRODUCT_VISION.md",
+    "docs/REPO_CITY_SYSTEM_DESIGN.md",
+    "docs/REPO_CITY_ITERATIVE_WORKFLOW.md",
+    "docs/REPO_CITY_ITERATION_PROMPT.md"
+  ],
+  "guiding_rules": [
+    "Do not treat the repo as a literal city; build a translation layer.",
+    "Metadata-first and read-only GitHub integration in the MVP.",
+    "Keep the current mission/district abstractions if they still help.",
+    "Prefer bounded slices over giant rewrites.",
+    "Preserve app runnability after every slice.",
+    "Prioritize clarity, trust, and smoothness over spectacle.",
+    "After Phase 0, docs-only cycles do not count as progress.",
+    "After Phase 0, every cycle must change code and run validation."
+  ],
+  "milestones": [
+    {
+      "name": "Phase 0 - Product lock and docs",
+      "status": "done",
+      "deliverables": [
+        "Product vision",
+        "System design",
+        "Workflow",
+        "Tracker",
+        "Implementation prompts"
+      ]
+    },
+    {
+      "name": "Phase 1 - Repo Model Foundation",
+      "status": "done",
+      "completed_at": "2026-03-08T22:30:00+05:30",
+      "deliverables": [
+        "Shared RepoModel types (shared/repoModel.ts)",
+        "Two mock repo snapshot fixtures (shared/seed/repoFixtures.ts)",
+        "Repo-to-city generator with bridge to game types (shared/repoCityGenerator.ts)",
+        "Frontend repo selector in MainMenu with loadRepoCity in gameStore",
+        "Worker endpoints for fixture listing and city generation",
+        "HUD repo city badge"
+      ],
+      "validation": {
+        "frontend_build": "pass",
+        "worker_build": "pass",
+        "frontend_lint": "pass",
+        "browser_smoke": "not_run — MainMenu enter-city testid preserved, selector is additive"
+      }
+    },
+    {
+      "name": "Phase 2 - Static Repo City Generation",
+      "status": "done",
+      "deliverables": [
+        "Repo archetype classifier (heuristic rules based on module kinds and languages)",
+        "District generation rules (improve layout, naming, size/heat tuning)",
+        "Road/dependency mapping rules (visual connectivity from DependencyEdge data)"
+      ],
+      "completed_slices": [
+        {
+          "title": "Dependency-edge road mapping and repo-city road rendering",
+          "summary": [
+            "GeneratedCity now includes readable roads derived from the strongest dependency edges.",
+            "Repo-city mode renders generated roads in the 3D scene while classic mode keeps the legacy street grid.",
+            "Repo city summaries now expose road counts to make the payload visible from the menu."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Archetype-aware district naming and layout templates",
+          "summary": [
+            "The generator now derives an archetype from repo structure when laying out the city.",
+            "District labels are stylized from module path hints so fullstack and library repos read differently.",
+            "Support modules pull toward central slots while app and service districts stay on clearer perimeter positions."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "frontend_build": "pass",
+            "generator_dry_run": "pass — fullstack and library fixtures now produce distinct labels and placements",
+            "frontend_lint": "not_run — no frontend file changed in this slice",
+            "browser_smoke": "not_run — no UI flow or selector changes"
+          }
+        },
+        {
+          "title": "Backend repo fixture and classifier coverage",
+          "summary": [
+            "Added a seeded backend repo fixture that flows through the shared fixture list, worker fixture endpoint, and frontend repo selector.",
+            "Generator dry runs now cover fullstack, library, and backend repos with classifier output matching each seeded archetype.",
+            "Backend fixture output produces a distinct city shape with runtime, data, validation, and control districts."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "frontend_build": "pass",
+            "generator_dry_run": "pass — fixture and generated archetypes match for fullstack, library, and backend repos",
+            "frontend_lint": "not_run — no frontend file changed in this slice",
+            "browser_smoke": "not_run — no UI flow or selector changes"
+          }
+        },
+        {
+          "title": "Monorepo fixture and workspace heuristics",
+          "summary": [
+            "Added a seeded monorepo repo fixture with apps, packages, services, tests, and workspace control metadata.",
+            "Tightened monorepo classification around workspace-style roots and config hints instead of treating any single services folder as a monorepo.",
+            "Monorepo labels and layout now emphasize workspace cores and control near the hub while app districts stay on the perimeter."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "frontend_build": "pass",
+            "generator_dry_run": "pass — fixture and generated archetypes match for fullstack, library, backend, and monorepo repos",
+            "frontend_lint": "not_run — no frontend file changed in this slice",
+            "browser_smoke": "not_run — no UI flow or selector changes"
+          }
+        },
+        {
+          "title": "Frontend-only fixture and language-share tie breakers",
+          "summary": [
+            "Added a seeded frontend-only repo fixture with UI, styles, assets, storybook, tests, and CI metadata.",
+            "Classifier heuristics now use frontend language share plus surface-folder hints to resolve ambiguous UI repos before falling back to library or unknown.",
+            "Generator dry runs now cover fullstack, library, backend, frontend, and monorepo repos with classifier output matching each seeded archetype."
+          ],
+          "validation": {
+            "worker_build": "pass",
+            "frontend_build": "pass",
+            "generator_dry_run": "pass — fixture and generated archetypes match for fullstack, library, backend, frontend, and monorepo repos",
+            "frontend_lint": "not_run — no frontend file changed in this slice",
+            "browser_smoke": "not_run — no UI flow or selector changes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 3 - Minimal City Frontend",
+      "status": "in_progress",
+      "deliverables": [
+        "Minimal city map",
+        "District view",
+        "Lightweight movement layer",
+        "Minimalist UI shell"
+      ],
+      "completed_slices": [
+        {
+          "title": "Minimal repo-city surface overlay",
+          "summary": [
+            "Added a new SVG-based repo-city surface in play mode that renders districts, routes, the player marker, and the active waypoint from GeneratedCity data.",
+            "Repo-city mode now sidelines the old district blocks and hologram props so the new surface becomes the primary readable map layer without touching mission or movement logic yet.",
+            "The existing menu-to-city flow and browser smoke path remain intact while repo-city mode now looks visibly distinct from classic mode."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Surface-native district entry and mission routing cues",
+          "summary": [
+            "The repo-city surface now supports direct district entry in play mode by snapping the player to a district center when the surface is clicked outside of an active mission.",
+            "Available-mission districts now advertise themselves on the surface, and the map shows a live guidance line to hovered districts or active mission waypoints so entry and approach cues no longer depend on the hidden legacy meshes.",
+            "The local smoke bridge now reuses the same district-move helper as the UI so map-driven and scripted district entry stay consistent."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city minimalist HUD shell baseline",
+          "summary": [
+            "Repo-city mode now uses a lighter status shell that keeps credits, reputation, repo identity, district state, and mission timing readable without leaning on the old heavy chrome.",
+            "The duplicated legacy minimap and direction arrow are now removed from repo-city mode because the SVG surface already carries map position and routing cues.",
+            "Mission route and capture overlays now restyle into compact repo-city cards so the active play screen feels more consistent even while the legacy mission panel remains in place."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city mission panel shell alignment",
+          "summary": [
+            "The mission panel now adopts repo-city-specific header, summary, and card styling so mission browsing matches the calmer map-first shell instead of the older neon-heavy side panel.",
+            "Mission cards now surface route type and district context directly in repo-city mode while keeping the existing accept flow and smoke selectors intact.",
+            "Empty and write-session states now inherit the same repo-city panel language, reducing the remaining visual break between the map surface and mission selection."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city leaderboard and bulletin overlay alignment",
+          "summary": [
+            "The optional leaderboard and bulletin overlays now adopt repo-city-specific headers, close controls, and calmer card styling so they read as part of the same minimalist shell.",
+            "Repo-city leaderboard entries now surface district-control and mission-clear metrics without falling back to the older arcade-style chrome.",
+            "Repo-city bulletin items now expose district context and severity chips in a compact feed layout while preserving the existing overlay toggles and smoke flow."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city connection banner and reward toast shell alignment",
+          "summary": [
+            "The worker status banner now uses repo-city-specific headers, state pills, and calmer action styling in repo-city mode while preserving the existing retry behavior and smoke selectors.",
+            "Reward toasts now render as compact repo-city shell cards with route-clear framing and structured credit and reputation metrics instead of the older arcade-style popup chrome.",
+            "Mobile repo-city layouts now reposition both transient surfaces to stay readable inside the minimalist shell without changing their underlying behavior."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city merge conflict boss shell alignment",
+          "summary": [
+            "Repo-city boss encounters now render inside a calmer shell with route context, district and reward pills, and a structured timer block instead of dropping back to the older neon-heavy merge conflict overlay.",
+            "Conflict options now present as repo-city candidate cards with clearer side labels and calmer success and failure result states while keeping the existing resolution loop intact.",
+            "The boss overlay now includes repo-city mobile spacing and panel sizing so conflict encounters stay readable within the minimalist shell."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city selector panel shell alignment",
+          "summary": [
+            "The repo selector now uses a repo-city-specific header, close control, and shell card treatment in repo-city mode while keeping the existing seeded fixture chooser behavior intact.",
+            "Repo fixtures now read as structured repo-city cards with branch, archetype, language, and repo-structure metrics instead of the older flat neon list rows.",
+            "The selector panel now includes repo-city mobile sizing and spacing while classic-mode selector content order and behavior remain unchanged."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city main menu action shell alignment",
+          "summary": [
+            "The repo-city entry CTA now uses a calmer shell card with launch context and city-readiness metadata instead of the older neon-heavy start button chrome.",
+            "Repo-city secondary actions now render as structured action cards for changing repos or returning to classic mode while preserving the existing menu behavior and enter-city smoke selector.",
+            "The main menu action row now includes repo-city desktop and mobile sizing so the Phase 3 entry point feels consistent with the rest of the minimalist shell."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city menu hero and summary shell alignment",
+          "summary": [
+            "The repo-city main menu title and subtitle now render inside a calmer hero shell with connected-repo context instead of relying on the older neon-heavy title chrome.",
+            "The repo summary now reads as a structured snapshot card with archetype framing and district, road, mission, and threat metrics while preserving the existing enter-city flow.",
+            "Desktop and mobile repo-city menu layouts now keep the header copy and summary metrics readable without changing selectors or selector-panel behavior."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city menu backdrop and footer shell alignment",
+          "summary": [
+            "Repo-city mode now uses a calmer full-screen menu backdrop with subtle grid and gradient framing instead of the older stark radial menu treatment.",
+            "The floating version string now renders as a structured footer note with repo-city pill styling and snapshot context while preserving the existing menu flow and enter-city selector.",
+            "Desktop and mobile repo-city menu frame elements now read as part of the same minimalist shell without changing selector-panel behavior."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city scene ground and lighting tone alignment",
+          "summary": [
+            "Repo-city play mode now uses a calmer canvas background, softer ground palette, and reduced fog and lighting contrast beneath the SVG surface instead of inheriting the older stark scene treatment.",
+            "Generated repo roads now render with more subdued materials, and repos without generated roads fall back to muted guide lanes instead of the legacy neon street grid.",
+            "Classic mode keeps its previous scene look while repo-city mode drops the old street-light spectacle so the minimalist surface remains the primary readable layer."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city marker tone alignment",
+          "summary": [
+            "Repo-city play mode now uses calmer player, waypoint, and mission-trigger materials so the in-world markers stop competing with the SVG surface.",
+            "Waypoint labels now render as quieter shell-like callouts in repo-city mode while routing, trigger opening, and waypoint reach behavior remain unchanged.",
+            "Classic mode keeps the previous bright marker treatment while repo-city mode drops the older neon-heavy avatar and beam language."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city camera framing alignment",
+          "summary": [
+            "Repo-city play mode now uses a higher, steadier follow camera and a narrower field of view so the in-world scene better matches the top-down SVG surface.",
+            "The initial canvas camera and runtime follow behavior now stay aligned in repo-city mode while movement, mission routing, and district entry remain unchanged.",
+            "Classic mode keeps the previous chase-style framing while repo-city drops the older shared camera relationship."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city movement feel alignment",
+          "summary": [
+            "Repo-city play mode now uses a slower, damped locomotion profile with softer sprinting so keyboard traversal feels more deliberate from the top-down surface view.",
+            "External district moves now clear local movement momentum so surface-driven entry, waypoint routing, and mission triggers stay stable after the movement adjustment.",
+            "Classic mode keeps the previous immediate locomotion behavior while repo-city drops the older arcade-fast shared movement feel."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city surface transit replaces district snap",
+          "summary": [
+            "Repo-city surface clicks now queue a short readable transit toward the selected district instead of teleporting the player instantly, while classic-mode scripted district moves keep their previous immediate behavior.",
+            "The player now physically traverses into the destination district before district state flips, so mission trigger opening and arrival cues stay tied to actual entry rather than a premature snap.",
+            "The surface keeps the queued district highlighted during transit and closes stale mission-panel context until the player reaches the new district."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city surface transit follows generated roads",
+          "summary": [
+            "Repo-city transit now prefers a bounded road-guided path through generated district connections instead of cutting straight across the map whenever a short readable route exists.",
+            "The player steps through routed transit points and the surface guidance overlay now mirrors the routed path, so the visible cue and in-world movement stay aligned during transit.",
+            "Intermediate district trigger rings no longer pop the mission panel during a pass-through, while the target district still keeps its normal arrival behavior."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city 3D scene highlights active transit roads",
+          "summary": [
+            "Repo-city transit now carries the ids of the generated roads selected for the active routed path, without changing direct transit or classic-mode behavior.",
+            "The 3D scene now brightens the active routed road segments and dashes during transit so the in-world scene visibly matches the road-guided surface path.",
+            "The highlight clears automatically when routed transit ends or is canceled, keeping the calmer default road tone for idle repo-city exploration."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city HUD shell exposes active transit status",
+          "summary": [
+            "Repo-city HUD now shows a dedicated transit card while transit is active, including the destination district, remaining distance, and whether the route is direct or road-guided.",
+            "The transit card is repo-city-only and clears automatically on arrival or cancel because it is derived from the existing transit state instead of introducing a parallel HUD flag.",
+            "The new card keeps transit context readable from the shell even when the player is not watching the surface or 3D road highlight directly."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city mission panel follows queued transit district",
+          "summary": [
+            "Repo-city mission browsing now scopes available routes to the queued transit destination while transit is active instead of staying pinned to the current district until arrival.",
+            "Mission-panel header, subtitle, and empty-state copy now explicitly frame the queued district as the active route preview so surface, HUD, and panel context stay aligned during approach.",
+            "Classic mode and non-transit repo-city browsing keep their previous current-district or city-wide scope without introducing new mission state."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city district status shell follows queued transit district",
+          "summary": [
+            "Repo-city HUD district status now scopes its title, heat pill, presence, and stability chips to the queued transit destination while transit is active instead of staying pinned to the source district.",
+            "The repo-city surface legend now switches its district-status row and heat pill to the queued destination during transit, while canceled or idle transit falls back to current-district or idle copy.",
+            "Classic mode and repo-city movement behavior stay unchanged because the slice only re-scopes display copy and shell summaries around the existing transit state."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city objective tracker aligns with the route-first shell",
+          "summary": [
+            "Repo-city missions now render their tracker as an active-route shell with mission title, route type, target district, current cue, and step progress instead of the older generic objective checklist header.",
+            "Route steps now keep the existing mission progression logic but restyle into calmer repo-city cards with numbered progression and current-distance context while classic mode keeps the previous objective list unchanged.",
+            "The tracker now reads coherently beside the transit card, mission panel, and district-status shell without changing smoke selectors or underlying mission state."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city capture overlay aligns with the stability shell",
+          "summary": [
+            "Repo-city district recovery now renders as a structured stability card with district title, state pill, progress chips, and calmer shell framing instead of the older centered capture overlay.",
+            "The stability progress bar and status copy now read as repo-city shell elements while keeping the existing capture progression and current-district behavior unchanged.",
+            "Classic mode keeps the previous territory-capture overlay and copy, so the slice stays isolated to repo-city presentation."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        },
+        {
+          "title": "Repo-city mission-active bar aligns with the route shell",
+          "summary": [
+            "Repo-city in-mission status now renders as an active-route shell with mission title, route type, district, step progress, and current cue instead of the older simple title-plus-objective strip.",
+            "The repo-city mission timer now sits inside the calmer route shell while keeping the existing timer countdown and waypoint behavior unchanged.",
+            "Classic mode keeps the previous mission-active bar and separate timer treatment, so the slice stays isolated to repo-city presentation."
+          ],
+          "validation": {
+            "frontend_lint": "pass",
+            "frontend_build": "pass",
+            "browser_smoke": "pass"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 4 - GitHub Connection MVP",
+      "status": "pending",
+      "deliverables": [
+        "GitHub auth/connect flow",
+        "Repo selection flow",
+        "Read-only ingestion path",
+        "Cached snapshot storage"
+      ]
+    },
+    {
+      "name": "Phase 5 - Signal-Driven Missions",
+      "status": "pending",
+      "deliverables": [
+        "Signal normalization",
+        "Signal-to-mission generator",
+        "Heat and threat updates"
+      ]
+    },
+    {
+      "name": "Phase 6 - AI Bot Battle Layer",
+      "status": "pending",
+      "deliverables": [
+        "Bot archetype system",
+        "Battle template mapping",
+        "Boss/battle theme rewrite"
+      ]
+    },
+    {
+      "name": "Phase 7 - Trust, refresh, and polish",
+      "status": "pending",
+      "deliverables": [
+        "Refresh/update cycle",
+        "Privacy-safe copy",
+        "Performance pass",
+        "Stability and testing improvements"
+      ]
+    }
+  ],
+  "current_slice_recommendation": {
+    "title": "Align repo-city HUD control row with shell action cards",
+    "why": "The repo-city mission-active bar now matches the route shell, but the bottom HUD controls still read as shared legacy buttons with shortcut labels rather than repo-city action cards. The next bounded Phase 3 gap is making the repo-city control row feel consistent with the calmer shell without changing the underlying toggles.",
+    "candidate_files": [
+      "frontend/src/ui/HUD.tsx",
+      "frontend/src/index.css"
+    ],
+    "acceptance_criteria": [
+      "Repo-city HUD controls use shell-style action labels and calmer button framing without changing toggle behavior or keyboard shortcuts",
+      "Classic mode keeps its existing HUD button treatment while repo-city mode reads coherently with the rest of the minimalist shell",
+      "frontend lint, build, and browser smoke pass after the HUD control-row slice"
+    ]
+  },
+  "open_questions": [
+    "Should GitHub integration use OAuth first or a GitHub App first?",
+    "How much private repo content should ever be inspected?",
+    "Will the first generated city be top-down DOM/SVG or lightweight canvas/R3F?",
+    "Should the existing deployed game be preserved in a separate mode while the pivot is built?"
+  ],
+  "known_risks": [
+    "Trying to understand arbitrary code too deeply too early will stall delivery.",
+    "Overly literal graph rendering will produce unreadable city layouts.",
+    "GitHub trust/privacy concerns can kill adoption if handled casually.",
+    "A huge frontend rewrite without a data-model foundation will create theme without product."
+  ],
+  "validation_expectations": {
+    "global_cycle_rule": [
+      "Every post-Phase-0 cycle must change at least one non-doc file.",
+      "Every post-Phase-0 cycle must run at least one validation command.",
+      "If UI flow changes, browser smoke should be run unless explicitly blocked."
+    ],
+    "phase_1": [
+      "worker build passes if backend/shared contracts change",
+      "frontend build passes if UI/data contracts change",
+      "types remain coherent"
+    ],
+    "frontend_heavy_changes": [
+      "frontend lint passes",
+      "frontend build passes",
+      "smoke preserved or explicitly updated"
+    ]
+  }
+}

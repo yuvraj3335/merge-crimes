@@ -1,0 +1,21 @@
+{
+    "name": "merge-crimes-api",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "scripts": {
+        "dev": "wrangler dev",
+        "build": "tsc --noEmit",
+        "deploy": "wrangler deploy",
+        "seed": "curl -X POST http://localhost:8787/api/admin/seed"
+    },
+    "dependencies": {
+        "hono": "^4.7.0",
+        "zod": "^3.24.0"
+    },
+    "devDependencies": {
+        "@cloudflare/workers-types": "^4.20241230.0",
+        "typescript": "~5.9.3",
+        "wrangler": "^4.14.0"
+    }
+}
