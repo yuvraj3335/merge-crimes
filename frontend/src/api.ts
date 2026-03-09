@@ -460,14 +460,6 @@ export async function failMission(id: string): Promise<Mission> {
     return writeApiFetch<Mission>(`/api/missions/${encodeURIComponent(id)}/fail`, { method: 'POST' });
 }
 
-export async function seedDatabase(): Promise<{ status: string; inserted: Record<string, number> }> {
-    return apiFetch<{ status: string; inserted: Record<string, number> }>(
-        '/api/admin/seed',
-        { method: 'POST' },
-        'Worker returned an invalid seed response.',
-    );
-}
-
 function getGitHubOAuthRedirectUri(): string {
     if (typeof window === 'undefined') {
         return GITHUB_OAUTH_CALLBACK_PATH;

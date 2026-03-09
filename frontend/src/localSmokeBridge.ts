@@ -176,18 +176,10 @@ function ensureSmokeRepoCityLoaded(): GitHubRepoMetadataSnapshot {
             repoId: null,
             message: null,
         },
-        selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
         connectedRepoRefreshStatus: buildIdleRefreshStatus(smokeRepo),
         credits: 0,
         reputation: 0,
-        playerPosition: [0, 0.5, 0],
-        districtRooms: {},
-        showMissionPanel: false,
-        showLeaderboard: false,
-        showBulletin: false,
-        rewardToasts: [],
-        phase: 'menu',
     });
 
     return smokeRepo;
@@ -257,7 +249,6 @@ function setTrustState(trustState: SmokeTrustState): SmokeSnapshot {
                 repoId: null,
                 message: null,
             },
-            selectedGitHubRepoSnapshot: null,
             showGitHubRepoPicker: false,
         });
 
@@ -291,7 +282,6 @@ function setTrustState(trustState: SmokeTrustState): SmokeSnapshot {
         selectedGitHubRepo: selectedRepo,
         selectedGitHubRepoEligibility: selectedRepoEligibility,
         selectedGitHubRepoIngestState: selectedRepoIngestState,
-        selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
     });
 

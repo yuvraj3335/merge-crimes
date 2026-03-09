@@ -86,6 +86,16 @@ export async function checkGitHubRepoRefresh({
   );
 
   if (!commitsResponse.ok) {
+    if (commitsResponse.status === 409) {
+      return {
+        ok: true,
+        refreshCheck: buildRepoRefreshCheckResult(
+          { owner, name, defaultBranch, lastKnownCommitSha },
+          null,
+        ),
+      };
+    }
+
     const status: 404 | 502 = commitsResponse.status === 404 ? 404 : 502;
     return {
       ok: false,

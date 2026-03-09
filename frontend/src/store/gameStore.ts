@@ -12,7 +12,11 @@ import {
     type ConnectedRepoRefreshStatus,
 } from '../../../shared/repoRefresh';
 import * as api from '../api';
-import { getBootstrapRepoSnapshot, writeStoredSelectedGitHubRepoSnapshot } from '../repoCityBootstrap';
+import {
+    getBootstrapRepoSnapshot,
+    writeBootstrapModePreference,
+    writeStoredSelectedRepoSnapshot,
+} from '../repoCityBootstrap';
 import {
     getGitHubRepoTranslationEligibility,
     type GitHubRepoTranslationEligibility,
@@ -256,6 +260,7 @@ function createMissionWriteRollbackState(state: Pick<
 
 function restoreMissionWriteRollbackState(
     set: (partial: Partial<GameState>) => void,
+    getState: () => GameState,
     snapshot: MissionWriteRollbackState,
 ): void {
     if (snapshot.activeMission) {
@@ -280,6 +285,7 @@ function restoreMissionWriteRollbackState(
         captureProgress: snapshot.captureProgress,
         showMissionPanel: snapshot.showMissionPanel,
     });
+    saveRepoCityRuntimeState(getState());
 }
 
 function shouldSyncWorkerMissionState(state: Pick<GameState, 'apiAvailable' | 'repoCityMode'>): boolean {
@@ -325,7 +331,6 @@ interface SelectedGitHubRepoStateSlice {
     selectedGitHubRepo: GitHubReadableRepo | null;
     selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null;
     selectedGitHubRepoIngestState: SelectedGitHubRepoIngestState;
-    selectedGitHubRepoSnapshot: GitHubRepoMetadataSnapshot | null;
     showGitHubRepoPicker: boolean;
 }
 
@@ -339,9 +344,7 @@ export interface GameState {
     setPlayerPosition: (pos: [number, number, number]) => void;
     playerName: string;
     credits: number;
-    addCredits: (amount: number) => void;
     reputation: number;
-    addReputation: (amount: number) => void;
     isSprinting: boolean;
     setSprinting: (v: boolean) => void;
 
@@ -380,7 +383,6 @@ export interface GameState {
     // Merge Conflicts
     conflicts: MergeConflictEncounter[];
     activeConflict: MergeConflictEncounter | null;
-    startBossFight: (conflictId: string) => void;
     resolveBossFight: (success: boolean) => void;
 
     // UI
@@ -416,13 +418,10 @@ export interface GameState {
     selectedGitHubRepo: GitHubReadableRepo | null;
     selectedGitHubRepoEligibility: GitHubRepoTranslationEligibility | null;
     selectedGitHubRepoIngestState: SelectedGitHubRepoIngestState;
-    selectedGitHubRepoSnapshot: GitHubRepoMetadataSnapshot | null;
     showGitHubRepoPicker: boolean;
     setGitHubAuthExchanging: () => void;
     setGitHubAccessToken: (token: string) => void;
     setGitHubAuthError: (message: string) => void;
-    clearGitHubAuth: () => void;
-    resetSelectedGitHubRepoState: (overrides?: Partial<SelectedGitHubRepoStateSlice>) => void;
     setSelectedGitHubRepo: (repo: GitHubReadableRepo | null) => void;
     setSelectedGitHubRepoIngestState: (state: SelectedGitHubRepoIngestState) => void;
     setSelectedGitHubRepoSnapshot: (snapshot: GitHubRepoMetadataSnapshot | null) => void;
@@ -435,11 +434,12 @@ export interface GameState {
     writeSessionState: ApiWriteSessionState;
     writeSessionMessage: string | null;
     setApiRuntimeStatus: (status: ApiRuntimeStatus) => void;
-    loadFromApi: () => Promise<void>;
+    loadFromApi: () => Promise<boolean>;
 }
 
 let toastIdCounter = 0;
 let missionWriteMutationId = 0;
+const INITIAL_PLAYER_POSITION: [number, number, number] = [0, 0.5, 0];
 const initialRepoSnapshot = getBootstrapRepoSnapshot();
 const initialGeneratedCity = initialRepoSnapshot ? generateCityFromRepo(initialRepoSnapshot) : null;
 const baseInitialDistricts = initialGeneratedCity ? generatedCityToDistricts(initialGeneratedCity) : SEED_DISTRICTS;
@@ -472,9 +472,22 @@ function buildResetSelectedGitHubRepoState(
         selectedGitHubRepo: null,
         selectedGitHubRepoEligibility: null,
         selectedGitHubRepoIngestState: createInitialSelectedGitHubRepoIngestState(),
-        selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
         ...overrides,
+    };
+}
+
+function buildTransientRuntimeResetState() {
+    return {
+        playerPosition: [...INITIAL_PLAYER_POSITION] as [number, number, number],
+        currentDistrict: null,
+        repoCityTransit: null,
+        districtRooms: {},
+        showMissionPanel: false,
+        showLeaderboard: false,
+        showBulletin: false,
+        rewardToasts: [],
+        isSprinting: false,
     };
 }
 
@@ -490,13 +503,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     setPhase: (phase) => set({ phase }),
 
     // Player
-    playerPosition: [0, 0.5, 0],
+    playerPosition: INITIAL_PLAYER_POSITION,
     setPlayerPosition: (pos) => set({ playerPosition: pos }),
     playerName: 'Runner',
     credits: initialRepoCityRuntime?.credits ?? 0,
-    addCredits: (amount) => set((s) => ({ credits: s.credits + amount })),
     reputation: initialRepoCityRuntime?.reputation ?? 0,
-    addReputation: (amount) => set((s) => ({ reputation: s.reputation + amount })),
     isSprinting: false,
     setSprinting: (v) => set({ isSprinting: v }),
 
@@ -567,14 +578,15 @@ export const useGameStore = create<GameState>((set, get) => ({
         const current = get().captureProgress[districtId];
         if (!current) return;
         const newProgress = Math.min(100, current.progress + amount);
+        const completedCaptureNow = current.progress < 100 && newProgress >= 100;
         set({
             captureProgress: {
                 ...get().captureProgress,
                 [districtId]: { progress: newProgress, capturing: newProgress < 100 },
             },
         });
-        // At 100%, decrease heat
-        if (newProgress >= 100) {
+        // Only cool the district once when capture actually crosses the finish line.
+        if (completedCaptureNow) {
             const districts = get().districts.map((d) =>
                 d.id === districtId ? { ...d, heatLevel: Math.max(0, d.heatLevel - 20) } : d
             );
@@ -614,9 +626,15 @@ export const useGameStore = create<GameState>((set, get) => ({
                         return;
                     }
 
-                    get().loadFromApi().catch(() => {
-                        restoreMissionWriteRollbackState(set, rollbackState);
-                    });
+                    void get().loadFromApi()
+                        .then((didSync) => {
+                            if (!didSync) {
+                                restoreMissionWriteRollbackState(set, get, rollbackState);
+                            }
+                        })
+                        .catch(() => {
+                            restoreMissionWriteRollbackState(set, get, rollbackState);
+                        });
                 });
             }
         }
@@ -696,9 +714,15 @@ export const useGameStore = create<GameState>((set, get) => ({
                             return;
                         }
 
-                        get().loadFromApi().catch(() => {
-                            restoreMissionWriteRollbackState(set, rollbackState);
-                        });
+                        void get().loadFromApi()
+                            .then((didSync) => {
+                                if (!didSync) {
+                                    restoreMissionWriteRollbackState(set, get, rollbackState);
+                                }
+                            })
+                            .catch(() => {
+                                restoreMissionWriteRollbackState(set, get, rollbackState);
+                            });
                     });
                 return;
             }
@@ -737,9 +761,15 @@ export const useGameStore = create<GameState>((set, get) => ({
                     return;
                 }
 
-                get().loadFromApi().catch(() => {
-                    restoreMissionWriteRollbackState(set, rollbackState);
-                });
+                void get().loadFromApi()
+                    .then((didSync) => {
+                        if (!didSync) {
+                            restoreMissionWriteRollbackState(set, get, rollbackState);
+                        }
+                    })
+                    .catch(() => {
+                        restoreMissionWriteRollbackState(set, get, rollbackState);
+                    });
             });
         }
     },
@@ -756,12 +786,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Merge Conflicts
     conflicts: initialConflicts,
     activeConflict: null,
-    startBossFight: (conflictId) => {
-        const conflict = get().conflicts.find((c) => c.id === conflictId);
-        if (conflict) {
-            set({ activeConflict: conflict, phase: 'boss', missionTimer: conflict.timeLimit });
-        }
-    },
     resolveBossFight: (success) => {
         const conflict = get().activeConflict;
         const activeMission = get().activeMission;
@@ -824,7 +848,21 @@ export const useGameStore = create<GameState>((set, get) => ({
         });
         const restoredRuntime = restoreRepoCityRuntimeState(repo, districts, baseMissions);
 
+        if (restoredRuntime?.activeMission) {
+            saveWaypointState(
+                restoredRuntime.activeMission.id,
+                restoredRuntime.currentWaypointIndex,
+                restoredRuntime.completedWaypoints,
+            );
+        } else {
+            clearWaypointState();
+        }
+
+        writeStoredSelectedRepoSnapshot(repo);
+        writeBootstrapModePreference('repo-city');
+
         set({
+            ...buildTransientRuntimeResetState(),
             connectedRepo: repo,
             connectedRepoRefreshStatus: repo.metadata?.provider === 'github'
                 ? createInitialConnectedRepoRefreshStatus(repo.signals)
@@ -837,13 +875,11 @@ export const useGameStore = create<GameState>((set, get) => ({
             captureProgress: restoredRuntime?.captureProgress ?? capture,
             activeMission: restoredRuntime?.activeMission ?? null,
             activeConflict: null,
-            currentDistrict: null,
-            repoCityTransit: null,
             currentWaypointIndex: restoredRuntime?.currentWaypointIndex ?? 0,
             completedWaypoints: restoredRuntime?.completedWaypoints ?? [],
             missionTimer: restoredRuntime?.activeMission?.timeLimit ?? 0,
-            credits: restoredRuntime?.credits ?? get().credits,
-            reputation: restoredRuntime?.reputation ?? get().reputation,
+            credits: restoredRuntime?.credits ?? 0,
+            reputation: restoredRuntime?.reputation ?? 0,
             phase: restoredRuntime?.phase ?? 'menu',
             apiStatusMessage: get().apiConnectionState === 'offline'
                 ? getOfflineApiStatusMessage(true)
@@ -857,7 +893,13 @@ export const useGameStore = create<GameState>((set, get) => ({
             capture[d.id] = { progress: 0, capturing: false };
         });
 
+        clearWaypointState();
+        writeBootstrapModePreference('classic');
+        writeStoredSelectedRepoSnapshot(null);
+
         set({
+            ...buildTransientRuntimeResetState(),
+            ...buildResetSelectedGitHubRepoState(),
             connectedRepo: null,
             connectedRepoRefreshStatus: null,
             generatedCity: null,
@@ -868,11 +910,11 @@ export const useGameStore = create<GameState>((set, get) => ({
             captureProgress: capture,
             activeMission: null,
             activeConflict: null,
-            currentDistrict: null,
-            repoCityTransit: null,
             currentWaypointIndex: 0,
             completedWaypoints: [],
             missionTimer: 0,
+            credits: 0,
+            reputation: 0,
             phase: 'menu',
             apiStatusMessage: get().apiConnectionState === 'offline'
                 ? getOfflineApiStatusMessage(false)
@@ -902,13 +944,6 @@ export const useGameStore = create<GameState>((set, get) => ({
         githubAuthMessage: message,
         ...buildResetSelectedGitHubRepoState(),
     }),
-    clearGitHubAuth: () => set({
-        githubAccessToken: null,
-        githubAuthStatus: 'anonymous',
-        githubAuthMessage: null,
-        ...buildResetSelectedGitHubRepoState(),
-    }),
-    resetSelectedGitHubRepoState: (overrides) => set(buildResetSelectedGitHubRepoState(overrides)),
     setSelectedGitHubRepo: (repo) => set((state) => {
         if (!repo) {
             return buildResetSelectedGitHubRepoState({ showGitHubRepoPicker: state.showGitHubRepoPicker });
@@ -930,20 +965,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     }),
     setSelectedGitHubRepoIngestState: (state) => set({ selectedGitHubRepoIngestState: state }),
     setSelectedGitHubRepoSnapshot: (snapshot) => {
-        set({
-            selectedGitHubRepoSnapshot: snapshot,
-            ...(snapshot
-                ? {
-                    selectedGitHubRepoIngestState: createInitialSelectedGitHubRepoIngestState(),
-                }
-                : {}),
-        });
-
         if (!snapshot) {
             return;
         }
 
-        writeStoredSelectedGitHubRepoSnapshot(snapshot);
+        set({
+            selectedGitHubRepoIngestState: createInitialSelectedGitHubRepoIngestState(),
+        });
         get().loadRepoCity(snapshot);
     },
     setShowGitHubRepoPicker: (show) => set({ showGitHubRepoPicker: show }),
@@ -1010,7 +1038,7 @@ export const useGameStore = create<GameState>((set, get) => ({
                     ...(events ? { events } : {}),
                 });
                 console.log('[MergeCrimes] Loaded runtime data from Worker API without replacing repo-city bootstrap state');
-                return;
+                return true;
             }
 
             const capture: Record<string, DistrictCapture> = {};
@@ -1033,7 +1061,17 @@ export const useGameStore = create<GameState>((set, get) => ({
                     restoredWaypointIndex = saved.currentWaypointIndex;
                     restoredCompletedWaypoints = saved.completedWaypoints;
                 }
+                saveWaypointState(
+                    restoredActiveMission.id,
+                    restoredWaypointIndex,
+                    restoredCompletedWaypoints,
+                );
+            } else {
+                clearWaypointState();
             }
+            const nextPhase = restoredActiveMission
+                ? 'mission'
+                : (get().phase === 'mission' ? 'playing' : get().phase);
             set({
                 apiAvailable: true,
                 apiConnectionState: 'online',
@@ -1043,16 +1081,17 @@ export const useGameStore = create<GameState>((set, get) => ({
                 captureProgress: capture,
                 activeMission: restoredActiveMission,
                 activeConflict: null,
-                currentWaypointIndex: restoredActiveMission ? restoredWaypointIndex : get().currentWaypointIndex,
-                completedWaypoints: restoredActiveMission ? restoredCompletedWaypoints : get().completedWaypoints,
-                missionTimer: restoredActiveMission ? restoredActiveMission.timeLimit : get().missionTimer,
-                phase: restoredActiveMission ? 'mission' : get().phase,
+                currentWaypointIndex: restoredActiveMission ? restoredWaypointIndex : 0,
+                completedWaypoints: restoredActiveMission ? restoredCompletedWaypoints : [],
+                missionTimer: restoredActiveMission ? restoredActiveMission.timeLimit : 0,
+                phase: nextPhase,
                 ...(leaderboard ? { leaderboard } : {}),
                 ...(events ? { events } : {}),
                 ...(conflicts ? { conflicts } : {}),
             });
             console.log('[MergeCrimes] Loaded game data from Worker API');
             saveRepoCityRuntimeState(get());
+            return true;
         } else {
             set({
                 apiAvailable: false,
@@ -1060,6 +1099,7 @@ export const useGameStore = create<GameState>((set, get) => ({
                 apiStatusMessage: getOfflineApiStatusMessage(get().repoCityMode),
             });
             console.log('[MergeCrimes] Worker API unavailable, using local fallback data');
+            return false;
         }
     },
 }));

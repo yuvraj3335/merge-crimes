@@ -1,7 +1,11 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 
 export function RewardToast() {
-    const { rewardToasts, repoCityMode } = useGameStore();
+    const { rewardToasts, repoCityMode } = useGameStore(useShallow((state) => ({
+        rewardToasts: state.rewardToasts,
+        repoCityMode: state.repoCityMode,
+    })));
 
     if (rewardToasts.length === 0) return null;
 

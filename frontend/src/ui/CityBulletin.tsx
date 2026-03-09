@@ -1,7 +1,15 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 
 export function CityBulletin() {
-    const { showBulletin, setShowBulletin, events, districts, phase, repoCityMode } = useGameStore();
+    const { showBulletin, setShowBulletin, events, districts, phase, repoCityMode } = useGameStore(useShallow((state) => ({
+        showBulletin: state.showBulletin,
+        setShowBulletin: state.setShowBulletin,
+        events: state.events,
+        districts: state.districts,
+        phase: state.phase,
+        repoCityMode: state.repoCityMode,
+    })));
 
     if (!showBulletin || phase === 'boss') return null;
 

@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 import { Html } from '@react-three/drei';
 import { getWaypointDistanceAndText } from './waypointUtils';
@@ -21,7 +22,14 @@ export function Waypoint() {
     const markerRef = useRef<THREE.Group>(null);
     const ringRef = useRef<THREE.Mesh>(null);
     const beamRef = useRef<THREE.Mesh>(null);
-    const { activeMission, currentWaypointIndex, playerPosition, reachWaypoint, phase, repoCityMode } = useGameStore();
+    const { activeMission, currentWaypointIndex, playerPosition, reachWaypoint, phase, repoCityMode } = useGameStore(useShallow((state) => ({
+        activeMission: state.activeMission,
+        currentWaypointIndex: state.currentWaypointIndex,
+        playerPosition: state.playerPosition,
+        reachWaypoint: state.reachWaypoint,
+        phase: state.phase,
+        repoCityMode: state.repoCityMode,
+    })));
 
     useFrame((state) => {
         if (!markerRef.current || !ringRef.current || !beamRef.current) return;

@@ -42,6 +42,7 @@ export function buildRepoRefreshStatusCopy(
 ): RepoRefreshStatusCopy {
     const { tone, message } = getActiveRepoRefreshState(connectedRepo, repoRefreshStatus);
     const hasConnectedRepoUpdate = Boolean(connectedRepoRefreshStatus?.hasNewerRemote);
+    const hasBackgroundRefreshError = connectedRepoRefreshStatus?.status === 'error';
 
     if (tone === 'loading') {
         return {
@@ -67,6 +68,14 @@ export function buildRepoRefreshStatusCopy(
         };
     }
 
+    if (hasBackgroundRefreshError) {
+        return {
+            pill: 'Checks failed',
+            title: 'Could not check for repo updates',
+            message: connectedRepoRefreshStatus.errorMessage ?? 'GitHub update checks failed. Try refreshing this repo again.',
+        };
+    }
+
     return {
         pill: hasConnectedRepoUpdate ? 'Update detected' : 'Manual refresh',
         title: hasConnectedRepoUpdate ? 'Newer snapshot available' : 'Refresh the connected snapshot',
@@ -85,6 +94,10 @@ export function buildRepoRefreshIndicatorTone(
 
     if (tone !== 'idle') {
         return tone;
+    }
+
+    if (connectedRepoRefreshStatus?.status === 'error') {
+        return 'error';
     }
 
     return connectedRepoRefreshStatus?.hasNewerRemote ? 'success' : 'idle';

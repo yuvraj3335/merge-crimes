@@ -1,5 +1,5 @@
 const REPO_PRIVACY_NOTICE =
-    'This app reads repository metadata only. No code or personal data is copied. You must explicitly select each repo to visualize. In the default OAuth flow, only public repos are eligible for city generation. No write or content access is possible.';
+    'This app reads repository metadata and top-level structure names only. No personal data is copied, and this flow never edits repos. You must explicitly select each repo to visualize it. In the default OAuth flow, only public repos are eligible for city generation.';
 
 interface RepoPrivacyNoticeProps {
     context: 'menu' | 'picker';

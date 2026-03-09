@@ -1,4 +1,5 @@
 import type { Faction, FactionId, LeaderboardEntry } from '../types';
+import { SEED_DISTRICTS } from './districts';
 
 export const SEED_FACTIONS: Faction[] = [
     { id: 'chrome-syndicate', name: 'Chrome Syndicate', color: '#61DAFB', motto: 'We render the future.', score: 2400, districtsControlled: 1 },
@@ -22,7 +23,7 @@ export function buildSeedLeaderboard(factions: readonly Faction[] = SEED_FACTION
             factionId: faction.id,
             factionName: faction.name,
             score: faction.score,
-            districtsControlled: faction.districtsControlled,
-            missionsCompleted: Math.floor(faction.score / 100),
+            districtsControlled: SEED_DISTRICTS.filter((district) => district.faction === faction.id).length,
+            missionsCompleted: 0,
         }));
 }

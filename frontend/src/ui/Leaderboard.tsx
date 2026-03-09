@@ -1,7 +1,16 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 
 export function Leaderboard() {
-    const { showLeaderboard, setShowLeaderboard, leaderboard, factions, phase, activeMission, repoCityMode } = useGameStore();
+    const { showLeaderboard, setShowLeaderboard, leaderboard, factions, phase, activeMission, repoCityMode } = useGameStore(useShallow((state) => ({
+        showLeaderboard: state.showLeaderboard,
+        setShowLeaderboard: state.setShowLeaderboard,
+        leaderboard: state.leaderboard,
+        factions: state.factions,
+        phase: state.phase,
+        activeMission: state.activeMission,
+        repoCityMode: state.repoCityMode,
+    })));
 
     // Hide leaderboard during active missions: the objective tracker occupies the same
     // left-panel slot (left: hud-padding, top: 50%), so both showing simultaneously

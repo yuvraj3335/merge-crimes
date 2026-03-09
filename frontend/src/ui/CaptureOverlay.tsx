@@ -1,7 +1,13 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 
 export function CaptureOverlay() {
-    const { currentDistrict, captureProgress, phase, repoCityMode } = useGameStore();
+    const { currentDistrict, captureProgress, phase, repoCityMode } = useGameStore(useShallow((state) => ({
+        currentDistrict: state.currentDistrict,
+        captureProgress: state.captureProgress,
+        phase: state.phase,
+        repoCityMode: state.repoCityMode,
+    })));
 
     if (!currentDistrict || phase === 'menu' || phase === 'boss') return null;
 

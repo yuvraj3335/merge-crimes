@@ -1,6 +1,7 @@
 import { useRef, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 
 interface MissionTriggerProps {
@@ -19,7 +20,15 @@ export function MissionTrigger({ districtId, position, radius, color }: MissionT
     // Track previous proximity to open the panel only on entry, not on every frame.
     // Without this edge-trigger, the panel reopens instantly after the player closes it.
     const prevIsNearRef = useRef(false);
-    const { playerPosition, phase, setShowMissionPanel, missions, activeMission, repoCityMode, repoCityTransit } = useGameStore();
+    const { playerPosition, phase, setShowMissionPanel, missions, activeMission, repoCityMode, repoCityTransit } = useGameStore(useShallow((state) => ({
+        playerPosition: state.playerPosition,
+        phase: state.phase,
+        setShowMissionPanel: state.setShowMissionPanel,
+        missions: state.missions,
+        activeMission: state.activeMission,
+        repoCityMode: state.repoCityMode,
+        repoCityTransit: state.repoCityTransit,
+    })));
 
     const districtMissions = missions.filter(
         (m) => m.districtId === districtId && m.status === 'available'
@@ -119,7 +128,7 @@ export function MissionTrigger({ districtId, position, radius, color }: MissionT
 }
 
 export function MissionTriggers() {
-    const { districts } = useGameStore();
+    const districts = useGameStore((state) => state.districts);
 
     return (
         <>

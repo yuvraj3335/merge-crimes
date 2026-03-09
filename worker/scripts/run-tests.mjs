@@ -11,6 +11,7 @@ const testEntries = [
   'src/__tests__/repoCityMissionGeneration.test.ts',
   'src/__tests__/battleTemplateMapping.test.ts',
   'src/__tests__/fetchRepoSignals.test.ts',
+  'src/__tests__/checkRepoRefresh.test.ts',
 ];
 
 async function runNodeScript(filePath) {

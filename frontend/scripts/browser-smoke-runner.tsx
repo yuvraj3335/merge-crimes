@@ -107,7 +107,6 @@ function resetSmokeRepoCityHarness(): GitHubRepoMetadataSnapshot {
             repoId: null,
             message: null,
         },
-        selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
         connectedRepoRefreshStatus: {
             ...createInitialConnectedRepoRefreshStatus(smokeRepo.signals),
@@ -141,7 +140,6 @@ function setTrustState(trustState: SmokeTrustState) {
                 repoId: null,
                 message: null,
             },
-            selectedGitHubRepoSnapshot: null,
             showGitHubRepoPicker: false,
         });
         return;
@@ -167,7 +165,6 @@ function setTrustState(trustState: SmokeTrustState) {
                 repoId: null,
                 message: null,
             },
-        selectedGitHubRepoSnapshot: null,
         showGitHubRepoPicker: false,
     });
 }

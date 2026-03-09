@@ -100,7 +100,7 @@ async function verifyOAuthState(state: string, secret: string): Promise<boolean>
 const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
 const LOCAL_DEV_PUBLIC_SESSION_SECRET = 'merge-crimes-local-dev-public-session';
 const DEFAULT_GITHUB_CLIENT_ID_PLACEHOLDER = 'replace-with-github-client-id';
-const DEFAULT_GITHUB_OAUTH_SCOPE = 'public_repo';
+const DEFAULT_GITHUB_OAUTH_SCOPE: string | null = null;
 const GITHUB_API_ACCEPT = 'application/vnd.github+json';
 const GITHUB_API_VERSION = '2022-11-28';
 const GITHUB_API_USER_AGENT = 'merge-crimes-worker';
@@ -127,7 +127,7 @@ const MISSION_SELECT_COLUMNS = `
     m.time_limit,
     m.reward,
     m.faction_reward,
-    COALESCE(ms.status, m.status) AS status,
+    COALESCE(ms.status, 'available') AS status,
     m.objectives_json,
     m.waypoints_json
 `;
@@ -189,8 +189,13 @@ function getPublicSessionSecret(c: AppContext): string | null {
     return null;
 }
 
-function getGitHubClientId(env: Bindings): string {
-    return env.GITHUB_CLIENT_ID?.trim() || DEFAULT_GITHUB_CLIENT_ID_PLACEHOLDER;
+function getGitHubClientId(env: Bindings): string | null {
+    const clientId = env.GITHUB_CLIENT_ID?.trim();
+    if (!clientId || clientId === DEFAULT_GITHUB_CLIENT_ID_PLACEHOLDER) {
+        return null;
+    }
+
+    return clientId;
 }
 
 function getGitHubClientSecret(env: Bindings): string | null {
@@ -198,8 +203,13 @@ function getGitHubClientSecret(env: Bindings): string | null {
     return secret ? secret : null;
 }
 
-function getGitHubOAuthScope(env: Bindings): string {
-    return env.GITHUB_OAUTH_SCOPE?.trim() || DEFAULT_GITHUB_OAUTH_SCOPE;
+function getGitHubOAuthScope(env: Bindings): string | null {
+    if (typeof env.GITHUB_OAUTH_SCOPE !== 'string') {
+        return DEFAULT_GITHUB_OAUTH_SCOPE;
+    }
+
+    const trimmedScope = env.GITHUB_OAUTH_SCOPE.trim();
+    return trimmedScope.length > 0 ? trimmedScope : DEFAULT_GITHUB_OAUTH_SCOPE;
 }
 
 function getGitHubRepoRequestHeaders(accessToken?: string | null): HeadersInit {
@@ -798,6 +808,15 @@ app.get('/api/auth/github/start', async (c) => {
         return c.json({ error: 'forbidden_redirect_uri', message: 'Redirect URI origin is not allowed' }, 403);
     }
 
+    const clientId = getGitHubClientId(c.env);
+    const clientSecret = getGitHubClientSecret(c.env);
+    if (!clientId || !clientSecret) {
+        return c.json({
+            error: 'github_oauth_unconfigured',
+            message: 'GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be configured before starting GitHub OAuth.',
+        }, 503);
+    }
+
     // Sign the client-supplied nonce so /token can verify it wasn't forged.
     const secret = getPublicSessionSecret(c);
     const signedState = secret
@@ -805,7 +824,7 @@ app.get('/api/auth/github/start', async (c) => {
         : query.data.state;
 
     const authorizeUrl = new URL('https://github.com/login/oauth/authorize');
-    authorizeUrl.searchParams.set('client_id', getGitHubClientId(c.env));
+    authorizeUrl.searchParams.set('client_id', clientId);
     authorizeUrl.searchParams.set('redirect_uri', query.data.redirectUri);
     authorizeUrl.searchParams.set('state', signedState);
 
@@ -838,11 +857,12 @@ app.post('/api/auth/github/token', async (c) => {
         }
     }
 
+    const clientId = getGitHubClientId(c.env);
     const clientSecret = getGitHubClientSecret(c.env);
-    if (!clientSecret) {
+    if (!clientId || !clientSecret) {
         return c.json({
             error: 'github_oauth_unconfigured',
-            message: 'GITHUB_CLIENT_SECRET must be configured to exchange GitHub OAuth codes.',
+            message: 'GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be configured to exchange GitHub OAuth codes.',
         }, 503);
     }
 
@@ -853,7 +873,7 @@ app.post('/api/auth/github/token', async (c) => {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            client_id: getGitHubClientId(c.env),
+            client_id: clientId,
             client_secret: clientSecret,
             code: parsed.data.code,
             redirect_uri: parsed.data.redirectUri,
@@ -872,7 +892,7 @@ app.post('/api/auth/github/token', async (c) => {
     return c.json({
         accessToken: payload.access_token,
         tokenType: payload.token_type ?? 'bearer',
-        scope: payload.scope ?? getGitHubOAuthScope(c.env),
+        scope: payload.scope ?? getGitHubOAuthScope(c.env) ?? '',
     });
 });
 
@@ -1034,9 +1054,6 @@ app.post('/api/missions/:id/accept', async (c) => {
     if (!mission) {
         return c.json({ error: 'not_found', message: `Mission '${parsed.data.id}' not found` }, 404);
     }
-    if (mission.status !== 'available') {
-        return c.json({ error: 'conflict', message: `Mission definition is '${mission.status}', not deployable` }, 409);
-    }
 
     const currentMission = await db
         .prepare('SELECT status FROM mission_sessions WHERE session_id = ? AND mission_id = ?')
@@ -1195,7 +1212,7 @@ app.post('/api/missions/:id/fail', async (c) => {
 });
 
 // ─── Leaderboard ───
-const LEADERBOARD_CACHE_KEY = 'leaderboard_v1';
+const LEADERBOARD_CACHE_KEY = 'leaderboard_v2';
 const LEADERBOARD_TTL_SECONDS = 60;
 
 app.get('/api/leaderboard', async (c) => {
@@ -1209,7 +1226,33 @@ app.get('/api/leaderboard', async (c) => {
     }
 
     const db = c.env.DB;
-    const { results } = await db.prepare('SELECT * FROM factions ORDER BY score DESC').all();
+    const { results } = await db.prepare(`
+        SELECT
+            f.id,
+            f.name,
+            f.score,
+            COALESCE(district_counts.districts_controlled, 0) AS districts_controlled,
+            COALESCE(completed_missions.missions_completed, 0) AS missions_completed
+        FROM factions f
+        LEFT JOIN (
+            SELECT faction, COUNT(*) AS districts_controlled
+            FROM districts
+            GROUP BY faction
+        ) AS district_counts
+            ON district_counts.faction = f.id
+        LEFT JOIN (
+            SELECT
+                d.faction AS faction_id,
+                COUNT(*) AS missions_completed
+            FROM mission_sessions ms
+            INNER JOIN missions m ON m.id = ms.mission_id
+            INNER JOIN districts d ON d.id = m.district_id
+            WHERE ms.status = 'completed'
+            GROUP BY d.faction
+        ) AS completed_missions
+            ON completed_missions.faction_id = f.id
+        ORDER BY f.score DESC
+    `).all();
 
     const leaderboard = results.map((row, i) => ({
         rank: i + 1,
@@ -1217,7 +1260,7 @@ app.get('/api/leaderboard', async (c) => {
         factionName: row.name,
         score: row.score,
         districtsControlled: row.districts_controlled,
-        missionsCompleted: Math.floor((row.score as number) / 100),
+        missionsCompleted: row.missions_completed,
     }));
 
     // Write-through to KV via waitUntil so the write completes after response is sent

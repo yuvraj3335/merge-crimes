@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 
 type EncounterCopySource = {
@@ -34,7 +35,15 @@ function getEncounterCopy(encounter: EncounterCopySource) {
 }
 
 export function MergeConflictGame() {
-    const { phase, activeConflict, resolveBossFight, missionTimer, setMissionTimer, repoCityMode, districts } = useGameStore();
+    const { phase, activeConflict, resolveBossFight, missionTimer, setMissionTimer, repoCityMode, districts } = useGameStore(useShallow((state) => ({
+        phase: state.phase,
+        activeConflict: state.activeConflict,
+        resolveBossFight: state.resolveBossFight,
+        missionTimer: state.missionTimer,
+        setMissionTimer: state.setMissionTimer,
+        repoCityMode: state.repoCityMode,
+        districts: state.districts,
+    })));
     if (phase !== 'boss' || !activeConflict) return null;
     const encounterCopy = getEncounterCopy(activeConflict);
 
@@ -77,9 +86,10 @@ function BossEncounterOverlay({
     encounterSummary,
     resolutionText,
 }: BossEncounterOverlayProps) {
-    const [selectedHunk, setSelectedHunk] = useState<number | null>(null);
+    const [selectedHunkIds, setSelectedHunkIds] = useState<number[]>([]);
     const [result, setResult] = useState<'success' | 'failure' | null>(null);
     const [showResult, setShowResult] = useState(false);
+    const [isResolving, setIsResolving] = useState(false);
 
     // Timer countdown
     useEffect(() => {
@@ -97,27 +107,44 @@ function BossEncounterOverlay({
     }, [missionTimer, result, setMissionTimer]);
 
     const handleHunkSelect = useCallback((hunkId: number) => {
-        if (result || !activeConflict) return;
-        setSelectedHunk(hunkId);
+        if (result || isResolving || !activeConflict || selectedHunkIds.includes(hunkId)) return;
 
-        // Check if correct
-        const isCorrect = activeConflict.correctOrder.includes(hunkId);
+        const nextSelectedHunkIds = [...selectedHunkIds, hunkId];
+        setSelectedHunkIds(nextSelectedHunkIds);
 
-        setTimeout(() => {
-            if (isCorrect) {
-                setResult('success');
-            } else {
+        const expectedPrefix = activeConflict.correctOrder.slice(0, nextSelectedHunkIds.length);
+        const matchesExpectedOrder = expectedPrefix.every((expectedHunkId, index) => (
+            expectedHunkId === nextSelectedHunkIds[index]
+        ));
+
+        if (!matchesExpectedOrder) {
+            setIsResolving(true);
+            setTimeout(() => {
                 setResult('failure');
-            }
+                setShowResult(true);
+                setIsResolving(false);
+            }, 800);
+            return;
+        }
+
+        if (nextSelectedHunkIds.length < activeConflict.correctOrder.length) {
+            return;
+        }
+
+        setIsResolving(true);
+        setTimeout(() => {
+            setResult('success');
             setShowResult(true);
+            setIsResolving(false);
         }, 800);
-    }, [result, activeConflict]);
+    }, [activeConflict, isResolving, result, selectedHunkIds]);
 
     const handleContinue = useCallback(() => {
         resolveBossFight(result === 'success');
-        setSelectedHunk(null);
+        setSelectedHunkIds([]);
         setResult(null);
         setShowResult(false);
+        setIsResolving(false);
     }, [result, resolveBossFight]);
 
     const getTimerColor = () => {
@@ -133,7 +160,7 @@ function BossEncounterOverlay({
     };
 
     const getHunkStateClassName = (hunkId: number) => {
-        if (selectedHunk !== hunkId) {
+        if (!selectedHunkIds.includes(hunkId)) {
             return '';
         }
 
@@ -175,6 +202,11 @@ function BossEncounterOverlay({
                             <>
                                 <div className="boss-instruction repo-city">
                                     Review {activeConflict.hunks.length} candidate responses and lock the cleanest route.
+                                    {activeConflict.correctOrder.length > 1 && (
+                                        <div className="boss-resolution-note repo-city">
+                                            {`Lock responses in order (${selectedHunkIds.length}/${activeConflict.correctOrder.length}).`}
+                                        </div>
+                                    )}
                                     <div className="boss-resolution-note repo-city">{`Resolution route: ${resolutionText}`}</div>
                                 </div>
 
@@ -185,7 +217,7 @@ function BossEncounterOverlay({
                                             type="button"
                                             className={`hunk-card repo-city ${getHunkStateClassName(hunk.id)}`.trim()}
                                             onClick={() => handleHunkSelect(hunk.id)}
-                                            aria-pressed={selectedHunk === hunk.id}
+                                            aria-pressed={selectedHunkIds.includes(hunk.id)}
                                         >
                                             <div className="hunk-card-topline">
                                                 <span className={`hunk-side ${hunk.side}`}>{hunk.side}</span>
@@ -238,6 +270,9 @@ function BossEncounterOverlay({
 
                     <div className="boss-instruction">
                         Review the candidate responses and lock the cleanest route
+                        {activeConflict.correctOrder.length > 1
+                            ? ` (${selectedHunkIds.length}/${activeConflict.correctOrder.length} locked)`
+                            : ''}
                     </div>
 
                     <div className="boss-hunks">

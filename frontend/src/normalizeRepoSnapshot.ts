@@ -53,9 +53,17 @@ function cloneDependencyEdges(
         .map((edge) => ({ ...edge }));
 }
 
-function cloneSignals(signals: RepoSignal[], allowedModuleIds?: ReadonlySet<string>): RepoSignal[] {
+function cloneSignals(
+    signals: RepoSignal[],
+    allowedModuleIds?: ReadonlySet<string>,
+    repoTarget?: string,
+): RepoSignal[] {
     return signals
-        .filter((signal) => !allowedModuleIds || allowedModuleIds.has(signal.target))
+        .filter((signal) => (
+            !allowedModuleIds
+            || signal.target === repoTarget
+            || allowedModuleIds.has(signal.target)
+        ))
         .map((signal) => ({ ...signal }));
 }
 
@@ -134,11 +142,12 @@ export function normalizeRepoSnapshot(
     const modules = cloneModules(candidate.modules as RepoModule[], options.moduleLimit);
     const allowedModuleIds = new Set(modules.map((module) => module.id));
     const relationFilter = options.filterRelationsToModuleIds ? allowedModuleIds : undefined;
+    const repoSignalTarget = options.repoIdOverride ?? candidate.repoId;
     const dependencyEdges = Array.isArray(candidate.dependencyEdges)
         ? cloneDependencyEdges(candidate.dependencyEdges as DependencyEdge[], relationFilter)
         : [];
     const baseSignals = Array.isArray(candidate.signals)
-        ? cloneSignals(candidate.signals as RepoSignal[], relationFilter)
+        ? cloneSignals(candidate.signals as RepoSignal[], relationFilter, repoSignalTarget)
         : [];
     const baseSnapshot: RepoModel = {
         repoId: options.repoIdOverride ?? candidate.repoId,
