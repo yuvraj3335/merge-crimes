@@ -1,11 +1,11 @@
 // ─── Merge Crimes — DB Seed Script ───
 // Populates D1 tables from shared seed data
 
-import { SEED_DISTRICTS } from '../../shared/seed/districts';
-import { SEED_FACTIONS } from '../../shared/seed/factions';
-import { SEED_MISSIONS } from '../../shared/seed/missions';
-import { SEED_EVENTS } from '../../shared/seed/events';
-import { SEED_CONFLICTS } from '../../shared/seed/conflicts';
+import { SEED_DISTRICTS } from '../../shared/seed/districts.ts';
+import { SEED_FACTIONS } from '../../shared/seed/factions.ts';
+import { SEED_MISSIONS } from '../../shared/seed/missions.ts';
+import { SEED_EVENTS } from '../../shared/seed/events.ts';
+import { SEED_CONFLICTS } from '../../shared/seed/conflicts.ts';
 
 export async function seedDatabase(db: D1Database): Promise<{ inserted: Record<string, number> }> {
     const counts: Record<string, number> = {};

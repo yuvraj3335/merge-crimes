@@ -7,6 +7,7 @@
         "dev": "wrangler dev",
         "build": "tsc --noEmit",
         "lint": "tsc --noEmit",
+        "test": "node ./scripts/run-tests.mjs",
         "deploy": "wrangler deploy",
         "seed": "curl -X POST http://localhost:8787/api/admin/seed"
     },
@@ -16,6 +17,7 @@
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20241230.0",
+        "esbuild": "^0.25.10",
         "typescript": "~5.9.3",
         "wrangler": "^4.14.0"
     }

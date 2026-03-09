@@ -76,11 +76,23 @@ export function Player() {
             keys[e.key.toLowerCase()] = false;
             if (e.key === 'Shift') setSprinting(false);
         };
+        // Clear all held keys when the window loses focus or the tab becomes hidden
+        // so keyup events that arrive while unfocused don't leave the player stuck moving.
+        const clearKeys = () => {
+            for (const k of Object.keys(keys)) {
+                keys[k] = false;
+            }
+            setSprinting(false);
+        };
         window.addEventListener('keydown', onDown);
         window.addEventListener('keyup', onUp);
+        window.addEventListener('blur', clearKeys);
+        document.addEventListener('visibilitychange', clearKeys);
         return () => {
             window.removeEventListener('keydown', onDown);
             window.removeEventListener('keyup', onUp);
+            window.removeEventListener('blur', clearKeys);
+            document.removeEventListener('visibilitychange', clearKeys);
         };
     }, [setSprinting]);
 
@@ -196,9 +208,9 @@ export function Player() {
         }
     };
 
-    useFrame((state, delta) => {
+    useFrame((_state, delta) => {
         if (!meshRef.current) return;
-        if (phase === 'menu' || phase === 'boss' || phase === 'paused') return;
+        if (phase === 'menu' || phase === 'boss') return;
 
         const dir = new THREE.Vector3();
         if (keys['w'] || keys['arrowup']) dir.z -= 1;

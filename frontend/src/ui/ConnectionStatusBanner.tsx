@@ -1,4 +1,5 @@
 import * as api from '../api';
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 
 export function ConnectionStatusBanner() {
@@ -11,7 +12,16 @@ export function ConnectionStatusBanner() {
         writeSessionMessage,
         loadFromApi,
         repoCityMode,
-    } = useGameStore();
+    } = useGameStore(useShallow((state) => ({
+        phase: state.phase,
+        apiAvailable: state.apiAvailable,
+        apiConnectionState: state.apiConnectionState,
+        apiStatusMessage: state.apiStatusMessage,
+        writeSessionState: state.writeSessionState,
+        writeSessionMessage: state.writeSessionMessage,
+        loadFromApi: state.loadFromApi,
+        repoCityMode: state.repoCityMode,
+    })));
 
     if (phase === 'menu') {
         return null;
@@ -94,7 +104,7 @@ export function ConnectionStatusBanner() {
         });
     }
 
-    if (writeSessionState === 'checking') {
+    if (!repoCityMode && (writeSessionState === 'checking' || writeSessionState === 'unknown')) {
         return renderBanner({
             tone: 'info',
             testId: 'connection-status-checking',
@@ -107,7 +117,7 @@ export function ConnectionStatusBanner() {
         });
     }
 
-    if (writeSessionState === 'error') {
+    if (!repoCityMode && writeSessionState === 'error') {
         return renderBanner({
             tone: 'error',
             testId: 'connection-status-write-error',

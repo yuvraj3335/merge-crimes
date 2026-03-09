@@ -16,7 +16,11 @@ interface SurfaceBounds {
     height: number;
 }
 
-function computeSurfaceBounds(city: NonNullable<ReturnType<typeof useGameStore.getState>['generatedCity']>): SurfaceBounds {
+function computeSurfaceBounds(city: NonNullable<ReturnType<typeof useGameStore.getState>['generatedCity']>): SurfaceBounds | null {
+    if (city.districts.length === 0) {
+        return null;
+    }
+
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;

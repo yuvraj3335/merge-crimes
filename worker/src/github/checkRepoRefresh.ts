@@ -1,4 +1,4 @@
-import type { RepoRefreshCheckRequest, RepoRefreshCheckResult } from '../../../shared/repoRefresh';
+import type { RepoRefreshCheckRequest, RepoRefreshCheckResult } from '../../../shared/repoRefresh.ts';
 import type { GitHubJsonFetcher } from './fetchRepoSignals';
 
 interface GitHubCommitSummary {

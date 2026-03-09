@@ -26,7 +26,7 @@ export function useGitHubOAuthCallback(): void {
         }
 
         setGitHubAuthExchanging();
-        void api.exchangeGitHubOAuthCode(callback.code, callback.redirectUri)
+        void api.exchangeGitHubOAuthCode(callback.code, callback.state, callback.redirectUri)
             .then((response) => {
                 if (!response.accessToken) {
                     setGitHubAuthError('GitHub token exchange failed.');

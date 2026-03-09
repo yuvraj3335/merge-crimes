@@ -1,4 +1,4 @@
-const REQUESTED_GITHUB_OAUTH_SCOPES = ['read:user'] as const;
+const REQUESTED_GITHUB_OAUTH_SCOPES = ['public_repo'] as const;
 
 interface GitHubTrustNoticeProps {
     context?: 'connect' | 'picker';
@@ -15,10 +15,11 @@ export function GitHubTrustNotice({ context = 'connect' }: GitHubTrustNoticeProp
             data-testid={`github-trust-notice-${context}`}
         >
             <div className="github-trust-notice-kicker">{kicker}</div>
-            <div className="github-trust-notice-title">Read-only access only</div>
+            <div className="github-trust-notice-title">Public repo metadata only</div>
             <p className="github-trust-notice-copy">
-                Merge Crimes asks GitHub for this OAuth scope before sign-in, then uses the session only to read repo
-                metadata for city generation.
+                Merge Crimes requests the <code>public_repo</code> scope to list and read metadata from your public
+                repositories. Only public repos are eligible for city generation in the default flow. If a broader
+                GitHub token can list private repos, they appear as "listed only" here.
             </p>
             <div className="github-trust-notice-scopes" aria-label="Requested GitHub OAuth scopes">
                 {REQUESTED_GITHUB_OAUTH_SCOPES.map((scope) => (

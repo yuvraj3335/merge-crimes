@@ -4,11 +4,20 @@ import {
     createInitialConnectedRepoRefreshStatus,
     type ConnectedRepoRefreshStatus,
 } from '../../shared/repoRefresh';
-import type { GitHubReadableRepo } from './api';
 import { SESSION_ID } from './api';
 import { normalizeRepoSnapshot } from './normalizeRepoSnapshot';
 import { getGitHubRepoTranslationEligibility } from './repoTranslationEligibility';
 import { isLocalSmokeMode } from './runtimeConfig';
+import {
+    SMOKE_CONNECTED_REPO_ID,
+    SMOKE_CONNECTED_REPO_PROVIDER_ID,
+    SMOKE_ACTIVE_COMMIT_SHA,
+    SMOKE_REMOTE_COMMIT_SHA,
+    SMOKE_CONNECTED_REPO_GENERATED_AT,
+    SMOKE_REFRESH_CHECKED_AT,
+    SMOKE_ELIGIBLE_REPO,
+    SMOKE_LISTED_ONLY_REPO,
+} from './smokeFixtures';
 import type { GamePhase } from './store/gameStore';
 import { useGameStore } from './store/gameStore';
 
@@ -66,29 +75,6 @@ declare global {
         __MERGE_CRIMES_SMOKE__?: MergeCrimesSmokeApi;
     }
 }
-
-const SMOKE_CONNECTED_REPO_ID = 'github-smoke-trust-refresh';
-const SMOKE_CONNECTED_REPO_PROVIDER_ID = 1000001;
-const SMOKE_ACTIVE_COMMIT_SHA = '6dfb92f31d9142b08d41a0c08ef2a53ef0a8fd41';
-const SMOKE_REMOTE_COMMIT_SHA = '8a9124d61fb6ac9ec4a54356bdf0e79eb0e3a18f';
-const SMOKE_CONNECTED_REPO_GENERATED_AT = '2026-03-08T13:45:00.000Z';
-const SMOKE_REFRESH_CHECKED_AT = '2026-03-08T18:30:00.000Z';
-const SMOKE_ELIGIBLE_REPO: GitHubReadableRepo = {
-    id: 1000010,
-    name: 'issue-radar',
-    fullName: 'acme-dev/issue-radar',
-    ownerLogin: 'acme-dev',
-    defaultBranch: 'main',
-    visibility: 'public',
-};
-const SMOKE_LISTED_ONLY_REPO: GitHubReadableRepo = {
-    id: 1000011,
-    name: 'incident-core',
-    fullName: 'acme-dev/incident-core',
-    ownerLogin: 'acme-dev',
-    defaultBranch: 'main',
-    visibility: 'private',
-};
 
 function buildSmokeMetadataFallback(snapshot: RepoModel): RepoMetadata {
     return {

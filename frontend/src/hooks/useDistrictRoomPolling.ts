@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore';
 
 export function useDistrictRoomPolling(): void {
     const apiAvailable = useGameStore((state) => state.apiAvailable);
+    const repoCityMode = useGameStore((state) => state.repoCityMode);
     const currentDistrict = useGameStore((state) => state.currentDistrict);
     const phase = useGameStore((state) => state.phase);
     const setDistrictRoom = useGameStore((state) => state.setDistrictRoom);
@@ -25,7 +26,7 @@ export function useDistrictRoomPolling(): void {
     }, [addCaptureProgress, currentDistrict, phase]);
 
     useEffect(() => {
-        if (!apiAvailable || !currentDistrict) {
+        if (!apiAvailable || !currentDistrict || repoCityMode) {
             return;
         }
 
@@ -47,5 +48,5 @@ export function useDistrictRoomPolling(): void {
         return () => {
             window.clearInterval(intervalId);
         };
-    }, [apiAvailable, currentDistrict, setDistrictRoom]);
+    }, [apiAvailable, currentDistrict, repoCityMode, setDistrictRoom]);
 }

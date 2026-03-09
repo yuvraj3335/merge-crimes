@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 
 export function MissionPanel() {
@@ -15,11 +16,25 @@ export function MissionPanel() {
         writeSessionState,
         writeSessionMessage,
         repoCityMode,
-    } = useGameStore();
+    } = useGameStore(useShallow((state) => ({
+        showMissionPanel: state.showMissionPanel,
+        setShowMissionPanel: state.setShowMissionPanel,
+        missions: state.missions,
+        districts: state.districts,
+        currentDistrict: state.currentDistrict,
+        repoCityTransit: state.repoCityTransit,
+        acceptMission: state.acceptMission,
+        activeMission: state.activeMission,
+        phase: state.phase,
+        apiAvailable: state.apiAvailable,
+        writeSessionState: state.writeSessionState,
+        writeSessionMessage: state.writeSessionMessage,
+        repoCityMode: state.repoCityMode,
+    })));
 
     if (!showMissionPanel || phase === 'boss') return null;
 
-    const writesBlocked = apiAvailable && (writeSessionState === 'checking' || writeSessionState === 'error');
+    const writesBlocked = apiAvailable && !repoCityMode && writeSessionState !== 'ready';
     const scopedDistrict = repoCityMode && repoCityTransit
         ? districts.find((district) => district.id === repoCityTransit.districtId) ?? currentDistrict
         : currentDistrict;
@@ -80,7 +95,7 @@ export function MissionPanel() {
                     className={`mission-sync-note ${repoCityMode ? 'repo-city' : ''} ${writeSessionState === 'error' ? 'error' : ''}`}
                     data-testid="mission-sync-note"
                 >
-                    {writeSessionState === 'checking'
+                    {writeSessionState === 'checking' || writeSessionState === 'unknown'
                         ? 'Checking worker write access before protected missions can sync.'
                         : (writeSessionMessage ?? 'Worker write access is unavailable. Mission accepts are temporarily blocked.')}
                 </div>
@@ -134,7 +149,7 @@ export function MissionPanel() {
                             }}
                         >
                             {writesBlocked
-                                ? (writeSessionState === 'checking' ? 'Checking Sync...' : 'Sync Unavailable')
+                                ? ((writeSessionState === 'checking' || writeSessionState === 'unknown') ? 'Checking Sync...' : 'Sync Unavailable')
                                 : mission.type === 'boss' ? '⚔ Accept Boss Fight' : '► Accept Mission'}
                         </button>
                     )}

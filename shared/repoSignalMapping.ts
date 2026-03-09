@@ -53,6 +53,13 @@ function compareModulesForSignal(signalType: RepoSignalType, left: RepoModule, r
   );
 }
 
+export function rankModulesForSignalTargets(
+  repo: Pick<RepoModel, 'modules'>,
+  signalType: RepoSignalType,
+): RepoModule[] {
+  return [...repo.modules].sort((left, right) => compareModulesForSignal(signalType, left, right));
+}
+
 function resolveExplicitTargetModule(repo: RepoModel, signal: RepoSignal): RepoModule | undefined {
   if (!signal.target) {
     return undefined;
@@ -86,7 +93,7 @@ function resolveSignalTargetModule(repo: RepoModel, signal: RepoSignal): RepoMod
     return explicitTarget;
   }
 
-  return [...repo.modules].sort((left, right) => compareModulesForSignal(signal.type, left, right))[0];
+  return rankModulesForSignalTargets(repo, signal.type)[0];
 }
 
 function getSignalHeatContribution(signal: RepoSignal): number {

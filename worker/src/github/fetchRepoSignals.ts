@@ -1,4 +1,5 @@
-import type { RepoModel, RepoSignal } from '../../../shared/repoModel';
+import type { RepoModel, RepoModule, RepoSignal } from '../../../shared/repoModel.ts';
+import { rankModulesForSignalTargets } from '../../../shared/repoSignalMapping.ts';
 
 export type GitHubJsonFetchResult<T> =
   | { ok: true; data: T }
@@ -15,7 +16,7 @@ interface GitHubCommitSummary {
 }
 
 interface FetchRepoSignalsOptions {
-  snapshot: Pick<RepoModel, 'repoId' | 'owner' | 'name' | 'defaultBranch'>;
+  snapshot: Pick<RepoModel, 'repoId' | 'owner' | 'name' | 'defaultBranch' | 'modules'>;
   fetchGitHubJson: GitHubJsonFetcher;
 }
 
@@ -79,6 +80,95 @@ function buildRepoCountDetail(
   return `${count} open ${pluralize(count, label)} currently reported for ${snapshot.owner}/${snapshot.name}.`;
 }
 
+function getLiveSignalTargetModules(
+  snapshot: FetchRepoSignalsOptions['snapshot'],
+  signalType: 'open_issue' | 'open_pr',
+  totalCount: number,
+): RepoModule[] {
+  if (totalCount <= 0 || snapshot.modules.length === 0) {
+    return [];
+  }
+
+  const maxTargets = Math.min(
+    snapshot.modules.length,
+    totalCount >= 10 ? 3 : totalCount >= 4 ? 2 : 1,
+  );
+
+  return rankModulesForSignalTargets(snapshot, signalType).slice(0, maxTargets);
+}
+
+function distributeCountAcrossTargets(totalCount: number, targetCount: number): number[] {
+  if (targetCount <= 1) {
+    return [totalCount];
+  }
+
+  const allocations = Array.from({ length: targetCount }, () => 1);
+  let remaining = Math.max(0, totalCount - targetCount);
+  let cursor = 0;
+
+  while (remaining > 0) {
+    allocations[cursor] += 1;
+    remaining -= 1;
+    cursor = (cursor + 1) % targetCount;
+  }
+
+  return allocations;
+}
+
+function buildMappedCountDetail(
+  snapshot: FetchRepoSignalsOptions['snapshot'],
+  module: RepoModule,
+  mappedCount: number,
+  totalCount: number,
+  label: string,
+): string {
+  return `${mappedCount} of ${totalCount} repo-wide open ${pluralize(totalCount, label)} mapped to ${module.path} for ${snapshot.owner}/${snapshot.name}.`;
+}
+
+function buildCountSignals(
+  snapshot: FetchRepoSignalsOptions['snapshot'],
+  type: 'open_issue' | 'open_pr',
+  count: number,
+  label: 'issue' | 'pull request',
+  severityFromCount: (count: number) => RepoSignal['severity'],
+): RepoSignal[] {
+  if (count <= 0) {
+    return [{
+      type,
+      target: snapshot.repoId,
+      severity: 0,
+      title: `${count} open ${pluralize(count, label)}`,
+      detail: buildRepoCountDetail(snapshot, count, label),
+      value: count,
+    }];
+  }
+
+  const targetModules = getLiveSignalTargetModules(snapshot, type, count);
+  if (targetModules.length === 0) {
+    return [{
+      type,
+      target: snapshot.repoId,
+      severity: severityFromCount(count),
+      title: `${count} open ${pluralize(count, label)}`,
+      detail: buildRepoCountDetail(snapshot, count, label),
+      value: count,
+    }];
+  }
+
+  const allocations = distributeCountAcrossTargets(count, targetModules.length);
+  return targetModules.map((module, index) => {
+    const mappedCount = allocations[index] ?? 0;
+    return {
+      type,
+      target: module.id,
+      severity: severityFromCount(mappedCount),
+      title: `${mappedCount} open ${pluralize(mappedCount, label)}`,
+      detail: buildMappedCountDetail(snapshot, module, mappedCount, count, label),
+      value: mappedCount,
+    };
+  });
+}
+
 export async function fetchRepoSignals({
   snapshot,
   fetchGitHubJson,
@@ -108,26 +198,24 @@ export async function fetchRepoSignals({
 
   if (openIssuesResponse.ok) {
     const openIssueCount = Math.max(0, openIssuesResponse.data.total_count);
-    signals.push({
-      type: 'open_issue',
-      target,
-      severity: severityFromOpenIssueCount(openIssueCount),
-      title: `${openIssueCount} open ${pluralize(openIssueCount, 'issue')}`,
-      detail: buildRepoCountDetail(snapshot, openIssueCount, 'issue'),
-      value: openIssueCount,
-    });
+    signals.push(...buildCountSignals(
+      snapshot,
+      'open_issue',
+      openIssueCount,
+      'issue',
+      severityFromOpenIssueCount,
+    ));
   }
 
   if (openPrsResponse.ok) {
     const openPrCount = Math.max(0, openPrsResponse.data.total_count);
-    signals.push({
-      type: 'open_pr',
-      target,
-      severity: severityFromOpenPullRequestCount(openPrCount),
-      title: `${openPrCount} open pull ${pluralize(openPrCount, 'request')}`,
-      detail: buildRepoCountDetail(snapshot, openPrCount, 'pull request'),
-      value: openPrCount,
-    });
+    signals.push(...buildCountSignals(
+      snapshot,
+      'open_pr',
+      openPrCount,
+      'pull request',
+      severityFromOpenPullRequestCount,
+    ));
   }
 
   if (commitsResponse.ok) {

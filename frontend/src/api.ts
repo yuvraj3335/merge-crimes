@@ -42,6 +42,7 @@ export interface GitHubReadableRepo {
 interface GitHubReadableRepoListResponse {
     repos: GitHubReadableRepo[];
     hasNextPage: boolean;
+    nextPage: number | null;
 }
 
 interface RepoRefreshResponse {
@@ -237,10 +238,13 @@ async function requestUrl(
         service,
         path,
         transportMessage,
+        emitWorkerStatus = false,
     }: {
         service: ApiService;
         path: string;
         transportMessage?: string;
+        /** Only emit worker connectionState updates when making worker calls. */
+        emitWorkerStatus?: boolean;
     },
     options?: RequestInit,
 ): Promise<Response> {
@@ -255,7 +259,9 @@ async function requestUrl(
             headers,
         });
 
-        emitApiRuntimeStatus({ connectionState: 'online', connectionMessage: null });
+        if (emitWorkerStatus) {
+            emitApiRuntimeStatus({ connectionState: 'online', connectionMessage: null });
+        }
         return res;
     } catch (error) {
         if (isAbortError(error)) {
@@ -263,7 +269,9 @@ async function requestUrl(
         }
 
         const message = buildTransportErrorMessage(service, transportMessage);
-        emitApiRuntimeStatus({ connectionState: 'offline', connectionMessage: message });
+        if (emitWorkerStatus) {
+            emitApiRuntimeStatus({ connectionState: 'offline', connectionMessage: message });
+        }
         throw new ApiClientError({
             message,
             kind: 'transport',
@@ -274,11 +282,11 @@ async function requestUrl(
 }
 
 async function request(path: string, options?: RequestInit, transportMessage?: string): Promise<Response> {
-    return requestUrl(`${API_BASE}${path}`, { service: 'worker', path, transportMessage }, options);
+    return requestUrl(`${API_BASE}${path}`, { service: 'worker', path, transportMessage, emitWorkerStatus: true }, options);
 }
 
 async function requestGitHub(url: string, options?: RequestInit, transportMessage?: string): Promise<Response> {
-    return requestUrl(url, { service: 'github', path: url, transportMessage }, options);
+    return requestUrl(url, { service: 'github', path: url, transportMessage, emitWorkerStatus: false }, options);
 }
 
 async function apiFetch<T>(path: string, options?: RequestInit, invalidMessage = 'Worker returned an invalid response.'): Promise<T> {
@@ -546,21 +554,29 @@ export function validateGitHubOAuthState(returnedState: string | null): boolean 
     }
 
     try {
-        const expectedState = window.sessionStorage.getItem(GITHUB_OAUTH_STATE_STORAGE_KEY);
+        const expectedNonce = window.sessionStorage.getItem(GITHUB_OAUTH_STATE_STORAGE_KEY);
         window.sessionStorage.removeItem(GITHUB_OAUTH_STATE_STORAGE_KEY);
-        return !expectedState || expectedState === returnedState;
+        // Fail closed: reject if either the stored nonce or the returned state is absent.
+        if (!expectedNonce || !returnedState) {
+            return false;
+        }
+        // The server returns a signed state "nonce.hmac" — extract just the nonce to compare.
+        const dotIdx = returnedState.indexOf('.');
+        const returnedNonce = dotIdx >= 0 ? returnedState.slice(0, dotIdx) : returnedState;
+        return returnedNonce === expectedNonce;
     } catch {
-        return true;
+        return false;
     }
 }
 
 export async function exchangeGitHubOAuthCode(
     code: string,
+    state: string | null,
     redirectUri: string,
 ): Promise<GitHubTokenExchangeResponse> {
     return apiFetch<GitHubTokenExchangeResponse>('/api/auth/github/token', {
         method: 'POST',
-        body: JSON.stringify({ code, redirectUri }),
+        body: JSON.stringify({ code, ...(state ? { state } : {}), redirectUri }),
     }, 'Worker returned an invalid GitHub token response.');
 }
 
@@ -575,9 +591,10 @@ function normalizeGitHubRepoVisibility(repo: GitHubRepoApiResponse): GitHubReada
 export async function fetchGitHubReadableRepos(
     accessToken: string,
     signal?: AbortSignal,
+    page = 1,
 ): Promise<GitHubReadableRepoListResponse> {
     const response = await requestGitHub(
-        'https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=owner,collaborator,organization_member',
+        `https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=owner,collaborator,organization_member&page=${page}`,
         {
             headers: {
                 Accept: 'application/vnd.github+json',
@@ -613,6 +630,7 @@ export async function fetchGitHubReadableRepos(
             visibility: normalizeGitHubRepoVisibility(repo),
         })),
         hasNextPage: response.headers.get('link')?.includes('rel="next"') ?? false,
+        nextPage: response.headers.get('link')?.includes('rel="next"') ? page + 1 : null,
     };
 }
 

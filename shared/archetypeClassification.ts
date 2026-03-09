@@ -146,9 +146,18 @@ export function classifyRepoArchetype(repo: RepoModel): RepoArchetype {
     .map((mod) => `${mod.name} ${mod.path}`.toLowerCase())
     .join(' ');
   const hasTextHint = (...hints: string[]) => hints.some((hint) => modulesText.includes(hint));
-  const hasAppsRoot = hasTextHint('apps/');
-  const hasPackagesRoot = hasTextHint('packages/');
-  const hasServicesRoot = hasTextHint('services/');
+  const hasModuleRoot = (...hints: string[]) => repo.modules.some((mod) => {
+    const values = [mod.name, mod.path].map((value) => value.toLowerCase());
+    return values.some((value) => hints.some((hint) => (
+      value === hint
+      || value.startsWith(`${hint}/`)
+      || value.includes(`/${hint}/`)
+      || value.endsWith(`/${hint}`)
+    )));
+  });
+  const hasAppsRoot = hasModuleRoot('apps');
+  const hasPackagesRoot = hasModuleRoot('packages');
+  const hasServicesRoot = hasModuleRoot('services');
   const hasWorkspaceConfig = hasTextHint('pnpm-workspace', 'turbo.json', 'nx.json', 'workspace');
   const hasBackendHints = hasTextHint('api/', 'server/', 'routes/', 'controllers/', 'db/', 'migrations/');
   const hasFrontendRoots = hasTextHint('frontend/', 'public/', 'components/', 'pages/', 'web/', 'client/');

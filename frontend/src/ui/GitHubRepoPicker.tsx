@@ -45,10 +45,28 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
     const [repos, setRepos] = useState<api.GitHubReadableRepo[]>([]);
     const [hasNextPage, setHasNextPage] = useState(false);
+    const [nextPage, setNextPage] = useState<number | null>(null);
     const [loadedToken, setLoadedToken] = useState<string | null>(null);
     const [errorState, setErrorState] = useState<TokenScopedError | null>(null);
+    const [loadMoreMessage, setLoadMoreMessage] = useState<string | null>(null);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const loadControllerRef = useRef<AbortController | null>(null);
     const ingestControllerRef = useRef<AbortController | null>(null);
+
+    function mergeReadableRepos(
+        currentRepos: api.GitHubReadableRepo[],
+        nextRepos: api.GitHubReadableRepo[],
+    ): api.GitHubReadableRepo[] {
+        const seen = new Set<number>();
+        return [...currentRepos, ...nextRepos].filter((repo) => {
+            if (seen.has(repo.id)) {
+                return false;
+            }
+
+            seen.add(repo.id);
+            return true;
+        });
+    }
 
     useEffect(() => {
         if (!open) {
@@ -76,7 +94,9 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
                 setRepos(response.repos);
                 setHasNextPage(response.hasNextPage);
+                setNextPage(response.nextPage);
                 setErrorState(null);
+                setLoadMoreMessage(null);
                 setLoadedToken(githubAccessToken);
             })
             .catch((error: unknown) => {
@@ -86,6 +106,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
                 setRepos([]);
                 setHasNextPage(false);
+                setNextPage(null);
                 setErrorState({
                     token: githubAccessToken,
                     message: error instanceof Error ? error.message : 'GitHub repo fetch failed.',
@@ -122,7 +143,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
     if (githubAccessToken) {
         if (loadedToken !== githubAccessToken) {
             displayStatus = 'loading';
-        } else if (activeErrorMessage) {
+        } else if (activeErrorMessage && repos.length === 0) {
             displayStatus = 'error';
         } else if (repos.length === 0) {
             displayStatus = 'empty';
@@ -152,7 +173,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
         : null;
 
     const pickerHint = githubAccessToken
-        ? 'You only see repos this GitHub connection can already list. Private repos need explicit permission, and only eligible repos can be translated here.'
+        ? 'You only see repos this GitHub connection can already list. Only public repos are translation-eligible in the default OAuth flow; any private repos remain reference-only if broader access is configured.'
         : 'GitHub is not connected in this browser state yet.';
     let pickerStatusCopy: PickerStatusCopy;
     if (!githubAccessToken) {
@@ -196,9 +217,9 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
             pill: 'Repos ready',
             title: 'Choose a repository',
             message: hasNextPage
-                ? `${repoCountCopy} from GitHub's first page of results.`
+                ? `${repoCountCopy} loaded so far from GitHub.`
                 : `${repoCountCopy} loaded from GitHub.`,
-            detail: 'Listed means this GitHub login can read the repo. Translate now means Merge Crimes can turn that repo into a city in this flow.',
+            detail: 'Listed means this GitHub login can read the repo. Translate now means Merge Crimes can turn that repo into a city in the default public-metadata flow.',
         };
     }
 
@@ -209,16 +230,67 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
 
         loadControllerRef.current?.abort();
         setErrorState(null);
+        setLoadMoreMessage(null);
+        setNextPage(null);
+        setHasNextPage(false);
+        setRepos([]);
         setLoadedToken(null);
     }
 
+    function handleLoadNextPage() {
+        if (!githubAccessToken || !nextPage || isLoadingMore) {
+            return;
+        }
+
+        const controller = new AbortController();
+        loadControllerRef.current?.abort();
+        loadControllerRef.current = controller;
+        setIsLoadingMore(true);
+        setLoadMoreMessage(null);
+
+        void api.fetchGitHubReadableRepos(githubAccessToken, controller.signal, nextPage)
+            .then((response) => {
+                if (controller.signal.aborted) {
+                    return;
+                }
+
+                setRepos((currentRepos) => mergeReadableRepos(currentRepos, response.repos));
+                setHasNextPage(response.hasNextPage);
+                setNextPage(response.nextPage);
+                setErrorState(null);
+                setLoadMoreMessage(null);
+                setLoadedToken(githubAccessToken);
+            })
+            .catch((error: unknown) => {
+                if (controller.signal.aborted) {
+                    return;
+                }
+
+                setLoadMoreMessage(error instanceof Error ? error.message : 'GitHub repo fetch failed.');
+            })
+            .finally(() => {
+                if (loadControllerRef.current === controller) {
+                    loadControllerRef.current = null;
+                }
+
+                if (!controller.signal.aborted) {
+                    setIsLoadingMore(false);
+                }
+            });
+    }
+
     function handleRepoSelection(repo: api.GitHubReadableRepo) {
-        const shouldTriggerIngest = isGitHubRepoTranslationEligible(repo.visibility) && selectedGitHubRepo?.id !== repo.id;
         const isNewSelection = selectedGitHubRepo?.id !== repo.id;
+        const isRetryAfterError = !isNewSelection
+            && isGitHubRepoTranslationEligible(repo.visibility)
+            && selectedGitHubRepoIngestState.tone === 'error'
+            && selectedGitHubRepoIngestState.repoId === repo.id;
+        const shouldTriggerIngest = isGitHubRepoTranslationEligible(repo.visibility)
+            && (isNewSelection || isRetryAfterError);
 
         setSelectedGitHubRepo(repo);
 
-        if (!isNewSelection) {
+        if (!isNewSelection && !isRetryAfterError) {
             return;
         }
 
@@ -413,9 +485,9 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                     <div className="repo-selector-eligibility-note" role="note" aria-label="Repository eligibility notice">
                         <div className="repo-selector-eligibility-title">What this list means</div>
                         <div className="repo-selector-eligibility-copy">
-                            You only see repositories available through this GitHub connection. Private repositories
-                            require explicit permissions. Only eligible repositories can be translated into a Repo
-                            City here; others are listed for reference only.
+                            You only see repositories available through this GitHub connection. Only public repositories
+                            are eligible for Repo City translation in the default OAuth flow. If this connection can list
+                            private repositories, they stay listed for reference only here.
                         </div>
                     </div>
                     <div className="repo-selector-list-meta">
@@ -425,7 +497,7 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                         </span>
                         {listedOnlyCount > 0 && <span>{listedOnlyCount} listed for reference</span>}
                         <span>Read-only metadata only</span>
-                        {hasNextPage && <span>Showing GitHub's first page of results</span>}
+                        {hasNextPage && <span>More GitHub pages available</span>}
                     </div>
                     <div className="repo-selector-list">
                         {visibleRepos.map((repo) => {
@@ -462,6 +534,21 @@ export function GitHubRepoPicker({ open, onClose }: GitHubRepoPickerProps) {
                             );
                         })}
                     </div>
+                    {(hasNextPage || loadMoreMessage) && (
+                        <div className="repo-selector-list-meta">
+                            {hasNextPage && (
+                                <button
+                                    type="button"
+                                    className="repo-connection-feedback-action"
+                                    onClick={handleLoadNextPage}
+                                    disabled={isLoadingMore}
+                                >
+                                    {isLoadingMore ? 'Loading more...' : 'Load next page'}
+                                </button>
+                            )}
+                            {loadMoreMessage && <span>{loadMoreMessage}</span>}
+                        </div>
+                    )}
                 </>
             ) : (
                 <div className={`repo-selector-state ${displayStatus}`.trim()}>

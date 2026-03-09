@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../store/gameStore';
 import { getWaypointDistanceAndText } from '../game/waypointUtils';
 
@@ -10,7 +11,15 @@ export function MissionObjectiveTracker() {
         playerPosition,
         repoCityMode,
         districts,
-    } = useGameStore();
+    } = useGameStore(useShallow((state) => ({
+        activeMission: state.activeMission,
+        currentWaypointIndex: state.currentWaypointIndex,
+        completedWaypoints: state.completedWaypoints,
+        phase: state.phase,
+        playerPosition: state.playerPosition,
+        repoCityMode: state.repoCityMode,
+        districts: state.districts,
+    })));
 
     if (!activeMission || phase === 'boss' || phase === 'menu') return null;
 

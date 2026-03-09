@@ -1,7 +1,7 @@
-import { getBattleTemplate } from '../../../shared/battleTemplates';
-import { generateCityFromRepo } from '../../../shared/repoCityGenerator';
-import { applySignalHeatToRepoModel } from '../../../shared/repoSignalMapping';
-import type { RepoModel } from '../../../shared/repoModel';
+import { getBattleTemplate } from '../../../shared/battleTemplates.ts';
+import { generateCityFromRepo } from '../../../shared/repoCityGenerator.ts';
+import { applySignalHeatToRepoModel } from '../../../shared/repoSignalMapping.ts';
+import type { RepoModel } from '../../../shared/repoModel.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

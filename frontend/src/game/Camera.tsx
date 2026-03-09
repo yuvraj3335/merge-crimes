@@ -19,7 +19,9 @@ const REPO_CITY_CAMERA = {
 const FOV_LERP = 6;
 
 export function Camera() {
-    const { playerPosition, phase, repoCityMode } = useGameStore();
+    const playerPosition = useGameStore((state) => state.playerPosition);
+    const phase = useGameStore((state) => state.phase);
+    const repoCityMode = useGameStore((state) => state.repoCityMode);
 
     useFrame((state, delta) => {
         if (phase === 'menu') return;

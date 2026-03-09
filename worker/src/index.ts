@@ -5,9 +5,9 @@ import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { z } from 'zod';
 import { seedDatabase } from './seed';
-import { SEED_DISTRICTS } from '../../shared/seed/districts';
-import { REPO_FIXTURES } from '../../shared/seed/repoFixtures';
-import { generateCityFromRepo, generatedCityToDistricts, generatedCityToMissions, generatedCityToConflicts } from '../../shared/repoCityGenerator';
+import { SEED_DISTRICTS } from '../../shared/seed/districts.ts';
+import { REPO_FIXTURES } from '../../shared/seed/repoFixtures.ts';
+import { generateCityFromRepo, generatedCityToDistricts, generatedCityToMissions, generatedCityToConflicts } from '../../shared/repoCityGenerator.ts';
 import {
     normalizeGitHubRepoSnapshot,
     type GitHubRepoContentsResponse,
@@ -19,7 +19,9 @@ import { checkGitHubRepoRefresh } from './github/checkRepoRefresh';
 // ─── Types ───
 type Bindings = {
     DB: D1Database;
-    GITHUB_CACHE?: KVNamespace;
+    // GITHUB_CACHE is not yet wired up in wrangler.toml — caching is unimplemented.
+    // Uncomment after: npx wrangler kv namespace create GITHUB_CACHE
+    // GITHUB_CACHE?: KVNamespace;
     LEADERBOARD?: KVNamespace;
     EVENTS?: KVNamespace;
     DISTRICT_ROOM?: DurableObjectNamespace;
@@ -70,12 +72,35 @@ interface GitHubApiErrorResponse {
 
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder();
+
+async function signOAuthState(nonce: string, secret: string): Promise<string> {
+    const key = await crypto.subtle.importKey(
+        'raw',
+        TEXT_ENCODER.encode(secret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign'],
+    );
+    const sigBuffer = await crypto.subtle.sign('HMAC', key, TEXT_ENCODER.encode(nonce));
+    const sigHex = Array.from(new Uint8Array(sigBuffer))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+    return `${nonce}.${sigHex}`;
+}
+
+async function verifyOAuthState(state: string, secret: string): Promise<boolean> {
+    const dotIdx = state.indexOf('.');
+    if (dotIdx < 1) {
+        return false;
+    }
+    const nonce = state.slice(0, dotIdx);
+    const expected = await signOAuthState(nonce, secret);
+    return expected === state;
+}
 const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
 const LOCAL_DEV_PUBLIC_SESSION_SECRET = 'merge-crimes-local-dev-public-session';
 const DEFAULT_GITHUB_CLIENT_ID_PLACEHOLDER = 'replace-with-github-client-id';
-const DEFAULT_GITHUB_OAUTH_SCOPE = 'read:user';
-const DEFAULT_GITHUB_REPO_OWNER = 'octocat';
-const DEFAULT_GITHUB_REPO_NAME = 'Hello-World';
+const DEFAULT_GITHUB_OAUTH_SCOPE = 'public_repo';
 const GITHUB_API_ACCEPT = 'application/vnd.github+json';
 const GITHUB_API_VERSION = '2022-11-28';
 const GITHUB_API_USER_AGENT = 'merge-crimes-worker';
@@ -604,15 +629,16 @@ const MissionIdParam = z.object({ id: z.string().min(1) });
 const DistrictIdParam = z.object({ id: z.string().min(1) });
 const GitHubAuthStartQuery = z.object({
     redirectUri: z.string().url(),
-    state: z.string().min(1).max(512).optional(),
+    state: z.string().min(1).max(512),
 });
 const GitHubTokenExchangeBody = z.object({
     code: z.string().min(1),
     redirectUri: z.string().url(),
+    state: z.string().min(1).max(1024).optional(),
 });
 const GitHubRepoMetadataQuery = z.object({
-    owner: z.string().trim().min(1).optional(),
-    name: z.string().trim().min(1).optional(),
+    owner: z.string().trim().min(1),
+    name: z.string().trim().min(1),
 });
 const RefreshRepoBody = z.object({
     owner: z.string().trim().min(1),
@@ -663,17 +689,6 @@ function rowToMission(row: Record<string, unknown>) {
         status: row.status,
         objectives: JSON.parse(row.objectives_json as string),
         waypoints: JSON.parse(row.waypoints_json as string),
-    };
-}
-
-function rowToFaction(row: Record<string, unknown>) {
-    return {
-        id: row.id,
-        name: row.name,
-        color: row.color,
-        motto: row.motto,
-        score: row.score,
-        districtsControlled: row.districts_controlled,
     };
 }
 
@@ -770,7 +785,7 @@ app.get('/api/health', (c) => {
 });
 
 // ─── GitHub OAuth ───
-app.get('/api/auth/github/start', (c) => {
+app.get('/api/auth/github/start', async (c) => {
     const query = GitHubAuthStartQuery.safeParse({
         redirectUri: c.req.query('redirectUri'),
         state: c.req.query('state'),
@@ -783,17 +798,20 @@ app.get('/api/auth/github/start', (c) => {
         return c.json({ error: 'forbidden_redirect_uri', message: 'Redirect URI origin is not allowed' }, 403);
     }
 
+    // Sign the client-supplied nonce so /token can verify it wasn't forged.
+    const secret = getPublicSessionSecret(c);
+    const signedState = secret
+        ? await signOAuthState(query.data.state, secret)
+        : query.data.state;
+
     const authorizeUrl = new URL('https://github.com/login/oauth/authorize');
     authorizeUrl.searchParams.set('client_id', getGitHubClientId(c.env));
     authorizeUrl.searchParams.set('redirect_uri', query.data.redirectUri);
+    authorizeUrl.searchParams.set('state', signedState);
 
     const scope = getGitHubOAuthScope(c.env);
     if (scope) {
         authorizeUrl.searchParams.set('scope', scope);
-    }
-
-    if (query.data.state) {
-        authorizeUrl.searchParams.set('state', query.data.state);
     }
 
     return c.redirect(authorizeUrl.toString(), 302);
@@ -807,6 +825,17 @@ app.post('/api/auth/github/token', async (c) => {
 
     if (!isAllowedRedirectUri(c.req.raw, c.env, parsed.data.redirectUri)) {
         return c.json({ error: 'forbidden_redirect_uri', message: 'Redirect URI origin is not allowed' }, 403);
+    }
+
+    // Verify the signed state when a secret is configured (rejects forged states).
+    const sessionSecret = getPublicSessionSecret(c);
+    if (sessionSecret) {
+        if (!parsed.data.state) {
+            return c.json({ error: 'missing_state', message: 'OAuth state parameter is required.' }, 400);
+        }
+        if (!(await verifyOAuthState(parsed.data.state, sessionSecret))) {
+            return c.json({ error: 'invalid_state', message: 'OAuth state parameter signature is invalid.' }, 400);
+        }
     }
 
     const clientSecret = getGitHubClientSecret(c.env);
@@ -856,10 +885,8 @@ app.get('/api/github/repo-metadata', async (c) => {
         return c.json({ error: 'invalid_query', details: query.error.flatten() }, 400);
     }
 
-    const owner = query.data.owner ?? DEFAULT_GITHUB_REPO_OWNER;
-    const name = query.data.name ?? DEFAULT_GITHUB_REPO_NAME;
     const accessToken = getGitHubAccessTokenFromAuthorizationHeader(c.req.header('Authorization'));
-    const result = await fetchGitHubRepoMetadataSnapshot(owner, name, accessToken);
+    const result = await fetchGitHubRepoMetadataSnapshot(query.data.owner, query.data.name, accessToken);
     if (!result.ok) {
         return c.json(result.body, result.status);
     }
@@ -935,7 +962,7 @@ app.get('/api/city', async (c) => {
     const db = c.env.DB;
     const [districts, missions, factions, events] = await Promise.all([
         db.prepare('SELECT COUNT(*) as count FROM districts').first<{ count: number }>(),
-        db.prepare('SELECT COUNT(*) as count FROM missions').first<{ count: number }>(),
+        db.prepare('SELECT COUNT(*) as count FROM mission_sessions WHERE status = ?').bind('active').first<{ count: number }>(),
         db.prepare('SELECT COUNT(*) as count FROM factions').first<{ count: number }>(),
         db.prepare('SELECT COUNT(*) as count FROM events').first<{ count: number }>(),
     ]);

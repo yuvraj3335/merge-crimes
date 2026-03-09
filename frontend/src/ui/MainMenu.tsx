@@ -112,6 +112,7 @@ function useMainMenuStoreState() {
     const setPhase = useGameStore((state) => state.setPhase);
     const loadRepoCity = useGameStore((state) => state.loadRepoCity);
     const clearRepoCity = useGameStore((state) => state.clearRepoCity);
+    const loadFromApi = useGameStore((state) => state.loadFromApi);
     const repoCityMode = useGameStore((state) => state.repoCityMode);
     const connectedRepo = useGameStore((state) => state.connectedRepo);
     const connectedRepoRefreshStatus = useGameStore((state) => state.connectedRepoRefreshStatus);
@@ -131,6 +132,7 @@ function useMainMenuStoreState() {
         setPhase,
         loadRepoCity,
         clearRepoCity,
+        loadFromApi,
         repoCityMode,
         connectedRepo,
         connectedRepoRefreshStatus,
@@ -852,10 +854,10 @@ function MenuFooter({
         <div className="menu-version repo-city">
             <span className="menu-version-pill">Repo City MVP</span>
             <span className="menu-version-copy">{footerNote}</span>
-            <span className="menu-version-phase">Phase 3 shell</span>
+            <span className="menu-version-phase">Phase 7 shipped</span>
         </div>
     ) : (
-        <div className="menu-version">v0.2.0 — Repo City MVP — Phase 3</div>
+        <div className="menu-version">v0.2.0 — Repo City MVP — Phase 7</div>
     );
 }
 
@@ -865,6 +867,7 @@ export function MainMenu() {
         setPhase,
         loadRepoCity,
         clearRepoCity,
+        loadFromApi,
         repoCityMode,
         connectedRepo,
         connectedRepoRefreshStatus,
@@ -904,6 +907,9 @@ export function MainMenu() {
     function handleClassicMode() {
         if (repoCityMode) {
             clearRepoCity();
+            // Reload worker-backed state now that we've cleared repo-city bootstrap
+            // data, so classic mode shows live missions/districts rather than stale seed.
+            void loadFromApi();
         }
         setPhase('playing');
     }

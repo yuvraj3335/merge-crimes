@@ -6,6 +6,7 @@ import { useGameStore } from '../store/gameStore';
 export function useAppShellEffects(): void {
     const phase = useGameStore((state) => state.phase);
     const apiAvailable = useGameStore((state) => state.apiAvailable);
+    const repoCityMode = useGameStore((state) => state.repoCityMode);
     const apiLoadedRef = useRef(false);
     const loadFromApi = useGameStore((state) => state.loadFromApi);
     const setApiRuntimeStatus = useGameStore((state) => state.setApiRuntimeStatus);
@@ -34,12 +35,12 @@ export function useAppShellEffects(): void {
     useEffect(() => installLocalSmokeBridge(), []);
 
     useEffect(() => {
-        if (phase !== 'menu' && apiAvailable) {
+        if (phase !== 'menu' && apiAvailable && !repoCityMode) {
             void api.primePublicWriteSession().catch(() => {
                 // Runtime status is already updated inside the API client.
             });
         }
-    }, [apiAvailable, phase]);
+    }, [apiAvailable, phase, repoCityMode]);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {

@@ -29,8 +29,8 @@ export function getGitHubRepoTranslationEligibility(
             tone: 'reference',
             pill: 'Listed only',
             shortLabel: 'listed only',
-            pickerDetail: 'Visible through this GitHub connection, but Repo City needs explicit access before translation.',
-            menuDetail: "This private repo can't be translated in the current read-only flow.",
+            pickerDetail: 'If this GitHub connection can list the repo, it stays reference-only in the default public-metadata flow.',
+            menuDetail: "This private repo can't be translated in the default public-metadata flow.",
         };
     }
 

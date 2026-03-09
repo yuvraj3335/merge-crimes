@@ -182,8 +182,8 @@ export function buildSelectedRepoStatusCopyFromModel(
             message: selectedGitHubRepoIngestState.message
                 ?? 'GitHub did not return a readable snapshot for this repository.',
             detail: connectedRepo
-                ? `${connectedRepo.owner}/${connectedRepo.name} stays active until you retry this public repo selection.`
-                : 'Retry this public repo selection to request a new read-only snapshot.',
+                ? `${connectedRepo.owner}/${connectedRepo.name} stays active until you retry this repo selection.`
+                : 'Retry this repo selection to request a new read-only snapshot.',
         };
     }
 
@@ -193,7 +193,7 @@ export function buildSelectedRepoStatusCopyFromModel(
             pill: kind === 'active' ? 'Active city' : selectedGitHubRepoEligibility.pill,
             title: kind === 'active' ? 'Selected repo is active' : 'Selected repo is eligible',
             message: kind === 'active'
-                ? `${selectedGitHubRepo.fullName} is the public repo behind the current Repo City snapshot.`
+                ? `${selectedGitHubRepo.fullName} is the repo behind the current Repo City snapshot.`
                 : `${selectedGitHubRepo.fullName} is eligible for Repo City translation in this flow.`,
             detail: kind === 'active'
                 ? 'Menu status and actions now match the same eligibility rule shown in the picker.'
@@ -209,8 +209,8 @@ export function buildSelectedRepoStatusCopyFromModel(
         title: 'Selected repo is listed only',
         message: `${selectedGitHubRepo.fullName} is visible through GitHub, but ${selectedGitHubRepoEligibility.menuDetail.toLowerCase()}`,
         detail: connectedRepo
-            ? `${connectedRepo.owner}/${connectedRepo.name} stays the active city. Pick an eligible public repo to switch translation.`
-            : 'Pick an eligible public repo to generate a city here.',
+            ? `${connectedRepo.owner}/${connectedRepo.name} stays the active city. Pick an eligible repo to switch translation.`
+            : 'Pick an eligible repo to generate a city here.',
     };
 }
 
@@ -321,7 +321,7 @@ export function buildSelectedRepoStartCopy(
             : {
                 kicker: 'Preparing snapshot',
                 title: 'Enter Repo City',
-                meta: `${selectedRepoName} is not ready yet. Retry the public repo selection before entering.`,
+                meta: `${selectedRepoName} is not ready yet. Retry the repo selection before entering.`,
             };
     }
 
@@ -335,7 +335,7 @@ export function buildSelectedRepoStartCopy(
             : {
                 kicker: 'Current active city',
                 title: 'Enter Repo City',
-                meta: `${selectedRepoName} is listed only. Pick an eligible public repo to generate a city.`,
+                meta: `${selectedRepoName} is listed only. Pick an eligible repo to generate a city.`,
             };
     }
 

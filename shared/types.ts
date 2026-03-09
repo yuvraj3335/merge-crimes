@@ -25,17 +25,21 @@ export interface RepoSource {
   lastActivity: string; // ISO date
 }
 
+// Live signal types — produced by real GitHub API calls in fetchRepoSignals.ts.
+// All other types below are currently fixture-only (seed/demo data); they are
+// present so the game engine can consume them when present but are never emitted
+// for real repos until the corresponding GitHub API fetches are implemented.
 export type RepoSignalType =
-  | 'failing_workflow'
-  | 'open_issue'
-  | 'open_pr'
-  | 'merge_conflict'
-  | 'security_alert'
-  | 'issue_spike'
-  | 'stale_pr'
-  | 'flaky_tests'
-  | 'dependency_drift'
-  | 'latest_commit';
+  | 'open_issue'         // live: GitHub search API
+  | 'open_pr'            // live: GitHub search API
+  | 'latest_commit'      // live: GitHub commits API
+  | 'failing_workflow'   // fixture-only: requires Checks / Actions API
+  | 'merge_conflict'     // fixture-only: requires comparing branch refs
+  | 'security_alert'     // fixture-only: requires Dependabot alerts API
+  | 'issue_spike'        // fixture-only: derived metric
+  | 'stale_pr'           // fixture-only: derived metric
+  | 'flaky_tests'        // fixture-only: requires CI run history
+  | 'dependency_drift';  // fixture-only: requires dependency graph API
 
 export interface RepoSignal {
   type: RepoSignalType;
